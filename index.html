@@ -1,0 +1,1728 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>魔法修煉 RPG：測試版</title>
+
+<style>
+:root {
+  --primary: #9b5cff;
+  --secondary: #5a2cff;
+  --bg-dark: #0d0818;
+  --card-bg: rgba(255, 255, 255, 0.08);
+  --rarity-0: #ffffff;
+  --rarity-1: #3498db;
+  --rarity-2: #9b59b6;
+  --rarity-3: #f1c40f;
+}
+
+* { box-sizing: border-box; } 
+
+body {
+  margin: 0;
+  background: #0d0818 linear-gradient(180deg, #1a0b2e 0%, #0d0818 100%) fixed;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #fff;
+  display: flex;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* --- 側邊選單 --- */
+.sidebar {
+  width: 70px;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  height: 100vh;
+  position: fixed;
+  left: 0; top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 20px;
+  border-right: 1px solid rgba(255,255,255,0.1);
+  z-index: 100;
+}
+
+.nav-item {
+  width: 50px; height: 50px; margin-bottom: 20px; border-radius: 12px;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  cursor: pointer; font-size: 10px; color: rgba(255,255,255,0.5);
+  transition: 0.3s;
+}
+.nav-item span { font-size: 20px; }
+.nav-item.active { background: var(--primary); color: #fff; box-shadow: 0 0 15px var(--primary); }
+
+/* --- 主要內容區 --- */
+.main-wrapper {
+  margin-left: 70px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.main-content {
+  width: 100%; 
+  max-width: 480px; 
+  padding: 15px;
+}
+
+.page { display: none; }
+.page.active { display: block; animation: fadeIn 0.3s ease-out; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* --- 核心元件 --- */
+.card { 
+  background: var(--card-bg); border-radius: 20px; padding: 20px; 
+  margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.magic { 
+  font-size: 36px; font-weight: bold; text-align: center;
+  background: linear-gradient(to bottom, #fff, var(--primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 15px rgba(155, 92, 255, 0.5);
+  margin-top: 10px;
+}
+
+/* --- 裝備九宮格佈局 --- */
+.equip-grid-new {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px 10px; /* 上下間距留給 label，左右適中 */
+  justify-items: center;
+  margin: 10px 0 20px 0;
+}
+
+.equip-slot {
+  width: 60px; height: 60px; 
+  background: rgba(0,0,0,0.4); 
+  border: 1px dashed rgba(155,92,255,0.5);
+  border-radius: 12px; 
+  display: flex; justify-content: center; align-items: center; 
+  font-size: 24px; position: relative; cursor: pointer;
+  transition: all 0.2s;
+}
+.equip-slot.occupied { 
+  border: 2px solid var(--primary); 
+  background: rgba(155,92,255,0.15); 
+  box-shadow: 0 0 10px rgba(155,92,255,0.2);
+}
+.equip-slot:active { transform: scale(0.9); }
+
+.equip-slot::after { 
+  content: attr(data-label); 
+  position: absolute; bottom: -18px; 
+  font-size: 10px; color: #aaa; white-space: nowrap; 
+}
+
+/* --- 屬性與數值 --- */
+.attr { 
+  display: flex; justify-content: space-between; align-items: center; 
+  margin: 8px 0; background: rgba(255,255,255,0.04); 
+  padding: 8px 12px; border-radius: 10px;
+}
+.small { font-size: 12px; color: #888; }
+
+/* --- 按鈕樣式 --- */
+button {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: #fff; border: none; border-radius: 12px; padding: 12px;
+  font-weight: bold; cursor: pointer; transition: 0.2s;
+  width: 100%; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+button:active { transform: scale(0.96); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+
+/* --- 背包物品 --- */
+.item-card {
+  background: rgba(255,255,255,0.06); border-radius: 12px; padding: 12px;
+  margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
+  border-left: 4px solid #fff; transition: 0.2s;
+}
+.sell-btn { background: #e74c3c !important; font-size: 11px; padding: 6px 12px; width: auto; margin: 0; }
+
+/* --- 彈窗優化 --- */
+.modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.9); z-index: 200; justify-content: center; align-items: center;
+  backdrop-filter: blur(5px);
+}
+.modal-card {
+  background: #1a1525; border: 1px solid var(--primary); border-radius: 24px;
+  padding: 30px; width: 300px; text-align: center;
+}
+
+/* --- 名稱輸入框 --- */
+#nameInput { 
+  background: rgba(0,0,0,0.6); border: 1px solid var(--primary); 
+  color: #fff; border-radius: 6px; padding: 4px 10px; 
+  text-align: center; width: 120px; font-size: 16px;
+}
+#nameDisplay {
+  font-size: 60px;           /* 增大字體 */
+  font-weight: 900;          /* 極粗體 */
+  color: #fff;               /* 白色字體 */
+  text-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary); /* 紫色發光 */
+  display: block;            /* 確保佔據整列 */
+  margin-bottom: 5px;        /* 與下方的距離 */
+  letter-spacing: 2px;       /* 字距微調，更有質感 */
+}
+
+/* 美化 BOSS 列表捲軸 */
+#bossList::-webkit-scrollbar {
+  height: 6px;
+}
+#bossList::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+#bossList::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 10px;
+}
+
+/* 技能圖標飄浮動畫 */
+@keyframes skill-float-up {
+  0% {
+    transform: translate(-50%, 0) scale(0.3); /* 圖片從較小開始噴出 */
+    opacity: 0;
+  }
+  25% {
+    transform: translate(-50%, -40px) scale(1.1); /* 噴射到高點，稍微放大 */
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -120px) scale(1); /* 緩慢漂浮並消失 */
+    opacity: 0;
+  }
+}
+
+.skill-popup {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1000;
+  /* 移除字體大小，改用 flex 容器控制圖片 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* 動畫設定 */
+  animation: skill-float-up 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  
+  /* 初始過濾器：確保圖片在 JS 加載前不會有奇怪的殘影 */
+  will-change: transform, opacity; 
+}
+
+/* 針對內含圖片的特別設定 */
+.skill-popup img {
+  width: 60px;  /* 你可以根據需求調整圖片大小 */
+  height: 60px;
+  object-fit: contain;
+  /* 讓圖片邊緣清晰，並增加一點基礎亮度 */
+  filter: brightness(1.1);
+}
+
+/* 如果你保留部分 Emoji，這行可以確保它們依然好看 */
+.skill-popup span {
+  font-size: 40px;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+}
+
+
+/* --- 版權 --- */
+.copyright-notice {
+  position: fixed;
+  bottom: 10px;        /* 距離底部 10 像素 */
+  left: 70px;          /* 避開你的側邊選單寬度 */
+  right: 0;
+  text-align: center;
+  font-size: 10px;     /* 小字體 */
+  color: rgba(255, 255, 255, 0.3); /* 半透明白色，不干擾視覺 */
+  z-index: 50;         /* 確保在內容之上，但在彈窗之下 */
+  pointer-events: none; /* 讓這行字不影響點擊操作 */
+  letter-spacing: 1px;
+}
+
+/* 手機版微調：如果你的側邊欄在手機上會隱藏或變動，可以調整 left */
+@media (max-width: 600px) {
+  .copyright-notice {
+    left: 0;
+    bottom: 5px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<nav class="sidebar">
+  <div class="nav-item active" onclick="switchPage('character')"><span>👤</span>角色</div>
+  <div class="nav-item" onclick="switchPage('battle')"><span>⚔️</span>戰鬥</div>
+  <div class="nav-item" onclick="switchPage('skills')"><span>📜</span>技能</div>
+  <div class="nav-item" onclick="switchPage('inventory')"><span>🎒</span>背包</div>
+  <div class="nav-item" id="nav-settings" onclick="switchPage('settings')"><span>⚙️</span>設定</div>
+</nav>
+
+<div class="main-wrapper">
+  <div class="main-content">
+    <div class="magic">✨ <span id="mana">0</span></div>
+    <div class="mps" style="text-align:center; opacity:0.8; font-size:12px; margin-bottom: 15px;">魔力流動：<span id="mps">0</span>/s</div>
+
+<div id="page-character" class="page active">
+  <div style="text-align: center; margin-bottom: 15px;">
+    <div id="nameDisplay" style="font-weight:bold; font-size:20px; color:var(--primary); letter-spacing: 1px;">未命名勇者</div>
+    <input type="text" id="nameInput" style="display:none;" maxlength="8">
+    <div class="small">Level <span id="charLv">1</span></div>
+  </div>
+
+  <div class="card" style="padding: 10px;">
+    <div style="width: 100%; aspect-ratio: 1/1; position: relative; overflow: hidden; border-radius: 12px; border: 2px solid var(--primary); background: #000; margin-bottom: 20px;">
+      <img id="avatarImg" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" src="https://via.placeholder.com/400" />
+      <button id="editBtn" style="position: absolute; bottom: 10px; right: 10px; width: auto; font-size: 10px; padding: 5px 10px; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);">編輯頭像/ID</button>
+      <input type="file" id="avatarInput" style="display:none;" accept="image/*">
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; justify-items: center; padding: 10px;">
+      <div class="equip-slot" id="slot-head" data-label="頭部">🎓</div>
+      <div class="equip-slot" id="slot-top" data-label="上衣">👘</div>
+      <div class="equip-slot" id="slot-necklace" data-label="項鍊">📿</div>
+      
+      <div class="equip-slot" id="slot-mainHand" data-label="主手">🗡️</div>
+      <div class="equip-slot" id="slot-offHand" data-label="副手">🛡️</div>
+      <div class="equip-slot" id="slot-ring1" data-label="戒指1">💍</div>
+
+      
+      <div class="equip-slot" id="slot-bottom" data-label="下衣">👖</div>
+      <div class="equip-slot" id="slot-shoes" data-label="鞋子">👞</div>
+      <div class="equip-slot" id="slot-ring2" data-label="戒指2">💍</div>
+
+    </div>
+  </div>
+
+  <div class="card">
+    <strong>📊 屬性面板</strong>
+    <div class="small" style="margin: 10px 0;">生命值 HP: <span id="hpText">0 / 0</span></div>
+    <div style="width: 100%; height: 10px; background: #441111; border-radius: 5px; overflow: hidden; margin-bottom: 15px;">
+      <div id="hpBar" style="width: 100%; height: 100%; background: #ff4d4d; transition: width 0.3s;"></div>
+    </div>
+    <div class="attr"><span>⚔️ 攻擊 ATK</span> <span id="atk">0</span></div>
+    <div class="attr"><span>🛡️ 防禦 DEF</span> <span id="def">0</span></div>
+    <hr style="opacity:0.1; margin: 15px 0;">
+    <div class="small" style="margin-bottom: 10px;">可用能力點：<span id="points">0</span></div>
+    <div class="attr"><span>📘 智力：<span id="int">0</span></span> <button style="width:36px; padding:4px;" onclick="addAttr('int')">+</button></div>
+    <div class="attr"><span>⏳ 冥想：<span id="med">0</span></span> <button style="width:36px; padding:4px;" onclick="addAttr('med')">+</button></div>
+    <div class="attr"><span>❤️ 體質：<span id="vit">0</span></span> <button style="width:36px; padding:4px;" onclick="addAttr('vit')">+</button></div>
+    <button id="upgradeChar" style="margin-top: 10px;">角色升級 (<span id="charCost">0</span>✨)</button>
+  </div>
+</div>
+
+<div id="page-skills" class="page" style="display:none;">
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+      <strong>🔮 技能配置</strong>
+      <span class="small">已綁定: <span id="activeSkillCount">0</span> / 3</span>
+    </div>
+    
+    <div id="skillList" style="display:flex; flex-direction:column; gap:10px;">
+      </div>
+    
+    <div class="small" style="margin-top:15px; color:rgba(255,255,255,0.4); text-align:center;">
+      ※ 領悟技能需消耗魔力與特定 BOSS 材料
+    </div>
+  </div>
+</div>
+
+<div id="page-settings" class="page">
+  <div class="card">
+    <h3 style="margin-top: 0; color: var(--primary);">⚙️ 遊戲設定</h3>
+    <p class="small">在這裡管理你的冒險進度與遊戲選項。</p>
+    
+    <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 15px 0;">
+
+    <div class="card">
+  <strong style="color: var(--primary);">💾 存檔管理</strong>
+  <p class="small">將你的進度下載為檔案保存，或上傳檔案恢復進度。</p>
+  
+  <div style="display: flex; gap: 10px; margin-top: 10px;">
+    <button onclick="exportSaveFile()" style="flex: 1; background: #3498db;">下載存檔檔</button>
+    <button onclick="document.getElementById('importFileInput').click()" style="flex: 1; background: #2ecc71;">上傳存檔檔</button>
+  </div>
+  
+  <input type="file" id="importFileInput" style="display:none;" accept=".sav,.json" onchange="importSaveFile(this)">
+</div>
+
+    <div style="padding: 15px; border: 1px dashed #e74c3c; border-radius: 12px; background: rgba(231, 76, 60, 0.05);">
+      <strong style="color: #e74c3c; display: block; margin-bottom: 5px;">⚠️ 危險區域</strong>
+      <span class="small">刪除後將失去所有等級、裝備、材料與魔力。此操作無法撤銷。</span>
+      
+      <button class="danger-btn" onclick="confirmReset()" style="margin-top: 15px; background: #e74c3c;">
+        刪除所有遊戲紀錄
+      </button>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="small" style="text-align: center;">
+      遊戲版本：v0.1<br>
+      最後存檔時間：<span id="lastSaveTime">--:--:--</span>
+    </div>
+  </div>
+</div>
+
+<div id="page-battle" class="page">
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <h3 style="margin: 0; color: var(--primary);">冒險與討伐</h3>
+      <div style="display: flex; gap: 5px;">
+        <button id="btnModeAdv" onclick="toggleBattleMode('adventure')" style="padding: 5px 10px; font-size: 12px;">冒險模式</button>
+        <button id="btnModeBoss" onclick="toggleBattleMode('boss')" style="padding: 5px 10px; font-size: 12px; background: #444;">BOSS 挑戰</button>
+      </div>
+    </div>
+
+    <div id="adventureControls">
+      <select id="regionSelect" onchange="changeRegion(this.value)" style="width: 100%; padding: 10px; background: #222; color: #fff; border: 1px solid var(--primary); border-radius: 8px; margin-bottom: 10px;">
+        <option value="新手森林">新手森林 (Lv.1+)</option>
+        <option value="墮落遺蹟">墮落遺蹟 (Lv.10+)</option>
+        <option value="幽影深淵">幽影深淵 (Lv.25+)</option>
+        <option value="灼熱熔岩區">灼熱熔岩區 (Lv.35+)</option>
+        <option value="極北凍原">極北凍原 (Lv.50+)</option>
+        <option value="天空島嶼">天空島嶼 (Lv.65+)</option>
+      </select>
+    </div>
+
+    <div id="bossControls" style="display:none;">
+      <div id="bossList" style="display: flex; gap: 12px; overflow-x: auto; padding: 10px 5px; scroll-snap-type: x mandatory;"></div>
+      <div class="small" style="text-align:center; color:rgba(255,255,255,0.4); margin-top:5px;">← 左右滑動選擇對手 →</div>
+    </div>
+
+    <div id="battleStatus" style="text-align: center; margin: 15px 0; min-height: 24px; color: #f1c40f;">準備就緒</div>
+
+<div id="battleDisplayArea" style="display: flex; flex-direction: column; gap: 12px;">
+  
+  <div id="playerBattleArea" class="card" style="display:none; position: relative; overflow: hidden; min-height: 130px; border-left: 5px solid var(--primary); padding: 15px; background: rgba(0,0,0,0.5);">
+    <img id="battlePlayerImg" src="" style="position: absolute; right: -5px; top: -5px; height: 130%; opacity: 0.7; pointer-events: none; mask-image: linear-gradient(to left, black, transparent); -webkit-mask-image: linear-gradient(to left, black, transparent); object-fit: contain; z-index: 0;">
+    
+    <div style="position: relative; z-index: 1; width: 60%;">
+      <div id="playerSideName" style="font-weight: bold; color: var(--primary); font-size: 18px; text-shadow: 0 0 5px #000;">【玩家】</div>
+      <div style="font-size: 14px; margin-top: 4px; color: #eee;">HP: <span id="pBattleHpText" style="font-family: monospace;">0 / 0</span></div>
+      <div style="width:100%; height:12px; background:rgba(0,0,0,0.6); border-radius:6px; overflow:hidden; margin-top:8px; border: 1px solid rgba(255,255,255,0.1);">
+        <div id="pBattleHpBar" style="width:100%; height:100%; background:linear-gradient(90deg, #2ecc71, #27ae60); transition: width 0.3s;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="vsTitle" style="display:none; text-align: center; color: #666; font-weight: bold; font-style: italic; font-size: 20px; margin: -5px 0;">V.S.</div>
+
+  <div id="monsterArea" class="card" style="display:none; position: relative; overflow: hidden; min-height: 130px; border-right: 5px solid #e74c3c; padding: 15px; background: rgba(0,0,0,0.5);">
+    <img id="bossImg" src="" style="position: absolute; left: -5px; top: -5px; height: 130%; opacity: 0.7; pointer-events: none; mask-image: linear-gradient(to right, black, transparent); -webkit-mask-image: linear-gradient(to right, black, transparent); object-fit: contain; z-index: 0;">
+    
+    <div style="position: relative; z-index: 1; width: 60%; margin-left: auto; text-align: right;">
+      <div id="mName" style="font-weight: bold; color: #e74c3c; font-size: 18px; text-shadow: 0 0 5px #000;">怪物名稱</div>
+      <div style="font-size: 14px; margin-top: 4px; color: #eee;">HP: <span id="mHpText" style="font-family: monospace;">0 / 0</span></div>
+      <div style="width:100%; height:12px; background:rgba(0,0,0,0.6); border-radius:6px; overflow:hidden; margin-top:8px; border: 1px solid rgba(255,255,255,0.1);">
+        <div id="mHpBar" style="width:100%; height:100%; background:linear-gradient(90deg, #ff4d4d, #ff9f43); transition: width 0.3s;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <button id="startBattleBtn" onclick="startBattle()" style="margin-top: 10px;">開始搜尋敵人</button>
+    <button id="stopBattleBtn" onclick="stopBattle('已撤離戰場')" style="display:none; background:#555; margin-top: 10px;">撤退 / 停止</button>
+  </div>
+
+  <div class="card" style="margin-top: 15px; padding: 10px;">
+    <div id="battleLog" style="height: 150px; overflow-y: auto; font-size: 12px; display: flex; flex-direction: column; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px;"></div>
+  </div>
+</div>
+
+<div id="page-inventory" class="page">
+  <div class="card">
+    <div style="display:flex; gap:10px; margin-bottom:15px;">
+      <button onclick="setInvTab('equip')" id="btnTabEquip" style="flex:1;">裝備</button>
+      <button onclick="setInvTab('material')" id="btnTabMat" style="flex:1; background:#444;">材料</button>
+    </div>
+
+    <div id="quickSellArea" style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05);">
+      <div class="small" style="margin-bottom: 8px; color: var(--primary);">💰 快速販售裝備</div>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <select id="sellRarityFilter" style="flex: 2; background:#222; color:#fff; border:1px solid #444; border-radius:4px; padding:4px;">
+          <option value="0">僅限：普通 (白)</option>
+          <option value="1">包含：稀有 (藍) 以下</option>
+          <option value="2">包含：史詩 (紫) 以下</option>
+        </select>
+        <button onclick="bulkSell()" style="flex: 1; background: #e74c3c; padding: 5px; font-size: 12px; color: white; border: none; border-radius: 4px; cursor: pointer;">確認販售</button>
+      </div>
+    </div>
+
+    <div id="inventoryContainer"></div>
+  </div>
+</div>
+
+<div id="itemModal" class="modal-overlay" onclick="closeModal()">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <div id="modalRarity" class="modal-rarity">RARITY</div>
+    <div id="modalIcon" style="font-size: 40px; margin: 10px 0;">🛡️</div>
+    <strong id="modalName" style="font-size: 18px;">裝備名稱</strong>
+    <div id="modalStats" class="modal-stats" style="margin: 15px 0; line-height: 1.6;">屬性讀取中...</div>
+    <button id="unequipBtn" style="background: #444;">卸下裝備</button>
+    <button onclick="closeModal()" style="background: none; border: 1px solid #555; margin-top: 10px; font-size: 12px; width: auto; padding: 5px 15px;">關閉</button>
+  </div>
+</div>
+
+<footer class="copyright-notice">
+  &copy; 2026 konghua_0206. All Rights Reserved.
+</footer>
+
+
+<script>
+/**
+ * ============================================================
+ * 核心數據初始化與持久化 (Core Data & Persistence)
+ * 負責定義遊戲狀態、載入/儲存玩家進度
+ * ============================================================
+ */
+
+// 1. 定義唯一的存檔標籤
+const SAVE_KEY = "magicRPG_v2"; 
+const MAX_LEVEL = 100; // 玩家等級上限
+
+// 2. 定義產生初始資料的函式
+function getDefaultGameData() {
+  return {
+    charName: "未命名勇者", 
+    avatarImage: "https://images.plurk.com/30N8diAK4J1Y928MusBotd.jpg",
+    mana: 0, 
+    charLv: 1, 
+    points: 0, 
+    int: 0, 
+    med: 0, 
+    vit: 0, 
+    currentHp: 100,
+    
+    // --- 技能系統新增資料 ---
+    learnedSkills: [],    // 已習得技能的 ID 陣列 (例如: ["fireball"])
+    equippedSkills: [],   // 目前綁定在戰鬥中的技能 ID (最多 3 個)
+    
+    // --- 物品與材料 ---
+    inventory: [], 
+    materials: {
+      "古老鹿角": 0,      // 預設列出基礎 BOSS 材料方便追踪
+      "守護者核心": 0,
+      "深淵靈魂": 0
+    },
+    
+    // --- 裝備槽位 ---
+    equipment: { 
+      head: null, top: null, bottom: null, shoes: null, 
+      mainHand: null, offHand: null, necklace: null, ring1: null, ring2: null 
+    }
+  };
+}
+
+// 3. 宣告全域變數 game (先不賦值)
+let game;
+
+// 4. 初始化遊戲邏輯
+function initGame() {
+    const savedData = localStorage.getItem(SAVE_KEY);
+    if (savedData) {
+        try {
+            // 合併存檔與預設值，確保新舊版相容
+            game = Object.assign(getDefaultGameData(), JSON.parse(savedData));
+            console.log("存檔載入成功");
+        } catch (e) {
+            console.error("存檔損壞，重置為新遊戲");
+            game = getDefaultGameData();
+        }
+    } else {
+        game = getDefaultGameData();
+        console.log("無存檔紀錄，開啟新遊戲");
+    }
+    // 確保所有 UI 顯示最新資料
+    if (typeof updateUI === "function") updateUI(); 
+}
+
+// 5. 其他全域狀態
+let isEditing = false;
+let currentInvTab = 'equip';
+let battleInterval = null;
+let currentMonster = null;
+const slotIcons = { head:"🎓", top:"👘", bottom:"👖", shoes:"👞", mainHand:"🗡️", offHand:"🛡️", necklace:"📿", ring1:"💍", ring2:"💍" };
+
+// 6. 執行初始化 (放最後)
+initGame();
+
+// 7. 定義統一的存檔函式
+function saveData() { 
+    localStorage.setItem(SAVE_KEY, JSON.stringify(game)); 
+    // 同步更新設定頁面的最後存檔時間
+    updateSaveTime(); 
+    console.log("遊戲已自動存檔");
+}
+
+// 8. 當瀏覽器視窗準備關閉或重新整理時，執行最後一次存檔
+window.addEventListener("beforeunload", function (e) {
+    // 只有在 canSave 許可的情況下才執行存檔
+    // 這樣在 confirmReset 或 importSaveFile 關閉許可後，就不會把舊資料寫回 LocalStorage
+    if (typeof canSave !== 'undefined' && canSave) {
+        saveData();
+    }
+});
+
+/**
+ * ============================================================
+ * 屬性數值運算中心 (Stat Calculation Engine)
+ * 負責處理所有裝備加成、角色成長與即時數值轉換
+ * ============================================================
+ */
+
+// 加總所有穿戴裝備的屬性
+function getEquipStats() {
+  let s = { atk:0, def:0, hp:0 };
+  for(let k in game.equipment) { if(game.equipment[k]) { s.atk+=game.equipment[k].atk; s.def+=game.equipment[k].def; s.hp+=game.equipment[k].hp; } }
+  return s;
+}
+
+// 取得當前最大血量 (整合你原本的公式)
+function getMaxHp() {
+  // 取得裝備加成 (確保 getEquipStats 函式存在)
+  const e = (typeof getEquipStats === "function") ? getEquipStats() : { hp: 0, atk: 0, def: 0 };
+  
+  // 原本公式：(基礎 + 等級加成 + 裝備加成) * (1 + 體質加成)
+  return Math.floor((100 + game.charLv * 30 + e.hp) * (1 + game.vit * 0.05));
+}
+
+// 取得戰鬥用屬性 (整合攻擊與防禦)
+function getCombatStats() {
+  const e = (typeof getEquipStats === "function") ? getEquipStats() : { hp: 0, atk: 0, def: 0 };
+  
+  return {
+    atk: 10 + (game.int * 5) + (e.atk || 0),   // 智力加成 + 裝備攻擊
+    def: 5 + (game.vit * 2) + (e.def || 0),    // 體質加成 + 裝備防禦
+    maxHp: getMaxHp()                         // 直接調用你原本的公式
+  };
+}
+
+// 計算總攻擊力 (等級基礎 + 智力加成 + 裝備)
+function getAtk() { return (game.charLv*5)+(game.int*8)+getEquipStats().atk; }
+
+// 計算總防禦力 (體力基礎 + 裝備)
+function getDef() { return (game.vit*2)+getEquipStats().def; }
+
+// 計算每秒產生的魔力 (MPS)
+function manaPerSecond() { return Math.floor((game.charLv*2)*(1+game.int*0.01)); }
+
+
+/**
+ * ============================================================
+ * 使用者介面驅動 (UI Driving & Interaction)
+ * 負責將數據變動反映到畫面，以及處理按鈕點擊事件
+ * ============================================================
+ */
+
+// 更新畫面上所有的數值與進度條
+function updateUI() {
+  document.getElementById("mana").innerText = Math.floor(game.mana);
+  document.getElementById("mps").innerText = manaPerSecond();
+  document.getElementById("charLv").innerText = game.charLv;
+  document.getElementById("nameDisplay").innerText = game.charName;
+  document.getElementById("points").innerText = game.points;
+  document.getElementById("int").innerText = game.int;
+  document.getElementById("med").innerText = game.med;
+  document.getElementById("vit").innerText = game.vit;
+  document.getElementById("atk").innerText = getAtk();
+  document.getElementById("def").innerText = getDef();
+  document.getElementById("charCost").innerText = Math.floor(50 * Math.pow(1.3, game.charLv-1));
+  
+  const mHp = getMaxHp();
+  document.getElementById("hpText").innerText = `${Math.floor(game.currentHp)} / ${mHp}`;
+  document.getElementById("hpBar").style.width = (game.currentHp/mHp*100) + "%";
+  if(game.avatarImage) document.getElementById("avatarImg").src = game.avatarImage;
+
+  // 渲染裝備槽位狀態
+  for (let sid in slotIcons) {
+    let el = document.getElementById(`slot-${sid}`);
+    if (game.equipment[sid]) {
+      el.innerText = game.equipment[sid].icon;
+      el.className = "equip-slot occupied";
+      el.style.borderColor = `var(--rarity-${game.equipment[sid].rarity})`;
+      el.onclick = () => showEquipDetail(sid);
+    } else {
+      el.innerText = slotIcons[sid];
+      el.className = "equip-slot";
+      el.style.borderColor = "";
+      el.onclick = null;
+    }
+  }
+}
+
+// 切換主頁面分頁
+function switchPage(p) {
+  // 1. 切換分頁顯示
+  document.querySelectorAll('.page').forEach(pg => {
+    pg.classList.remove('active');
+    pg.style.display = 'none';
+  });
+  
+  const target = document.getElementById('page-' + p);
+  if (target) {
+    target.classList.add('active');
+    target.style.display = 'block';
+  }
+
+  // 2. 更新側邊欄按鈕高亮
+  document.querySelectorAll('.nav-item').forEach(nav => {
+    nav.classList.remove('active');
+    // 增加安全性檢查，確保 onclick 屬性存在
+    const clickAttr = nav.getAttribute('onclick');
+    if (clickAttr && clickAttr.includes(`'${p}'`)) {
+      nav.classList.add('active');
+    }
+  });
+
+  // 3. 根據分頁執行對應的渲染邏輯
+  if (p === 'inventory') {
+    renderInventory();
+  }
+  
+  if (p === 'battle') {
+    updateBattleUI();
+  }
+
+  // ✅ 新增：如果是切換到技能分頁，執行技能列表渲染
+  if (p === 'skills') {
+    if (typeof renderSkills === "function") {
+      renderSkills();
+    } else {
+      console.warn("renderSkills 函式尚未定義，請確保技能系統代碼已加入腳本中。");
+    }
+  }
+}
+
+// 屬性點加點處理
+function addAttr(a) { if(game.points > 0) { game[a]++; game.points--; updateUI(); saveData(); } }
+
+// 角色等級提升處理
+document.getElementById("upgradeChar").onclick = () => {
+  let cost = Math.floor(50 * Math.pow(1.3, game.charLv-1));
+  if (game.mana >= cost) { game.mana -= cost; game.charLv++; game.points += 5; updateUI(); saveData(); }
+};
+
+
+/**
+ * ============================================================
+ * 角色檔案管理 (Profile & Avatar Management)
+ * 負責處理更名與大頭貼上傳
+ * ============================================================
+ */
+
+// 處理編輯資料模式切換
+document.getElementById("editBtn").onclick = function() {
+  isEditing = !isEditing;
+  const nameDisplay = document.getElementById("nameDisplay");
+  const nameInput = document.getElementById("nameInput");
+  if (isEditing) {
+    this.innerText = "儲存資料";
+    nameDisplay.style.display = "none";
+    nameInput.style.display = "inline-block";
+    nameInput.value = game.charName;
+    document.getElementById("avatarInput").click();
+  } else {
+    game.charName = nameInput.value || "未命名勇者";
+    this.innerText = "編輯頭像/ID";
+    nameDisplay.style.display = "inline-block";
+    nameInput.style.display = "none";
+    saveData();
+    updateUI();
+  }
+};
+
+// 處理大頭貼圖片讀取 (Base64)
+document.getElementById("avatarInput").onchange = (e) => {
+  const file = e.target.files[0];
+  if (file && file.size < 1024 * 1024) {
+    const reader = new FileReader();
+    reader.onload = ev => { game.avatarImage = ev.target.result; updateUI(); saveData(); };
+    reader.readAsDataURL(file);
+  } else if(file) alert("圖片太大囉 (限 1MB)");
+};
+
+
+/**
+ * ============================================================
+ * 背包與裝備系統 (Inventory & Equipment System)
+ * 負責裝備的穿戴、卸下、販賣與列表渲染
+ * ============================================================
+ */
+
+// 顯示裝備詳細彈窗
+function showEquipDetail(slotId) {
+    const item = game.equipment[slotId];
+    if (!item) return;
+    document.getElementById("itemModal").style.display = "flex";
+    const rarityNames = ["普通", "稀有", "史詩", "傳奇"];
+    document.getElementById("modalRarity").innerText = rarityNames[item.rarity];
+    document.getElementById("modalRarity").style.color = `var(--rarity-${item.rarity})`;
+    document.getElementById("modalName").innerText = item.name;
+    document.getElementById("modalIcon").innerText = item.icon;
+    document.getElementById("modalStats").innerHTML = `⚔️ ATK +${item.atk}<br>🛡️ DEF +${item.def}<br>❤️ HP +${item.hp}`;
+    document.getElementById("unequipBtn").onclick = () => unequipItem(slotId);
+}
+
+function closeModal() { document.getElementById("itemModal").style.display = "none"; }
+
+// 卸下裝備
+function unequipItem(slotId) {
+    game.inventory.push(game.equipment[slotId]);
+    game.equipment[slotId] = null;
+    closeModal();
+    updateUI();
+    saveData();
+}
+
+// 統一的裝備價值計算公式
+function getEquipValue(item) {
+    // 基礎價值 50，每提升一個品質等級增加 50
+    // 公式：(0+1)*50=50, (1+1)*50=100, (2+1)*50=150...
+    return (item.rarity + 1) * 50;
+}
+
+// 販賣背包物品
+function sellItem(id) {
+    const idx = game.inventory.findIndex(i => i.id === id);
+    if (idx === -1) return;
+    
+    const item = game.inventory[idx];
+    // 使用統一公式取得價格
+    const price = getEquipValue(item);
+    
+    if (confirm(`確定要賣掉 [${item.name}] 嗎？ (價值: ✨${price})`)) {
+        game.mana += price;
+        game.inventory.splice(idx, 1);
+        renderInventory();
+        updateUI();
+        saveData();
+    }
+}
+
+// 渲染背包內容
+function renderInventory() {
+  const container = document.getElementById("inventoryContainer");
+  if (!container) return;
+  container.innerHTML = "";
+
+  if (currentInvTab === 'equip') {
+    if (game.inventory.length === 0) {
+      container.innerHTML = `<div class="small" style="text-align:center; padding:20px;">背包空空如也...</div>`;
+      return;
+    }
+    game.inventory.forEach(item => {
+      let div = document.createElement("div");
+      div.className = `item-card`;
+      div.style.borderLeftColor = `var(--rarity-${item.rarity})`;
+      div.innerHTML = `
+        <div style="flex:1">
+          <strong>${item.icon} ${item.name}</strong><br>
+          <span class="small">⚔️${item.atk} 🛡️${item.def} ❤️${item.hp}</span>
+        </div>
+        <div style="display:flex; gap:5px;">
+          <button style="width:50px; padding:5px; font-size:11px; background:#28a745;" onclick="equipItem(${item.id})">穿上</button>
+          <button class="sell-btn" onclick="sellItem(${item.id})">販賣</button>
+        </div>`;
+      container.appendChild(div);
+    });
+  } else {
+    // 材料分頁邏輯
+    let hasMaterial = false;
+    for (let mat in game.materials) {
+      if (game.materials[mat] > 0) {
+        hasMaterial = true;
+        container.innerHTML += `<div class="item-card"><span>📦 ${mat}</span> <span>x${game.materials[mat]}</span></div>`;
+      }
+    }
+    if (!hasMaterial) container.innerHTML = `<div class="small" style="text-align:center; padding:20px;">尚無任何材料...</div>`;
+  }
+}
+
+// 切換背包標籤
+function setInvTab(t) {
+  currentInvTab = t;
+  const btnEquip = document.getElementById("btnTabEquip");
+  const btnMat = document.getElementById("btnTabMat");
+  const sellArea = document.getElementById("quickSellArea");
+
+  if (btnEquip) btnEquip.style.background = (t === 'equip') ? '' : '#444';
+  if (btnMat) btnMat.style.background = (t === 'material') ? '' : '#444';
+  
+  // 增加安全性檢查，防止 sellArea 還沒讀取到就報錯
+  if (sellArea) {
+    sellArea.style.display = (t === 'equip') ? 'block' : 'none';
+  }
+  
+  renderInventory();
+}
+
+// 穿上裝備處理 (會與現有裝備替換)
+function equipItem(id) {
+  const idx = game.inventory.findIndex(i => i.id === id);
+  const item = game.inventory[idx];
+  if (game.equipment[item.type]) game.inventory.push(game.equipment[item.type]);
+  game.equipment[item.type] = item;
+  game.inventory.splice(idx, 1);
+  renderInventory();
+  updateUI();
+  saveData();
+}
+
+//一鍵販售功能:根據選擇的品質等級，將背包內小於等於該等級的裝備全部賣掉
+function bulkSell() {
+    const filterEl = document.getElementById("sellRarityFilter");
+    if (!filterEl) return;
+    const maxRarity = parseInt(filterEl.value);
+    
+    const toSell = game.inventory.filter(item => item.rarity <= maxRarity);
+    if (toSell.length === 0) {
+        alert("沒有符合條件的裝備。");
+        return;
+    }
+
+    if (confirm(`確定販售 ${toSell.length} 件裝備嗎？`)) {
+        let totalIncome = 0;
+        game.inventory = game.inventory.filter(item => {
+            if (item.rarity <= maxRarity) {
+                // 使用統一公式累加價格
+                totalIncome += getEquipValue(item);
+                return false;
+            }
+            return true;
+        });
+
+        game.mana += totalIncome;
+        alert(`批次販售完成，共獲得 ✨ ${totalIncome}`);
+        renderInventory();
+        updateUI();
+        saveData();
+    }
+}
+
+/**
+ * ============================================================
+ * 技能系統 (Skills System)
+ * 包含：技能習得、綁定技能
+ * ============================================================
+ */
+
+// 1. 技能數據庫
+const allSkills = [
+  { 
+    id: "fireball", name: "火球術", desc: "造成 150% 傷害", 
+    chance: 0.25, multiplier: 1.5, cost: 500, 
+    color: "#ff4d4d", glowColor: "rgba(255, 77, 77, 0.8)", icon: "🔥",
+    learnCost: 50000, requireMat: "古老鹿角" 
+  },
+  { 
+    id: "heal", name: "治癒術", desc: "回復 20% 已損生命", 
+    chance: 0.15, type: "heal", ratio: 0.2, cost: 800, 
+    color: "#2ecc71", glowColor: "rgba(46, 204, 113, 0.8)", icon: "🌿",
+    learnCost: 150000, requireMat: "守護者核心" 
+  },
+  { 
+    id: "shield", name: "奧術護盾", desc: "減免 50% 傷害", 
+    chance: 0.2, type: "shield", ratio: 0.5, cost: 600, 
+    color: "#3498db", glowColor: "rgba(52, 152, 219, 0.8)", icon: "🛡️",
+    learnCost: 500000, requireMat: "深淵靈魂" 
+  }
+];
+
+// 初始化玩家技能數據 (放入 getDefaultGameData)
+// game.learnedSkills = ["fireball", "heal", "shield"]; // 假設預設全學會
+// game.equippedSkills = []; // 目前裝備中的技能 ID
+
+// 渲染技能列表
+function renderSkills() {
+  const container = document.getElementById("skillList");
+  if (!container) return;
+  container.innerHTML = "";
+  
+  allSkills.forEach(skill => {
+    const isLearned = game.learnedSkills.includes(skill.id);
+    const isEquipped = game.equippedSkills.includes(skill.id);
+    
+    const div = document.createElement("div");
+    div.className = "item-card";
+    div.style = `border-left: 4px solid ${isLearned ? skill.color : '#555'}; 
+                 display:flex; justify-content:space-between; align-items:center; 
+                 margin-bottom:10px; padding:12px; background:rgba(255,255,255,0.05); 
+                 border-radius:8px;`;
+    
+    if (isLearned) {
+      // 已習得：顯示裝備功能
+      div.innerHTML = `
+        <div style="flex:1;">
+          <div style="font-weight:bold; color:${skill.color}">${skill.name} <span style="font-size:10px; color:#aaa;">(消耗: ${skill.cost}✨)</span></div>
+          <div class="small" style="color:#ccc;">${skill.desc}</div>
+        </div>
+        <button onclick="toggleSkill('${skill.id}')" style="width:80px; padding:8px; font-size:12px; background:${isEquipped ? '#e74c3c' : 'var(--primary)'}">
+          ${isEquipped ? '卸下' : '裝備'}
+        </button>
+      `;
+    } else {
+      // 未習得：顯示學習要求
+      div.innerHTML = `
+        <div style="flex:1;">
+          <div style="font-weight:bold; color:#888;">${skill.name} (尚未領悟)</div>
+          <div class="small" style="color:#777;">需求: ${skill.learnCost.toLocaleString()} ✨</div>
+          <div class="small" style="color:#f1c40f;">材料: ${skill.requireMat} x1</div>
+        </div>
+        <button onclick="learnSkill('${skill.id}')" style="width:80px; padding:8px; font-size:12px; background:#2c3e50; border:1px solid #f1c40f; color:#f1c40f;">
+          領悟
+        </button>
+      `;
+    }
+    container.appendChild(div);
+  });
+  
+  document.getElementById("activeSkillCount").innerText = game.equippedSkills.length;
+}
+
+// 領悟技能邏輯
+function learnSkill(id) {
+  const skill = allSkills.find(s => s.id === id);
+  if (!skill) return;
+
+  // 檢查資源
+  const hasMana = game.mana >= skill.learnCost;
+  const hasMat = (game.materials[skill.requireMat] || 0) >= 1;
+
+  if (!hasMana) { alert("魔力不足！"); return; }
+  if (!hasMat) { alert(`缺乏材料: ${skill.requireMat}`); return; }
+
+  if (confirm(`是否消耗 ${skill.learnCost} 魔力與 ${skill.requireMat} 領悟【${skill.name}】？`)) {
+    game.mana -= skill.learnCost;
+    game.materials[skill.requireMat] = Math.max(0, (game.materials[skill.requireMat] || 0) - 1);
+    game.learnedSkills.push(id);
+    
+    alert(`🎉 成功領悟了 ${skill.name}！`);
+    renderSkills();
+    saveData();
+    updateUI();
+  }
+}
+
+function toggleSkill(id) {
+  const index = game.equippedSkills.indexOf(id);
+  if (index > -1) {
+    game.equippedSkills.splice(index, 1);
+  } else {
+    if (game.equippedSkills.length >= 3) { // 限制最多裝備 3 個
+      alert("最多只能裝備 3 個技能！");
+      return;
+    }
+    game.equippedSkills.push(id);
+  }
+  renderSkills();
+  saveData();
+}
+
+/**
+ * 進階飄浮特效 (解析度自適應)
+ * @param {Object} skill - 傳入技能物件
+ */
+function spawnSkillEffect(skill) {
+  const container = document.getElementById('battleDisplayArea');
+  if (!container || container.offsetParent === null) return;
+
+  const effect = document.createElement('div');
+  effect.className = 'skill-popup';
+  
+  // 強制設定容器層級與基礎樣式，避免被 BOSS 戰容器樣式壓縮
+  effect.style.position = "absolute";
+  effect.style.zIndex = "9999";
+  effect.style.pointerEvents = "none";
+  effect.style.display = "flex";
+  effect.style.alignItems = "center";
+  effect.style.justifyContent = "center";
+
+  // --- 判斷是圖片還是文字 ---
+  if (skill.icon.includes('.') || skill.icon.includes('/')) {
+    const img = document.createElement('img');
+    img.src = skill.icon;
+    
+    // 【核心調整】使用 vmin 確保在不同解析度下視覺大小一致
+    // 12vmin 代表螢幕短邊的 12%，這通常是技能圖示最舒服的大小
+    img.style.width = "12vmin";  
+    img.style.height = "12vmin";
+    img.style.minWidth = "60px"; // 設定最小像素保證低階手機不會看不見
+    img.style.minHeight = "60px";
+    
+    img.style.objectFit = "contain";
+    effect.appendChild(img);
+  } else {
+    // 否則當作 Emoji 文字處理
+    effect.innerText = skill.icon || "✨";
+    effect.style.color = skill.color;
+    effect.style.fontSize = "10vmin"; // Emoji 也要動態大小
+  }
+
+  // 套用發光效果 (發光半徑也隨螢幕大小縮放)
+  effect.style.filter = `drop-shadow(0 0 2vmin ${skill.glowColor || skill.color})`;
+
+  // 位置與隨機偏移 (偏移也使用 % 避免解析度破壞)
+  const jitterX = (Math.random() - 0.5) * 15; 
+  effect.style.left = `calc(50% + ${jitterX}%)`;
+  effect.style.top = "40%"; 
+
+  container.appendChild(effect);
+  
+  // 1.2 秒後移除
+  setTimeout(() => {
+    if (effect.parentNode) effect.remove();
+  }, 1200);
+}
+  
+/**
+ * ============================================================
+ * 完整戰鬥系統 (Combat System)
+ * 包含：隨機裝備生成、血條歸零緩衝、自動續戰
+ * ============================================================
+ */
+
+// 1. 怪物數據庫
+const regions = {
+  "新手森林": {
+    minLv: 1,
+    monsters: [
+      { name: "史萊姆", lv: 3, hp: 200, def: 1, atkRange: [3, 6], dropMat: "黏液" },
+      { name: "森林灰狼", lv: 5, hp: 450, def: 3, atkRange: [6, 12], dropMat: "狼皮" },
+      { name: "憤怒小鳥", lv: 7, hp: 600, def: 5, atkRange: [10, 15], dropMat: "羽毛" },
+      { name: "森林守護者", lv: 10, hp: 1000, def: 10, atkRange: [15, 25], dropMat: "古老原木" }
+    ]
+  },
+  "墮落遺蹟": {
+    minLv: 10,
+    monsters: [
+      { name: "墮落學徒", lv: 12, hp: 1500, def: 15, atkRange: [25, 40], dropMat: "殘破書頁" },
+      { name: "石像鬼", lv: 15, hp: 2500, def: 30, atkRange: [35, 55], dropMat: "岩石核心" },
+      { name: "遺蹟守衛", lv: 18, hp: 3500, def: 45, atkRange: [50, 75], dropMat: "鏽蝕齒輪" },
+      { name: "幽靈法師", lv: 22, hp: 4200, def: 35, atkRange: [80, 110], dropMat: "靈魂精華" }
+    ]
+  },
+  "幽影深淵": {
+    minLv: 25,
+    monsters: [
+      { name: "幽影蛛", lv: 25, hp: 6000, def: 50, atkRange: [120, 160], dropMat: "劇毒蛛絲" },
+      { name: "深淵潛行者", lv: 28, hp: 8000, def: 65, atkRange: [150, 210], dropMat: "黑暗碎片" },
+      { name: "小惡魔", lv: 30, hp: 12000, def: 100, atkRange: [180, 250], dropMat: "惡魔之角" },
+      { name: "深淵領主", lv: 35, hp: 18000, def: 130, atkRange: [250, 350], dropMat: "領主披風" }
+    ]
+  },
+  "灼熱熔岩區": {
+    minLv: 35,
+    monsters: [
+      { name: "熔岩火精", lv: 38, hp: 25000, def: 160, atkRange: [400, 550], dropMat: "火元素粉末" },
+      { name: "地獄犬", lv: 42, hp: 35000, def: 200, atkRange: [500, 700], dropMat: "焦黑皮革" },
+      { name: "烈焰巨人", lv: 45, hp: 55000, def: 280, atkRange: [700, 950], dropMat: "熔岩結晶" },
+      { name: "熔岩飛龍", lv: 50, hp: 85000, def: 350, atkRange: [1000, 1400], dropMat: "飛龍逆鱗" }
+    ]
+  },
+  "極北凍原": {
+    minLv: 50,
+    monsters: [
+      { name: "冰原雪兔", lv: 52, hp: 100000, def: 400, atkRange: [1500, 2000], dropMat: "純淨白毛" },
+      { name: "凍土魔像", lv: 56, hp: 150000, def: 600, atkRange: [2200, 3000], dropMat: "萬年不化冰" },
+      { name: "寒霜巨魔", lv: 60, hp: 220000, def: 550, atkRange: [3000, 4200], dropMat: "巨魔之血" },
+      { name: "冰霜女妖", lv: 65, hp: 300000, def: 500, atkRange: [4500, 6000], dropMat: "冰晶淚滴" }
+    ]
+  },
+  "天空島嶼": {
+    minLv: 65,
+    monsters: [
+      { name: "雲端獵鷹", lv: 68, hp: 450000, def: 800, atkRange: [7000, 9000], dropMat: "疾風之羽" },
+      { name: "雷鳴怪鳥", lv: 72, hp: 600000, def: 950, atkRange: [9000, 12000], dropMat: "帶電之爪" },
+      { name: "天空神像", lv: 75, hp: 850000, def: 1500, atkRange: [11000, 15000], dropMat: "神聖之石" },
+      { name: "風暴龍王", lv: 80, hp: 1500000, def: 2000, atkRange: [18000, 25000], dropMat: "龍王之冠" }
+    ]
+  }
+};
+
+let currentRegion = "新手森林"; // 預設區域
+
+// BOSS 數據庫
+const bossData = [
+  { 
+    id: "boss_1", name: "森林之王 · 巨角鹿", lv: 10, hp: 2500, def: 30, 
+    atkRange: [25, 45], img: "https://images.plurk.com/dKH0NvpuvTolvO8P2rypx.jpg",
+    dropMat: "古老鹿角", rewardMana: 3000 
+  },
+  { 
+    id: "boss_mandrake_1", name: "腹黑曼德拉草", lv: 15, hp: 4500, def: 45, 
+    atkRange: [35, 60], img: "https://images.plurk.com/4SqKRuaqPjZlQHLEhZkmBK.png", 
+    dropMat: "曼德拉葉片", rewardMana: 5000,
+    skills: [
+      { name: "曼德拉搗蛋", chance: 0.2, power: 1.5, msg: "使用了【曼德拉搗蛋】，造成了大量傷害！" },
+      { name: "曼德拉遁地", chance: 0.1, heal: 0.1, msg: "使用了【曼德拉遁地】，回復了大量血量！" }
+    ]
+  },
+  { 
+    id: "boss_2", name: "遺蹟守護者", lv: 20, hp: 8000, def: 65, 
+    atkRange: [50, 80], img: "https://images.plurk.com/dKH0NvpuvTolvO8P2rypx.jpg",
+    dropMat: "守護者核心", rewardMana: 8000 
+  },
+  { 
+    id: "boss_3", name: "深淵恐懼 · 納迦", lv: 35, hp: 28000, def: 130, 
+    atkRange: [130, 210], img: "https://images.plurk.com/dKH0NvpuvTolvO8P2rypx.jpg",
+    dropMat: "深淵靈魂", rewardMana: 25000 
+  },
+  { 
+    id: "boss_4", name: "烈焰巨龍 · 阿格尼", lv: 45, hp: 65000, def: 220, 
+    atkRange: [250, 400], img: "https://images.plurk.com/dKH0NvpuvTolvO8P2rypx.jpg",
+    dropMat: "不滅火種", rewardMana: 60000 
+  },
+  { 
+    id: "boss_5", name: "極北霜狼 · 芬里爾", lv: 60, hp: 150000, def: 450, 
+    atkRange: [550, 800], img: "https://images.plurk.com/dKH0NvpuvTolvO8P2rypx.jpg",
+    dropMat: "冰封王冠", rewardMana: 150000 
+  },
+  { 
+    id: "boss_6", name: "天空主宰 · 獅鷲獸", lv: 75, hp: 450000, def: 900, 
+    atkRange: [1200, 1800], img: "https://images.plurk.com/dKH0NvpuvTolvO8P2rypx.jpg",
+    dropMat: "風暴羽翼", rewardMana: 500000 
+  },
+  { 
+    id: "boss_7", name: "墮落神官 · 墨菲斯托", lv: 80, hp: 1200000, def: 2500, 
+    atkRange: [3500, 5000], img: "https://images.plurk.com/dKH0NvpuvTolvO8P2rypx.jpg",
+    dropMat: "墮落碎片", rewardMana: 2000000 
+  }, // <--- 這裡剛才漏掉了逗號
+  { 
+    id: "boss_final_1", name: "埋まるです", lv: 100, hp: 5000000, def: 8000, 
+    atkRange: [12000, 18000], img: "https://images.plurk.com/p1nVQhClPae02nucYwaa4.png", 
+    dropMat: "神聖遺物", rewardMana: 10000000,
+    skills: [
+      { name: "懶散光束", chance: 0.2, power: 1.5, msg: "使用了【懶散光束】，造成大量傷害！" },
+      { name: "可樂噴射", chance: 0.15, power: 2.5, msg: "瘋狂搖晃可樂瓶後噴射！爆發性傷害！" },
+      { name: "深夜零食時間", chance: 0.1, heal: 0.2, msg: "開始吃起零食，回復了 20% 的生命值！" }
+    ]
+  }
+];
+
+let battleMode = 'adventure'; // 'adventure' or 'boss'
+
+// 2. 隨機裝備生成器
+function generateRandomEquip(lv) {
+  const types = ["head", "top", "bottom", "shoes", "mainHand", "offHand"];
+  const type = types[Math.floor(Math.random() * types.length)];
+  const r = Math.random() < 0.05 ? 3 : (Math.random() < 0.15 ? 2 : (Math.random() < 0.4 ? 1 : 0));
+  const rarityNames = ["普通", "稀有", "史詩", "傳奇"];
+  const multiplier = (1 + r * 0.5) * (lv / 5);
+  
+  return {
+    id: Date.now() + Math.random(),
+    type: type,
+    rarity: r,
+    name: `${rarityNames[r]}的 Lv.${lv} 裝備`,
+    atk: Math.floor(10 * multiplier),
+    def: Math.floor(5 * multiplier),
+    hp: Math.floor(20 * multiplier),
+    icon: slotIcons[type]
+  };
+}
+
+// 2. 切換模式
+function toggleBattleMode(mode) {
+  if (battleInterval) {
+    alert("戰鬥中無法切換模式！");
+    return;
+  }
+  battleMode = mode;
+  document.getElementById("adventureControls").style.display = (mode === 'adventure') ? 'block' : 'none';
+  document.getElementById("bossControls").style.display = (mode === 'boss') ? 'block' : 'none';
+  document.getElementById("btnModeAdv").style.background = (mode === 'adventure') ? '' : '#444';
+  document.getElementById("btnModeBoss").style.background = (mode === 'boss') ? '' : '#444';
+  
+  if (mode === 'boss') renderBossList();
+}
+
+// 3. 渲染 BOSS 列表
+function renderBossList() {
+  const list = document.getElementById("bossList");
+  if (!list) return;
+  list.innerHTML = "";
+
+  bossData.forEach(boss => {
+    const card = document.createElement("div");
+    // 設定卡片樣式
+    card.style = `
+      flex: 0 0 140px;
+      height: 160px;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border: 1px solid #f1c40f;
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      text-align: center;
+      scroll-snap-align: start;
+      position: relative;
+      transition: transform 0.2s;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    `;
+    
+    // 滑鼠移入效果
+    card.onmouseover = () => card.style.transform = "translateY(-5px)";
+    card.onmouseout = () => card.style.transform = "translateY(0)";
+    card.onclick = () => startBossBattle(boss);
+
+    card.innerHTML = `
+      <div style="position:absolute; top:-8px; left:10px; background:#f1c40f; color:#000; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:bold;">
+        Lv.${boss.lv}
+      </div>
+      <div style="font-size: 24px; margin-top:10px;">💀</div>
+      <div style="font-weight: bold; font-size: 13px; color: #fff; margin: 5px 0;">${boss.name}</div>
+      <div style="font-size: 11px; color: #f1c40f;">✨ ${boss.rewardMana.toLocaleString()}</div>
+      <button style="
+        width: 100%; 
+        padding: 5px; 
+        font-size: 11px; 
+        background: #e74c3c; 
+        border: none; 
+        border-radius: 4px; 
+        color: white; 
+        font-weight: bold;
+        margin-top: 5px;
+      ">挑戰</button>
+    `;
+    list.appendChild(card);
+  });
+}
+
+// 3.1 切換區域
+function changeRegion(val) {
+  if (battleInterval) {
+    alert("戰鬥中無法切換區域！");
+    document.getElementById("regionSelect").value = currentRegion; // 跳回原位
+    return;
+  }
+  currentRegion = val;
+  document.getElementById("battleStatus").innerText = `已抵達：${currentRegion}`;
+}
+
+// 3.2 開始戰鬥
+function startBattle() {
+  if (battleInterval || game.currentHp <= 0) return;
+  const areaData = regions[currentRegion];
+  const monsterList = areaData.monsters;
+  const rand = Math.floor(Math.random() * monsterList.length);
+  currentMonster = { ...monsterList[rand], maxHp: monsterList[rand].hp, curHp: monsterList[rand].hp };
+
+  // 鏡像資訊
+  document.getElementById("battlePlayerImg").src = document.getElementById("avatarImg").src;
+  document.getElementById("playerSideName").innerText = `【${document.getElementById("nameDisplay").innerText}】`;
+  document.getElementById("bossImg").src = ""; // 一般怪不顯圖或顯示預設圖
+
+  // UI 切換
+  document.getElementById("playerBattleArea").style.display = "block";
+  document.getElementById("monsterArea").style.display = "block";
+  document.getElementById("vsTitle").style.display = "block";
+  document.getElementById("startBattleBtn").style.display = "none";
+  document.getElementById("stopBattleBtn").style.display = "block";
+  document.getElementById("mName").innerText = `${currentMonster.name} (Lv.${currentMonster.lv})`;
+
+  updateBattleUI();
+  battleInterval = setInterval(battleTick, 1000);
+}
+
+// 4. 開始 BOSS 戰鬥
+function startBossBattle(boss) {
+  if (game.currentHp <= 0) { alert("體力不足！"); return; }
+  
+  // 鏡像資訊
+  document.getElementById("battlePlayerImg").src = document.getElementById("avatarImg").src;
+  document.getElementById("playerSideName").innerText = `【${document.getElementById("nameDisplay").innerText}】`;
+  
+  currentMonster = { ...boss, maxHp: boss.hp, curHp: boss.hp, isBoss: true };
+  document.getElementById("bossImg").src = boss.img;
+  document.getElementById("mName").innerText = `【BOSS】${currentMonster.name}`;
+
+  // UI 切換
+  document.getElementById("bossControls").style.display = "none";
+  document.getElementById("playerBattleArea").style.display = "block";
+  document.getElementById("monsterArea").style.display = "block";
+  document.getElementById("vsTitle").style.display = "block";
+  document.getElementById("startBattleBtn").style.display = "none";
+  document.getElementById("stopBattleBtn").style.display = "block";
+  
+  updateBattleUI();
+  battleInterval = setInterval(battleTick, 1000);
+}
+
+// 4. 戰鬥循環邏輯 (每一秒觸發一次)
+function battleTick() {
+  if (!currentMonster) return;
+
+  // 1. 取得計算後的數值 (包含裝備與等級加成)
+  const stats = getCombatStats();
+  
+  // 2. 玩家行動準備
+  let baseDmg = 0;
+  let actionLog = ""; 
+  let skillTriggered = false;
+
+  // --- A. 技能判定 ---
+  if (game.equippedSkills && game.equippedSkills.length > 0) {
+    const randomId = game.equippedSkills[Math.floor(Math.random() * game.equippedSkills.length)];
+    const skill = allSkills.find(s => s.id === randomId);
+
+    // 判定機率與魔力
+    if (skill && Math.random() < skill.chance) {
+      if (game.mana >= skill.cost) {
+        game.mana -= skill.cost;
+        skillTriggered = true;
+
+        // 【新增：觸發視覺特效】
+        // 這裡調用之前建立的特效函數，傳入當前發動的技能物件
+        if (typeof spawnSkillEffect === "function") {
+          spawnSkillEffect(skill);
+        }
+
+        if (skill.multiplier) {
+          // 技能倍率作用於基礎攻擊力
+          let effectiveAtk = stats.atk * skill.multiplier;
+          baseDmg = Math.max(1, Math.floor((effectiveAtk * effectiveAtk) / (effectiveAtk + currentMonster.def)));
+          actionLog = `<span style="color:${skill.color}">【${skill.name}】發動！</span> `;
+        }
+        
+        if (skill.type === "heal") {
+          let healAmt = Math.floor((stats.maxHp - game.currentHp) * (skill.ratio || 0));
+          game.currentHp = Math.min(stats.maxHp, game.currentHp + healAmt);
+          actionLog = `<span style="color:${skill.color}">【${skill.name}】治癒 ${healAmt} HP！</span> `;
+          // 治癒術若無攻擊力，基礎傷害則走普攻
+          let pAtk = stats.atk;
+          baseDmg = Math.max(1, Math.floor((pAtk * pAtk) / (pAtk + currentMonster.def)));
+        }
+      } else {
+        actionLog = `<span style="color:rgba(255,255,255,0.3); font-size:11px;">(魔力不足施展 ${skill.name})</span> `;
+      }
+    }
+  }
+
+
+  // --- B. 普攻計算 (若未觸發攻擊型技能) ---
+  if (!skillTriggered) {
+    if (actionLog === "") actionLog = `<span style="color:#ccc;">普通攻擊：</span> `;
+    let pAtk = stats.atk;
+    baseDmg = Math.max(1, Math.floor((pAtk * pAtk) / (pAtk + currentMonster.def)));
+  }
+
+  // 玩家造成傷害
+  currentMonster.curHp -= baseDmg;
+  addBattleLog(`<div>${actionLog}造成 <span style="color: #2ecc71;">${baseDmg}</span> 傷害</div>`);
+
+  // --- C. 怪物反擊計算 (僅在怪物存活時) ---
+  if (currentMonster.curHp > 0) {
+    let mAtkData = currentMonster.atkRange || [currentMonster.lv * 5, currentMonster.lv * 10];
+    let mBaseAtk = Math.floor(Math.random() * (mAtkData[1] - mAtkData[0] + 1)) + mAtkData[0];
+    let mDamage = 0;
+    let battleMsg = "";
+
+    // --- 技能發動判斷 ---
+    let usedSkill = null;
+    // 檢查怪物是否有技能，並設定 25% 的總技能發動率
+    if (currentMonster.skills && currentMonster.skills.length > 0 && Math.random() < 0.25) {
+      usedSkill = currentMonster.skills[Math.floor(Math.random() * currentMonster.skills.length)];
+    }
+
+    if (usedSkill) {
+      if (usedSkill.heal) {
+        // A. 治療型技能
+        let healAmt = Math.floor(currentMonster.hp * usedSkill.heal);
+        currentMonster.curHp = Math.min(currentMonster.hp, currentMonster.curHp + healAmt);
+        battleMsg = `<div style="color: #2ecc71;">${currentMonster.name} ${usedSkill.msg} (+${healAmt} HP)</div>`;
+      } else {
+        // B. 傷害型技能 (套用技能倍率 power)
+        let skillAtk = mBaseAtk * (usedSkill.power || 1);
+        mDamage = Math.max(1, Math.floor((skillAtk * skillAtk) / (skillAtk + stats.def)));
+        game.currentHp -= mDamage;
+        battleMsg = `<div style="color: #f39c12;">★ ${currentMonster.name} ${usedSkill.msg} 造成 ${mDamage} 傷害</div>`;
+      }
+    } else {
+      // C. 普通攻擊 (您原本的遞減曲線公式)
+      mDamage = Math.max(1, Math.floor((mBaseAtk * mBaseAtk) / (mBaseAtk + stats.def)));
+      game.currentHp -= mDamage;
+      battleMsg = `<div style="color: #e74c3c;">${currentMonster.name} 反擊造成 ${mDamage} 傷害</div>`;
+    }
+
+    addBattleLog(battleMsg);
+  }
+
+  // --- D. 視覺更新與勝負判定 ---
+  updateBattleUI();
+
+  if (currentMonster.curHp <= 0) {
+    // 停止計時器，防止在 setTimeout 期間多打一下
+    clearInterval(battleInterval);
+    battleInterval = null;
+    currentMonster.curHp = 0;
+    updateBattleUI();
+    // 延遲結算，提升視覺體驗
+    setTimeout(winBattle, 300);
+  } else if (game.currentHp <= 0) {
+    game.currentHp = 0;
+    clearInterval(battleInterval);
+    battleInterval = null;
+    updateBattleUI();
+    stopBattle("你被打敗了，撤退回家...");
+  }
+}
+
+// 輔助函式：新增戰鬥訊息到日誌
+function addBattleLog(msg) {
+  const log = document.getElementById("battleLog");
+  if (log) {
+    // 使用 innerHTML 並結合 flex-direction: column-reverse 讓新訊息在最上方
+    const div = document.createElement("div");
+    div.innerHTML = msg;
+    log.insertBefore(div, log.firstChild);
+  }
+}
+
+// 5. 勝利結算
+function winBattle() {
+  if (!currentMonster) return;
+
+  // 1. 紀錄當前是否為 BOSS 戰
+  const isBossBattle = currentMonster.isBoss === true;
+  const monsterName = currentMonster.name;
+
+  // 2. 結算基礎獎勵
+  let dropItemName = currentMonster.dropMat || "未知材料";
+  game.materials[dropItemName] = (game.materials[dropItemName] || 0) + 1;
+  
+  // 如果是 BOSS，給予額外的魔力獎勵 (使用數據庫設定的或預設 5 倍)
+  let rewardMana = isBossBattle ? (currentMonster.rewardMana || currentMonster.lv * 500) : (currentMonster.lv * 100);
+  game.mana += rewardMana;
+
+  const log = document.getElementById("battleLog");
+  let equipMsg = "";
+
+  // 3. 裝備掉落邏輯 (BOSS 100% 掉落，一般怪 30%)
+  let dropChance = isBossBattle ? 1.0 : 0.3;
+  if (Math.random() < dropChance) {
+    const newEquip = generateRandomEquip(currentMonster.lv);
+    // BOSS 掉落保底至少是「稀有(1)」以上
+    if (isBossBattle && newEquip.rarity < 1) newEquip.rarity = 1;
+    
+    game.inventory.push(newEquip);
+    equipMsg = ` 並獲得了 <span style="color: var(--rarity-${newEquip.rarity})">[${newEquip.name}]</span>`;
+  }
+
+  // 4. 更新日誌顯示
+  if (log) {
+    if (isBossBattle) {
+      log.innerHTML = `<div style="color: #f1c40f; font-weight: bold; border: 1px solid #f1c40f; padding: 5px; border-radius: 5px; margin: 5px 0;">
+        🏆 傳奇討伐成功！擊敗了 ${monsterName}<br>獲得 ${rewardMana} ✨ 與 ${dropItemName}${equipMsg}
+      </div>` + log.innerHTML;
+    } else {
+      log.innerHTML = `<div style="color: #3498db;">勝利！獲得 ${rewardMana} ✨ 與 ${dropItemName}${equipMsg}</div>` + log.innerHTML;
+    }
+  }
+
+  document.getElementById("battleStatus").innerText = isBossBattle ? `首領挑戰成功！` : `勝利！獲得獎勵...`;
+  
+  // 5. 核心修改：判斷續戰邏輯
+  if (isBossBattle) {
+    // 如果是 BOSS，直接呼叫停止戰鬥，不進入下方的 setTimeout
+    stopBattle(`成功擊敗了首領 ${monsterName}！`);
+    saveData(); // 擊敗 BOSS 務必立即存檔
+  } else {
+    // 如果是一般怪物，清空實體並準備下一場
+    currentMonster = null;
+    saveData();
+    
+    setTimeout(() => {
+      // 確保在延遲期間玩家沒有手動停止戰鬥
+      if (game.currentHp > 0) {
+        startBattle(); 
+      } else {
+        stopBattle("體力不足，自動戰鬥停止");
+      }
+    }, 1200); 
+  }
+}
+
+// 6. 終止戰鬥與復原介面
+function stopBattle(reason = "戰鬥停止") {
+  if (battleInterval) { clearInterval(battleInterval); battleInterval = null; }
+  currentMonster = null;
+
+  document.getElementById("playerBattleArea").style.display = "none";
+  document.getElementById("monsterArea").style.display = "none";
+  document.getElementById("vsTitle").style.display = "none";
+  
+  if (battleMode === 'boss') {
+    document.getElementById("bossControls").style.display = "block";
+  }
+
+  document.getElementById("startBattleBtn").style.display = "block";
+  document.getElementById("stopBattleBtn").style.display = "none";
+  document.getElementById("battleStatus").innerText = reason;
+  updateUI();
+}
+
+// 7. 更新戰鬥相關 UI
+function updateBattleUI() {
+  const stats = getCombatStats();
+  const curHp = Math.max(0, Math.floor(game.currentHp));
+  const maxHp = stats.maxHp;
+
+  // 更新戰鬥分頁血條
+  const pText = document.getElementById("pBattleHpText");
+  const pBar = document.getElementById("pBattleHpBar");
+  if (pText) pText.innerText = `${curHp} / ${maxHp}`;
+  if (pBar) pBar.style.width = (curHp / maxHp * 100) + "%";
+
+  // 更新怪物血條
+  if (currentMonster) {
+    const mHp = Math.max(0, Math.floor(currentMonster.curHp));
+    const mText = document.getElementById("mHpText");
+    const mBar = document.getElementById("mHpBar");
+    if (mText) mText.innerText = `${mHp} / ${currentMonster.maxHp}`;
+    if (mBar) mBar.style.width = (mHp / currentMonster.maxHp * 100) + "%";
+  }
+
+  // 同步更新主介面左上角血條 (不呼叫耗能的 updateUI)
+  const mainHpText = document.getElementById("hpText");
+  const mainHpBar = document.getElementById("hpBar");
+  if (mainHpText) mainHpText.innerText = `${curHp} / ${maxHp}`;
+  if (mainHpBar) mainHpBar.style.width = (curHp / maxHp * 100) + "%";
+  
+  // 更新魔力顯示
+  const manaEl = document.getElementById("mana");
+  if (manaEl) manaEl.innerText = Math.floor(game.mana).toLocaleString();
+}
+
+/**
+ * ============================================================
+ * 設定與存檔系統
+ * ============================================================
+ */
+
+// 1. 執行下載存檔檔案
+function exportSaveFile() {
+  const date = new Date();
+  const dateString = date.toISOString().split('T')[0];
+  const filename = `Legend_Save_${dateString}.sav`;
+  
+  // 確保下載的是最新的 game 數據
+  const saveData = JSON.stringify(game, null, 2);
+  const blob = new Blob([saveData], { type: 'application/json' });
+  
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  alert("存檔檔案已下載至您的設備。");
+}
+
+// 處理上傳存檔檔案 (修正 Key 值衝突)
+function importSaveFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const decodedData = JSON.parse(e.target.result);
+      
+      // 驗證存檔內容 (確保它是你的遊戲資料)
+      if (decodedData && (typeof decodedData.mana !== 'undefined' || typeof decodedData.charLv !== 'undefined')) {
+        if (confirm("檔案解析成功！確定要覆蓋目前進度並重啟遊戲嗎？")) {
+          // 核心修正：加入 flag 防止遺言存檔
+          canSave = false; 
+          
+          // 核心修正：將資料寫入與 initGame 相同的 Key
+          localStorage.setItem(SAVE_KEY, JSON.stringify(decodedData)); 
+          
+          alert("進度匯入成功，即將重啟遊戲！");
+          location.reload(); // 重整後 initGame() 會讀取新的 SAVE_KEY
+        }
+      } else {
+        alert("匯入失敗：這似乎不是有效的存檔檔案。");
+      }
+    } catch (err) {
+      alert("檔案讀取出錯，請確保它是正確的 .sav 或 .json 檔案。");
+      console.error(err);
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// 刪除紀錄邏輯 (統一使用 SAVE_KEY)
+function confirmReset() {
+  if (confirm("🚨 警告：確定要刪除所有進度嗎？")) {
+    if (confirm("這會清空所有數據並重新開始，真的確定？")) {
+      // 核心修正：防止遺言存檔
+      canSave = false; 
+      
+      localStorage.removeItem(SAVE_KEY); // 只刪除遊戲存檔，不影響其他可能的緩存
+      alert("數據已清空！");
+      location.reload();
+    }
+  }
+}
+
+// 5. 更新最後存檔時間顯示
+function updateSaveTime() {
+  const now = new Date();
+  const timeStr = now.getHours().toString().padStart(2, '0') + ":" + 
+                  now.getMinutes().toString().padStart(2, '0') + ":" + 
+                  now.getSeconds().toString().padStart(2, '0');
+  const el = document.getElementById("lastSaveTime");
+  if (el) el.innerText = timeStr;
+}
+
+/**
+ * ============================================================
+ * 全局定時器 (Global Game Loop) 
+ * ============================================================
+ */
+setInterval(() => {
+  // 1. 魔力產出 (MPS / 10)
+  game.mana += manaPerSecond() / 10;
+  
+  // 2. 脫戰狀態下的生命值回復
+  if (game.currentHp < getMaxHp() && !battleInterval) {
+    // 基礎回血 + 冥想加成
+    let regen = (getMaxHp() * 0.005) + (game.med * 0.5); 
+    game.currentHp = Math.min(getMaxHp(), game.currentHp + regen / 10);
+    
+    updateBattleUI(); 
+  }
+
+  // 3. 基礎數值顯示更新 (魔力)
+  const manaEl = document.getElementById("mana");
+  if (manaEl) manaEl.innerText = Math.floor(game.mana).toLocaleString();
+
+}, 100);
+
+// 初次啟動 UI
+updateUI();
+</script>
+
+</div>
+</div>
+</body>
+</html>
