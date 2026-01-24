@@ -84,34 +84,64 @@ body {
 }
 
 /* --- 裝備九宮格佈局 --- */
+/* 1. 容器：固定寬度與置中 */
 .equip-grid-new {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px 10px; /* 上下間距留給 label，左右適中 */
-  justify-items: center;
-  margin: 10px 0 20px 0;
+  grid-template-columns: repeat(3, 70px); 
+  gap: 22px 8px; 
+  justify-content: center; 
+  margin: 15px auto; 
 }
 
+/* 2. 格子主體 */
 .equip-slot {
-  width: 60px; height: 60px; 
-  background: rgba(0,0,0,0.4); 
-  border: 1px dashed rgba(155,92,255,0.5);
-  border-radius: 12px; 
-  display: flex; justify-content: center; align-items: center; 
-  font-size: 24px; position: relative; cursor: pointer;
+  width: 70px; 
+  height: 70px; 
+  background: rgba(0, 0, 0, 0.4); 
+  border: 1px dashed rgba(155, 92, 255, 0.5);
+  border-radius: 14px; 
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+  font-size: 32px; 
+  position: relative; /* 必須為相對定位，讓 img 和 ::after 參考 */
+  cursor: pointer;
   transition: all 0.2s;
+  z-index: 1;
 }
-.equip-slot.occupied { 
-  border: 2px solid var(--primary); 
-  background: rgba(155,92,255,0.15); 
-  box-shadow: 0 0 10px rgba(155,92,255,0.2);
-}
-.equip-slot:active { transform: scale(0.9); }
 
+/* 3. 圖片定位：新增 position: absolute 是關鍵 */
+.equip-slot img {
+  position: absolute; /* 讓圖片浮動在格子正中央，不影響文字佈局 */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* 精確居中 */
+  width: 80%; 
+  height: 80%;
+  object-fit: contain;
+  pointer-events: none; 
+  z-index: 2;
+}
+
+/* 4. 文字標籤 */
 .equip-slot::after { 
   content: attr(data-label); 
-  position: absolute; bottom: -18px; 
-  font-size: 10px; color: #aaa; white-space: nowrap; 
+  position: absolute; 
+  bottom: -16px; 
+  font-size: 11px; 
+  color: #a29bfe; 
+  white-space: nowrap; 
+  letter-spacing: 0.5px;
+  pointer-events: none;
+}
+
+/* 5. 占用狀態：隱藏 Emoji 的關鍵 */
+.equip-slot.occupied { 
+  border: 2px solid var(--primary); 
+  background: rgba(155, 92, 255, 0.15); 
+  box-shadow: 0 0 15px rgba(155, 92, 255, 0.3);
+  /* 當 class 包含 occupied 時，原本格子內的文字(Emoji)會變透明 */
+  color: transparent !important; 
 }
 
 /* --- 屬性與數值 --- */
@@ -145,9 +175,102 @@ button:active { transform: scale(0.96); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
   background: rgba(0,0,0,0.9); z-index: 200; justify-content: center; align-items: center;
   backdrop-filter: blur(5px);
 }
+/* 彈窗遮罩：加入動態模糊與深色漸層 */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: radial-gradient(circle, rgba(20, 15, 30, 0.85) 0%, rgba(0, 0, 0, 0.95) 100%);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(8px);
+    transition: all 0.3s ease;
+}
+
+/* 卡片本體：美化邊框與陰影 */
 .modal-card {
-  background: #1a1525; border: 1px solid var(--primary); border-radius: 24px;
-  padding: 30px; width: 300px; text-align: center;
+    background: #1a1525;
+    background-image: linear-gradient(145deg, #1e182e, #16111f);
+    border: 2px solid rgba(138, 43, 226, 0.4); /* 柔和的紫色邊框 */
+    border-radius: 24px;
+    padding: 25px;
+    width: 280px; /* 寬度稍微縮小以利並排 */
+    text-align: center;
+    color: #e0e0e0;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 
+                0 0 15px rgba(138, 43, 226, 0.2); /* 外發光 */
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+/* 裝備對比標題（當前裝備 / 目標裝備） */
+.compare-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--primary);
+    margin-bottom: 10px;
+    opacity: 0.8;
+}
+
+/* 稀有度文字：發光效果 */
+.modal-rarity {
+    font-size: 12px;
+    font-weight: 900;
+    margin-bottom: 5px;
+    text-shadow: 0 0 8px currentColor;
+}
+
+/* 屬性區塊：區分左右對比的條目 */
+.modal-stats {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    padding: 15px;
+    margin: 15px 0;
+    text-align: left;
+    font-family: 'Courier New', Courier, monospace; /* 數值對齊更有遊戲感 */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* 按鈕美化 */
+#unequipBtn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+}
+
+#unequipBtn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.2);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* 對比模式下的左側卡片特別處理（稍微縮小且低調） */
+#compareCard {
+    border-style: dashed;
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: scale(0.95);
+    background: #15111d;
+}
+
+/* 手機版自動改為垂直排列 */
+@media (max-width: 600px) {
+    .modal-overlay > div {
+        flex-direction: column !important;
+        gap: 20px !important;
+    }
+    .modal-card {
+        width: 85%;
+        padding: 20px;
+    }
 }
 
 /* --- 名稱輸入框 --- */

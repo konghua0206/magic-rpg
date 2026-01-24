@@ -179,19 +179,29 @@
 <div id="page-inventory" class="page">
   <div class="card">
     <div style="display:flex; gap:10px; margin-bottom:15px;">
-      <button onclick="setInvTab('equip')" id="btnTabEquip" style="flex:1;">裝備</button>
-      <button onclick="setInvTab('material')" id="btnTabMat" style="flex:1; background:#444;">材料</button>
+      <button onclick="setInvTab('equip')" id="btnTabEquip" style="flex:1;">🛡️ 裝備</button>
+      <button onclick="setInvTab('material')" id="btnTabMat" style="flex:1; background:#444;">📦 材料</button>
     </div>
 
-    <div id="quickSellArea" style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05);">
-      <div class="small" style="margin-bottom: 8px; color: var(--primary);">💰 快速販售裝備</div>
+    <div id="inventoryControls" style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05);">
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <span class="small" style="color: #aaa;">背包操作模式</span>
+        <button id="invModeBtn" onclick="toggleInvMode()" style="background: rgba(255,255,255,0.05); color: #2ecc71; border: 1px solid #2ecc71; padding: 5px 15px; border-radius: 20px; font-size: 11px; cursor: pointer; transition: all 0.3s; font-weight: bold;">
+          ⚡ 當前：裝備模式
+        </button>
+      </div>
+
+      <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.05); margin: 10px 0;">
+
+      <div class="small" style="margin-bottom: 8px; color: var(--primary);">💰 批量清理</div>
       <div style="display: flex; gap: 8px; align-items: center;">
-        <select id="sellRarityFilter" style="flex: 2; background:#222; color:#fff; border:1px solid #444; border-radius:4px; padding:4px;">
+        <select id="sellRarityFilter" style="flex: 2; background:#222; color:#fff; border:1px solid #444; border-radius:6px; padding:6px; font-size: 12px;">
           <option value="0">僅限：普通 (白)</option>
           <option value="1">包含：稀有 (藍) 以下</option>
           <option value="2">包含：史詩 (紫) 以下</option>
         </select>
-        <button onclick="bulkSell()" style="flex: 1; background: #e74c3c; padding: 5px; font-size: 12px; color: white; border: none; border-radius: 4px; cursor: pointer;">確認販售</button>
+        <button onclick="bulkSell()" style="flex: 1; background: #e74c3c; padding: 7px; font-size: 12px; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">一鍵販售</button>
       </div>
     </div>
 
@@ -226,23 +236,39 @@
   
   <div class="card">
     <div class="small" style="text-align: center;">
-      遊戲版本：v0.4.9<br>
+      遊戲版本：v0.5.0<br>
       最後存檔時間：<span id="lastSaveTime">--:--:--</span>
     </div>
   </div>
 </div>
 
 <!--彈窗、頁尾與結束標籤 (Modals & Footer)-->
-</div> </div> <div id="itemModal" class="modal-overlay" onclick="closeModal()">
-    <div class="modal-card" onclick="event.stopPropagation()">
-      <div id="modalRarity" class="modal-rarity">RARITY</div>
-      <div id="modalIcon" style="font-size: 40px; margin: 10px 0;">🛡️</div>
-      <strong id="modalName" style="font-size: 18px;">裝備名稱</strong>
-      <div id="modalStats" class="modal-stats" style="margin: 15px 0; line-height: 1.6;">屬性讀取中...</div>
-      <button id="unequipBtn" style="background: #444;">卸下裝備</button>
-      <button onclick="closeModal()" style="background: none; border: 1px solid #555; margin-top: 10px; font-size: 12px; width: auto; padding: 5px 15px;">關閉</button>
+<div id="itemModal" class="modal-overlay" onclick="closeModal()">
+  <div style="display: flex; gap: 10px; align-items: center; justify-content: center; width: 95%; max-width: 600px;">
+    
+    <div id="compareCard" class="modal-card" onclick="event.stopPropagation()" style="display: none; border: 1px dashed #666; opacity: 0.9;">
+      <div style="font-size: 10px; color: #aaa;">當前裝備</div>
+      <div id="compRarity" class="modal-rarity"></div>
+      <div id="compIcon" style="font-size: 32px; margin: 5px 0;"></div>
+      <strong id="compName" style="font-size: 16px;"></strong>
+      <div id="compStats" class="modal-stats" style="font-size: 12px; margin: 10px 0;"></div>
     </div>
+
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div id="targetLabel" style="font-size: 10px; color: #aaa; display: none;">選中物品</div>
+      <div id="modalRarity" class="modal-rarity"></div>
+      <div id="modalIcon" style="font-size: 40px; margin: 10px 0;"></div>
+      <strong id="modalName" style="font-size: 18px;"></strong>
+      <div id="modalStats" class="modal-stats" style="margin: 15px 0;"></div>
+      
+      <div style="display: flex; flex-direction: column; gap: 5px;">
+        <button id="unequipBtn" style="background: #2ecc71;">裝備/卸下</button>
+        <button onclick="closeModal()" style="background: none; border: 1px solid #555; font-size: 12px; padding: 5px;">關閉</button>
+      </div>
+    </div>
+
   </div>
+</div>
 
   <footer class="copyright-notice">
     &copy; 2026 konghua_0206. All Rights Reserved.
@@ -254,6 +280,7 @@
 <script src="js/monsters.js"></script>
 <script src="js/monsters_dropdown.js"></script>
 <script src="js/bosses.js"></script>
+<script src="js/equips.js"></script>
 
 <script>
 
@@ -498,18 +525,37 @@ function updateUI() {
 // 輔助更新裝備槽
 function renderEquipmentSlots() {
   for (let sid in slotIcons) {
-    let el = document.getElementById(`slot-${sid}`);
+    const el = document.getElementById(`slot-${sid}`);
     if (!el) continue;
-    if (game.equipment && game.equipment[sid]) {
-      el.innerText = game.equipment[sid].icon;
+
+    const item = game.equipment ? game.equipment[sid] : null;
+
+    if (item) {
+      // 1. 設定基礎狀態
       el.className = "equip-slot occupied";
-      el.style.borderColor = `var(--rarity-${game.equipment[sid].rarity})`;
+      el.style.borderColor = `var(--rarity-${item.rarity})`;
+
+      // 2. 新撈法：判斷 icon 類型並渲染
+      const isPath = item.icon && (item.icon.includes('/') || item.icon.includes('.'));
+      
+      if (isPath) {
+        // 圖片路徑：插入 img 標籤
+        el.innerHTML = `<img src="${item.icon}" class="equip-icon-img">`;
+      } else {
+        // 非路徑（Emoji）：插入一個 span 並強制給予顏色，避免被 CSS transparent 覆蓋
+        el.innerHTML = `<span class="equip-icon-text" style="color: white !important;">${item.icon || "❓"}</span>`;
+      }
+
       el.onclick = () => showEquipDetail(sid);
+      el.style.cursor = "pointer";
     } else {
-      el.innerText = slotIcons[sid];
+      // --- 若無裝備，恢復預設狀態 ---
       el.className = "equip-slot";
       el.style.borderColor = "";
+      // 顯示預設輔助 Emoji，此時沒 occupied 類別，顏色正常
+      el.innerHTML = slotIcons[sid]; 
       el.onclick = null;
+      el.style.cursor = "default";
     }
   }
 }
@@ -598,51 +644,104 @@ function resetStats() {
  * ============================================================
  */
 
-// 統一存檔函式
+let canSave = true; 
+
+// 統一存檔：改為事件驅動，並加入 try-catch 確保 localStorage 空間異常時不崩潰
 function saveData() { 
-    localStorage.setItem(SAVE_KEY, JSON.stringify(game)); 
-    if (typeof updateSaveTime === "function") updateSaveTime(); 
-    console.log("遊戲已自動存檔");
+    if (!canSave) return; 
+    try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify(game)); 
+        if (typeof updateSaveTime === "function") updateSaveTime(); 
+    } catch (e) {
+        console.error("❌ 存檔失敗:", e);
+    }
 }
 
-// 編輯模式切換
+// 編輯模式：切換輸入框與按鈕狀態，並在結束編輯時同步資料
 document.getElementById("editBtn").onclick = function() {
-  isEditing = !isEditing;
-  const nameDisplay = document.getElementById("nameDisplay");
-  const nameInput = document.getElementById("nameInput");
-  
-  if (isEditing) {
-    this.innerText = "儲存資料";
-    nameDisplay.style.display = "none";
-    nameInput.style.display = "inline-block";
-    nameInput.value = game.charName;
-    document.getElementById("avatarInput").click();
-  } else {
-    game.charName = nameInput.value || "未命名勇者";
-    this.innerText = "編輯頭像/ID";
-    nameDisplay.style.display = "inline-block";
-    nameInput.style.display = "none";
-    saveData();
-    updateUI();
-  }
-};
-
-// 處理大頭貼圖片讀取
-document.getElementById("avatarInput").onchange = (e) => {
-  const file = e.target.files[0];
-  if (file && file.size < 1024 * 1024) {
-    const reader = new FileReader();
-    reader.onload = ev => { game.avatarImage = ev.target.result; updateUI(); saveData(); };
-    reader.readAsDataURL(file);
-  } else if(file) alert("圖片太大囉 (限 1MB)");
-};
-
-// 關閉視窗前自動存檔
-window.addEventListener("beforeunload", function (e) {
-    if (typeof canSave !== 'undefined' && canSave) {
+    isEditing = !isEditing;
+    const nameDisplay = document.getElementById("nameDisplay");
+    const nameInput = document.getElementById("nameInput");
+    
+    if (isEditing) {
+        this.innerText = "💾 儲存資料";
+        nameDisplay.style.display = "none";
+        nameInput.style.display = "inline-block";
+        nameInput.value = game.charName;
+        document.getElementById("avatarInput").click(); // 觸發選擇圖片
+    } else {
+        game.charName = nameInput.value || "未命名勇者";
+        this.innerText = "👤 編輯頭像/ID";
+        nameDisplay.style.display = "inline-block";
+        nameInput.style.display = "none";
         saveData();
+        updateUI();
     }
+};
+
+// 頭像處理：使用 DataURL 存儲，限制 1MB 以免超出 localStorage 上限 (5MB)
+document.getElementById("avatarInput").onchange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        if (file.size < 1024 * 1024) { 
+            const reader = new FileReader();
+            reader.onload = ev => { 
+                game.avatarImage = ev.target.result; 
+                updateUI(); 
+                saveData(); 
+            };
+            reader.readAsDataURL(file);
+        } else {
+            alert("❌ 圖片限 1MB 內，以免存檔失敗！");
+        }
+    }
+};
+
+// 智慧存檔：偵測切換分頁或關閉視窗時自動存檔
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && canSave) saveData();
 });
+
+window.addEventListener("beforeunload", () => {
+    if (canSave) saveData();
+});
+
+// 安全重置：設定 canSave 為 false 防止 reload 瞬間再次寫入舊資料
+function confirmReset() {
+    if (confirm("🚨 確定要刪除所有進度嗎？") && confirm("最後確認：真的要清空嗎？")) {
+        canSave = false; 
+        localStorage.removeItem(SAVE_KEY);
+        alert("✨ 數據已清空！");
+        location.reload();
+    }
+}
+
+// 匯入功能：包含基本的格式驗證，防止毀損資料寫入
+function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const importedGame = JSON.parse(e.target.result);
+            // 基礎結構檢查
+            if (importedGame && typeof importedGame === 'object' && importedGame.charName) {
+                canSave = false; 
+                game = importedGame;
+                localStorage.setItem(SAVE_KEY, JSON.stringify(game));
+                alert("📂 存檔匯入成功！");
+                location.reload();
+            } else {
+                throw new Error("Invalid Format");
+            }
+        } catch (err) {
+            alert("❌ 失敗：存檔檔案格式錯誤！");
+            canSave = true;
+        }
+    };
+    reader.readAsText(file);
+}
 
 /**
  * ============================================================
@@ -652,61 +751,79 @@ window.addEventListener("beforeunload", function (e) {
  */
 
 // 顯示裝備詳細彈窗
-function showEquipDetail(slotId) {
-    const item = game.equipment[slotId];
-    if (!item) return;
+function showEquipDetail(source) {
+    let targetItem;
+    let isEquipped = false;
+    let slotId = "";
 
-    // 顯示彈窗
-    const modal = document.getElementById("itemModal");
-    modal.style.display = "flex";
-    
-    // 設定稀有度文字與顏色
-    const rarityNames = ["普通", "稀有", "史詩", "傳奇"];
-    const modalRarity = document.getElementById("modalRarity");
-    modalRarity.innerText = rarityNames[item.rarity];
-    modalRarity.style.color = `var(--rarity-${item.rarity})`;
-    
-    // 設定基本資訊
-    document.getElementById("modalName").innerText = item.name;
-    document.getElementById("modalIcon").innerText = item.icon;
-
-    // 翻譯對照表 (純文字，無圖示)
-    const translation = {
-        atk: "攻擊", def: "防禦", hp: "血量",
-        str: "力量", agi: "敏捷", int: "智力",
-        vit: "體質", luk: "幸運", med: "冥想"
-    };
-
-    let statsLines = [];
-
-    // 1. 撈取基礎屬性 (第一層：atk, def, hp)
-    ['atk', 'def', 'hp'].forEach(key => {
-        if (item[key] > 0) {
-            statsLines.push(`${translation[key]} +${item[key]}`);
-        }
-    });
-
-    // 2. 撈取隨機屬性 (extraStats 層：str, agi, int, vit, luk, med)
-    if (item.extraStats) {
-        Object.keys(item.extraStats).forEach(key => {
-            if (item.extraStats[key] > 0) {
-                statsLines.push(`${translation[key] || key} +${item.extraStats[key]}`);
-            }
-        });
+    // 判斷來源
+    if (typeof source === 'string') {
+        targetItem = game.equipment[source];
+        slotId = source;
+        isEquipped = true;
+    } else {
+        targetItem = source;
+        slotId = targetItem.type; // 假設 item 資料裡有 type (如 'weapon', 'armor')
+        isEquipped = false;
     }
 
-    // 更新屬性顯示區域
-    document.getElementById("modalStats").innerHTML = statsLines.length > 0 
-        ? statsLines.join("<br>") 
-        : "無屬性加成";
+    if (!targetItem) return;
 
-    // --- 修正按鈕事件 ---
-    const unequipBtn = document.getElementById("unequipBtn");
-    unequipBtn.onclick = (e) => {
-        e.stopPropagation(); // 防止點擊冒泡
-        unequipItem(slotId);
-        // unequipItem 內部已經有 closeModal()，所以這裡不需要再寫一次
-    };
+    // --- 處理對比邏輯 ---
+    const compareCard = document.getElementById("compareCard");
+    const currentEquipped = game.equipment[slotId];
+
+    // 如果是點擊背包物品，且對應位置已經有穿裝備，且兩者不是同一個物品
+    if (!isEquipped && currentEquipped && currentEquipped.id !== targetItem.id) {
+        compareCard.style.display = "block";
+        renderItemToElement(currentEquipped, "comp"); // 渲染左側
+        document.getElementById("targetLabel").style.display = "block";
+    } else {
+        compareCard.style.display = "none";
+        document.getElementById("targetLabel").style.display = "none";
+    }
+
+    // --- 渲染右側目標物品 ---
+    renderItemToElement(targetItem, "modal");
+    document.getElementById("itemModal").style.display = "flex";
+
+    // --- 更新按鈕 ---
+    const btn = document.getElementById("unequipBtn");
+    if (isEquipped) {
+        btn.innerText = "卸下裝備";
+        btn.style.background = "#e74c3c";
+        btn.onclick = () => { unequipItem(slotId); closeModal(); };
+    } else {
+        btn.innerText = "替換裝備";
+        btn.style.background = "#2ecc71";
+        btn.onclick = () => { equipItem(targetItem.id); closeModal(); };
+    }
+}
+
+// 輔助函式：統一渲染裝備內容
+function renderItemToElement(item, prefix) {
+    const rarityNames = ["普通", "稀有", "史詩", "傳奇"];
+    const translation = { atk: "攻擊", def: "防禦", hp: "血量", str: "力量", agi: "敏捷", int: "智力", vit: "體質", luk: "幸運", med: "冥想" };
+
+    document.getElementById(`${prefix}Rarity`).innerText = rarityNames[item.rarity];
+    document.getElementById(`${prefix}Rarity`).style.color = `var(--rarity-${item.rarity})`;
+    document.getElementById(`${prefix}Name`).innerText = item.name;
+    
+    // Icon
+    const iconEl = document.getElementById(`${prefix}Icon`);
+    if (item.icon && (item.icon.includes('/') || item.icon.includes('.'))) {
+        iconEl.innerHTML = `<img src="${item.icon}" style="width:40px; height:40px; object-fit:contain;">`;
+    } else {
+        iconEl.innerHTML = item.icon || "❓";
+    }
+
+    // 屬性清單
+    let stats = [];
+    ['atk', 'def', 'hp'].forEach(k => { if (item[k]) stats.push(`${translation[k]} +${item[k]}`); });
+    if (item.extraStats) {
+        Object.keys(item.extraStats).forEach(k => { if (item.extraStats[k]) stats.push(`${translation[k] || k} +${item.extraStats[k]}`); });
+    }
+    document.getElementById(`${prefix}Stats`).innerHTML = stats.join("<br>");
 }
 
 // 卸下裝備邏輯
@@ -772,6 +889,31 @@ function getEquipValue(item) {
   return finalValue;
 }
 
+let pressTimer;
+
+// 開始計時長按
+function startPress(item) {
+    pressTimer = setTimeout(() => {
+        toggleItemLock(item);
+    }, 700); // 0.7秒觸發長按
+}
+
+// 取消計時 (當滑鼠放開或移開時)
+function cancelPress() {
+    clearTimeout(pressTimer);
+}
+
+// 切換鎖定狀態
+function toggleItemLock(item) {
+    item.isLocked = !item.isLocked;
+    
+    // 震動回饋 (支援行動裝置)
+    if (navigator.vibrate) navigator.vibrate(50);
+    
+    // 立即重新渲染以更新鎖定小圖示
+    renderInventory();
+    saveData();
+}
 
 // 販賣背包物品
 function sellItem(id) {
@@ -779,7 +921,13 @@ function sellItem(id) {
     if (idx === -1) return;
     
     const item = game.inventory[idx];
-    // 使用統一公式取得價格
+
+    // --- 關鍵修改：檢查鎖定 ---
+    if (item.isLocked) {
+        alert(`🛡️ [${item.name}] 已鎖定，請先長按裝備解鎖再販售。`);
+        return;
+    }
+
     const price = getEquipValue(item);
     
     if (confirm(`確定要賣掉 [${item.name}] 嗎？ (價值: ✨${price})`)) {
@@ -791,6 +939,63 @@ function sellItem(id) {
     }
 }
 
+//一鍵販售功能:根據選擇的品質等級，將背包內小於等於該等級的裝備全部賣掉
+function bulkSell() {
+    const filterEl = document.getElementById("sellRarityFilter");
+    if (!filterEl) return;
+    const maxRarity = parseInt(filterEl.value);
+    
+    // --- 關鍵修改：過濾時排除 isLocked 的物品 ---
+    const toSell = game.inventory.filter(item => item.rarity <= maxRarity && !item.isLocked);
+    
+    if (toSell.length === 0) {
+        alert("沒有符合條件的裝備（或符合條件的裝備皆已鎖定）。");
+        return;
+    }
+
+    if (confirm(`確定販售 ${toSell.length} 件裝備嗎？ (已自動排除鎖定裝備)`)) {
+        let totalIncome = 0;
+        
+        // 使用新的清單覆蓋舊清單，但保留「稀有度過高」或「已鎖定」的物品
+        game.inventory = game.inventory.filter(item => {
+            const isMatchRarity = item.rarity <= maxRarity;
+            
+            if (isMatchRarity && !item.isLocked) {
+                totalIncome += getEquipValue(item);
+                return false; // 不保留，執行販售
+            }
+            return true; // 保留（可能是稀有度太高，或是被鎖定了）
+        });
+
+        game.mana += totalIncome;
+        alert(`批次販售完成，共獲得 ✨ ${totalIncome}`);
+        renderInventory();
+        updateUI();
+        saveData();
+    }
+}
+
+let isSellMode = false; // 預設為裝備模式
+
+function toggleInvMode() {
+    isSellMode = !isSellMode;
+    const btn = document.getElementById("invModeBtn");
+    
+    // 改變切換鈕的視覺
+    if (isSellMode) {
+        btn.innerText = "🔄 模式：販賣中";
+        btn.style.color = "#ff4d4d";
+        btn.style.borderColor = "#ff4d4d";
+        btn.style.background = "rgba(255, 77, 77, 0.1)";
+    } else {
+        btn.innerText = "🔄 模式：裝備中";
+        btn.style.color = "#aaa";
+        btn.style.borderColor = "#444";
+        btn.style.background = "rgba(255,255,255,0.05)";
+    }
+    renderInventory(); // 重新渲染列表
+}
+
 // 渲染背包內容
 function renderInventory() {
   const container = document.getElementById("inventoryContainer");
@@ -799,86 +1004,82 @@ function renderInventory() {
 
   if (currentInvTab === 'equip') {
     if (game.inventory.length === 0) {
-      container.innerHTML = `<div class="small" style="text-align:center; padding:20px;">背包目前沒有裝備</div>`;
+      container.innerHTML = `<div style="text-align:center; padding:40px; color:#555; font-size:14px;">背包空空如也</div>`;
       return;
     }
 
-    const translation = {
-      atk: "攻擊", def: "防禦", hp: "血量",
-      str: "力量", agi: "敏捷", int: "智力",
-      med: "冥想", vit: "體質", luk: "幸運"
-    };
-
-    game.inventory.forEach((item, index) => {
+    game.inventory.forEach((item) => {
       let div = document.createElement("div");
       div.className = `item-card`;
-      div.style.borderLeft = `4px solid var(--rarity-${item.rarity})`;
+      div.style.cssText = `display:flex; align-items:center; padding:12px 15px; margin-bottom:8px; border-left:5px solid var(--rarity-${item.rarity}); background: rgba(255,255,255,0.02); border-radius: 12px; position: relative;`;
 
-      // 1. 撈取屬性 (基礎 + extraStats)
-      let allStats = [];
-      ['atk', 'def', 'hp'].forEach(k => { if (item[k] > 0) allStats.push(`${translation[k]}: ${item[k]}`); });
-      if (item.extraStats) {
-        Object.keys(item.extraStats).forEach(k => { if (item.extraStats[k] > 0) allStats.push(`${translation[k] || k}: ${item.extraStats[k]}`); });
+      // 1. 圖標設定 (44px)
+      let iconHtml = "";
+      const isPath = item.icon && (item.icon.includes('/') || item.icon.includes('.'));
+      const iconStyle = `width:44px; height:44px; object-fit:contain; flex-shrink:0; margin-right:15px;`;
+      
+      if (isPath) {
+        iconHtml = `<img src="${item.icon}" style="${iconStyle}">`;
+      } else {
+        iconHtml = `<div style="${iconStyle} display:flex; align-items:center; justify-content:center; font-size:26px; background:rgba(255,255,255,0.03); border-radius:10px;">${item.icon || '⚔️'}</div>`;
       }
 
-      const statsString = allStats.length > 0 ? allStats.join(" / ") : "無屬性加成";
-      const contentId = `mq-${index}`;
+      // 2. 鎖定狀態顯示 (如果有鎖定，顯示一個小掛鎖)
+      const lockHtml = item.isLocked ? `<div style="position:absolute; top:2px; left:2px; background:#f1c40f; color:#000; border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:10px; z-index:10; box-shadow:0 2px 4px rgba(0,0,0,0.5);">🔒</div>` : "";
+
+      // 3. 模式按鈕判定
+      let actionBtn = "";
+      if (isSellMode) {
+        actionBtn = `<button onclick="sellItem(${item.id})" style="background:#e74c3c; color:white; border:none; padding:10px 18px; border-radius:10px; font-size:13px; cursor:pointer; font-weight:bold; transition: 0.2s; box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3); ${item.isLocked ? 'opacity:0.5; filter:grayscale(1); cursor:not-allowed;' : ''}">販賣</button>`;
+      } else {
+        actionBtn = `<button onclick="equipItem(${item.id})" style="background:#2ecc71; color:white; border:none; padding:10px 18px; border-radius:10px; font-size:13px; cursor:pointer; font-weight:bold; transition: 0.2s; box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);">裝備</button>`;
+      }
 
       div.innerHTML = `
-        <div style="flex:1; overflow:hidden; padding-right:8px;">
-          <div style="color: var(--rarity-${item.rarity}); font-weight:bold; font-size:12px;">
-            ${item.icon} ${item.name}
-          </div>
-          <div class="marquee-box">
-            <div id="${contentId}" class="marquee-content">${statsString}</div>
-          </div>
+        ${lockHtml}
+        <div class="item-click-area" style="flex:1; display:flex; align-items:center; cursor:pointer; user-select:none; -webkit-user-select:none;">
+          ${iconHtml}
+          <div style="color: var(--rarity-${item.rarity}); font-weight:bold; font-size:16px;">${item.name}</div>
         </div>
-        <div style="display:flex; gap:6px; flex-shrink:0;">
-          <button onclick="equipItem(${item.id})" style="background:#2ecc71; color:white; border:none; padding:6px 8px; border-radius:4px; font-size:11px; cursor:pointer;">裝備</button>
-          <button class="sell-btn" onclick="sellItem(${item.id})" style="background:#e74c3c; color:white; border:none; padding:6px 8px; border-radius:4px; font-size:11px; cursor:pointer;">販賣</button>
+        <div style="flex-shrink:0; margin-left:10px;">
+          ${actionBtn}
         </div>
       `;
+
+      // --- 長按邏輯綁定 ---
+      const clickArea = div.querySelector('.item-click-area');
+      
+      // 點擊詳情
+      clickArea.onclick = () => showEquipDetail(item);
+
+      // 長按監測：滑鼠版
+      clickArea.onmousedown = () => startPress(item);
+      clickArea.onmouseup = cancelPress;
+      clickArea.onmouseleave = cancelPress;
+
+      // 長按監測：手機版
+      clickArea.ontouchstart = () => startPress(item);
+      clickArea.ontouchend = cancelPress;
+
       container.appendChild(div);
-
-      // 2. 精確判定寬度
-      setTimeout(() => {
-        const el = document.getElementById(contentId);
-        if (el) {
-          const containerWidth = el.parentElement.clientWidth;
-          const textWidth = el.scrollWidth;
-
-          // 只要超過 1 像素就跑
-          if (textWidth > containerWidth) {
-            const dist = containerWidth - textWidth - 5; // 額外多跑 5px 留點緩衝
-            
-            // 動態速度計算：文字越長，跑的時間越久，保持速度體感一致
-            const speed = Math.max(4, (textWidth / 50)) + "s"; 
-            
-            el.style.setProperty('--scroll-dist', `${dist}px`);
-            el.style.setProperty('--scroll-speed', speed);
-            el.classList.add('animate');
-          }
-        }
-      }, 0);
     });
   } else {
-    // 材料分頁邏輯 (維持純文字風格)
+    // 材料分頁邏輯 (保持不變)
     let hasMaterial = false;
     let materialHtml = "";
     for (let mat in game.materials) {
       if (game.materials[mat] > 0) {
         hasMaterial = true;
         materialHtml += `
-          <div class="item-card" style="display:flex; justify-content:space-between; align-items:center;">
-            <span>📦 ${mat}</span>
-            <span style="color:var(--primary); font-weight:bold;">x${game.materials[mat]}</span>
+          <div class="item-card" style="display:flex; justify-content:space-between; align-items:center; padding:15px; margin-bottom:8px; border-left: 5px solid #555;">
+            <span style="font-size:15px;">📦 ${mat}</span>
+            <span style="color:var(--primary); font-weight:bold; font-size:16px;">x${game.materials[mat]}</span>
           </div>`;
       }
     }
-    container.innerHTML = hasMaterial ? materialHtml : `<div class="small" style="text-align:center; padding:20px;">尚無任何材料...</div>`;
+    container.innerHTML = hasMaterial ? materialHtml : `<div class="small" style="text-align:center; padding:20px; color:#666;">尚無任何材料...</div>`;
   }
 }
-
 
 // 切換背包標籤
 function setInvTab(t) {
@@ -901,44 +1102,43 @@ function setInvTab(t) {
 // 穿上裝備處理 (會與現有裝備替換)
 function equipItem(id) {
   const idx = game.inventory.findIndex(i => i.id === id);
+  if (idx === -1) return;
   const item = game.inventory[idx];
-  if (game.equipment[item.type]) game.inventory.push(game.equipment[item.type]);
-  game.equipment[item.type] = item;
+  
+  let targetSlot = item.type;
+
+  // --- 戒指特殊邏輯 ---
+  if (item.type === "ring1" || item.type === "ring2") {
+    // 如果 ring1 是空的，就穿在 ring1
+    if (!game.equipment["ring1"]) {
+      targetSlot = "ring1";
+    } 
+    // 如果 ring1 有人但 ring2 是空的，就穿在 ring2
+    else if (!game.equipment["ring2"]) {
+      targetSlot = "ring2";
+    } 
+    // 如果都滿了，預設替換掉 ring1 (你也可以根據需求改為替換 ring2)
+    else {
+      targetSlot = "ring1";
+    }
+  }
+
+  // --- 執行裝備更換 ---
+  // 如果目標槽位原本就有裝備，先把它踢回背包
+  if (game.equipment[targetSlot]) {
+    game.inventory.push(game.equipment[targetSlot]);
+  }
+
+  // 將新裝備放入目標槽位
+  game.equipment[targetSlot] = item;
+  
+  // 從背包移除該物品
   game.inventory.splice(idx, 1);
-  renderInventory();
+
+  // 更新介面與存檔
+  if (typeof renderInventory === 'function') renderInventory();
   updateUI();
   saveData();
-}
-
-//一鍵販售功能:根據選擇的品質等級，將背包內小於等於該等級的裝備全部賣掉
-function bulkSell() {
-    const filterEl = document.getElementById("sellRarityFilter");
-    if (!filterEl) return;
-    const maxRarity = parseInt(filterEl.value);
-    
-    const toSell = game.inventory.filter(item => item.rarity <= maxRarity);
-    if (toSell.length === 0) {
-        alert("沒有符合條件的裝備。");
-        return;
-    }
-
-    if (confirm(`確定販售 ${toSell.length} 件裝備嗎？`)) {
-        let totalIncome = 0;
-        game.inventory = game.inventory.filter(item => {
-            if (item.rarity <= maxRarity) {
-                // 使用統一公式累加價格
-                totalIncome += getEquipValue(item);
-                return false;
-            }
-            return true;
-        });
-
-        game.mana += totalIncome;
-        alert(`批次販售完成，共獲得 ✨ ${totalIncome}`);
-        renderInventory();
-        updateUI();
-        saveData();
-    }
 }
 
 /**
@@ -1469,46 +1669,81 @@ function winBattle() {
 
   const isBossBattle = currentMonster.isBoss === true;
   const monsterName = currentMonster.name;
+  const log = document.getElementById("battleLog");
 
+  // 1. 基礎獎勵計算 (材料與魔力)
   let dropItemName = currentMonster.dropMat || "未知材料";
   game.materials[dropItemName] = (game.materials[dropItemName] || 0) + 1;
-  
-  // --- 魔力獎勵指數化修改 ---
-let rewardMana = isBossBattle 
+
+  let rewardMana = isBossBattle 
     ? Math.floor(2000 * Math.pow(1.114, currentMonster.lv)) 
     : Math.floor(250 * Math.pow(1.114, currentMonster.lv));
-  
   game.mana += rewardMana;
-  // -------------------------
 
-  const log = document.getElementById("battleLog");
-  let equipMsg = "";
+  // 2. 裝備掉落判定系統
+  let dropMsgs = [];
 
-  let dropChance = isBossBattle ? 1.0 : 0.3;
-  if (Math.random() < dropChance) {
-    const newEquip = generateRandomEquip(currentMonster.lv);
-    if (isBossBattle && newEquip.rarity < 1) newEquip.rarity = 1;
-    game.inventory.push(newEquip);
-    equipMsg = ` 並獲得了 <span style="color: var(--rarity-${newEquip.rarity})">[${newEquip.name}]</span>`;
-  }
-
-  if (log) {
-    if (isBossBattle) {
-      log.innerHTML = `<div style="color: #f1c40f; font-weight: bold; border: 1px solid #f1c40f; padding: 5px; border-radius: 5px; margin: 5px 0;">🏆 傳奇討伐成功！擊敗了 ${monsterName}<br>獲得 ${rewardMana.toLocaleString()} ✨ 與 ${dropItemName}${equipMsg}</div>` + log.innerHTML;
-    } else {
-      log.innerHTML = `<div style="color: #3498db;">勝利！獲得 ${rewardMana.toLocaleString()} ✨ 與 ${dropItemName}${equipMsg}</div>` + log.innerHTML;
+  if (isBossBattle) {
+    // --- 情況 A：BOSS 專屬掉落 (執行 onDeath) ---
+    if (typeof currentMonster.onDeath === 'function') {
+      try {
+        const specialDrops = currentMonster.onDeath(currentMonster);
+        if (Array.isArray(specialDrops) && specialDrops.length > 0) {
+          specialDrops.forEach(item => {
+            if (item) {
+              game.inventory.push(item);
+              dropMsgs.push(`<span style="color: var(--rarity-${item.rarity})">[${item.name}]</span>`);
+            }
+          });
+        }
+      } catch (e) {
+        console.error("Boss onDeath 執行出錯:", e);
+      }
+    } 
+    
+    // --- 情況 B：BOSS 普通掉落 (若專屬沒中，則 30% 機率補一件隨機裝) ---
+    if (dropMsgs.length === 0 && Math.random() < 0.3) {
+      const fallbackEquip = generateRandomEquip(currentMonster.lv);
+      if (fallbackEquip) {
+        if (fallbackEquip.rarity < 1) fallbackEquip.rarity = 1; // Boss 保底綠裝
+        game.inventory.push(fallbackEquip);
+        dropMsgs.push(`<span style="color: var(--rarity-${fallbackEquip.rarity})">[${fallbackEquip.name}]</span>`);
+      }
+    }
+  } else {
+    // --- 情況 C：普通小怪 (30% 掉落) ---
+    if (Math.random() < 0.3) {
+      const commonEquip = generateRandomEquip(currentMonster.lv);
+      if (commonEquip) {
+        game.inventory.push(commonEquip);
+        dropMsgs.push(`<span style="color: var(--rarity-${commonEquip.rarity})">[${commonEquip.name}]</span>`);
+      }
     }
   }
 
+  // 3. 組合訊息與更新 UI
+  let equipMsg = dropMsgs.length > 0 ? ` 並獲得了 ${dropMsgs.join("、")}` : "";
+
+  if (log) {
+    if (isBossBattle) {
+      // Boss 特殊金色外框樣式
+      log.innerHTML = `<div style="color: #f1c40f; font-weight: bold; border: 1px solid #f1c40f; padding: 10px; border-radius: 8px; margin: 5px 0; background: rgba(241, 196, 15, 0.1);">🏆 傳奇討伐成功！擊敗了 ${monsterName}<br>獎勵：${rewardMana.toLocaleString()} ✨、${dropItemName}${equipMsg}</div>` + log.innerHTML;
+    } else {
+      // 小怪藍色簡潔樣式
+      log.innerHTML = `<div style="color: #3498db; margin: 3px 0; padding-left: 5px; border-left: 3px solid #3498db;">勝利！獲得 ${rewardMana.toLocaleString()} ✨、${dropItemName}${equipMsg}</div>` + log.innerHTML;
+    }
+  }
+
+  // 4. 狀態保存與渲染更新
   document.getElementById("battleStatus").innerText = isBossBattle ? `首領挑戰成功！` : `勝利！獲得獎勵...`;
-  
+  saveData();
+  renderInventory(); 
+
+  // 5. 戰鬥結束與後續動作
   if (isBossBattle) {
     stopBattle(`成功擊敗了首領 ${monsterName}！`);
-    saveData();
   } else {
     currentMonster = null;
-    saveData();
-    
     setTimeout(() => {
       if (game.currentHp > 0) {
         startBattle(); 
@@ -1544,138 +1779,171 @@ function stopBattle(reason = "戰鬥停止") {
  * ============================================================
  */
 function generateRandomEquip(lv) {
-  const types = ["head", "top", "bottom", "shoes", "mainHand", "offHand", "necklace", "ring1"];
-  const type = types[Math.floor(Math.random() * types.length)];
-  
-  // --- 下修後的精確機率邏輯 ---
-  const roll = Math.random();
-  let r;
-  if (roll < 0.01) {
-    r = 3; // 傳奇 (1%)
-  } else if (roll < 0.06) {
-    r = 2; // 史詩 (5%)
-  } else if (roll < 0.31) {
-    r = 1; // 稀有 (25%)
-  } else {
-    r = 0; // 普通 (69%)
-  }
-  // ------------------------------------------
+  try {
+    // 1. 內部基礎配置 (確保不依賴外部 slotIcons 或 namePool)
+    const types = ["head", "top", "bottom", "shoes", "mainHand", "offHand", "necklace", "ring1"];
+    const rarityNames = ["普通", "稀有", "史詩", "傳奇"];
+    
+    const internalIcons = {
+      head: "🎓", top: "👕", bottom: "👖", shoes: "👟",
+      mainHand: "⚔️", offHand: "🛡️", necklace: "📿", ring1: "💍"
+    };
 
-  const rarityNames = ["普通", "稀有", "史詩", "傳奇"];
-  
-  // 1. 定義名稱庫與隨機前綴
+    const internalNames = {
+      head: ["頭盔", "戰盔", "法帽"], top: ["胸甲", "長袍", "鎖子甲"],
+      bottom: ["護腿", "戰褲", "裙衣"], shoes: ["長靴", "戰靴", "輕靈靴"],
+      mainHand: ["長劍", "法杖", "戰錘"], offHand: ["盾牌", "咒文書", "護腕"],
+      necklace: ["頸飾", "護身符", "項鍊"], ring1: ["戒指", "指環", "刻印戒"]
+    };
+
     const prefixes = {
-    0: [
-      "生鏽的", "破損的", "粗糙的", "普通的", "老舊的", 
-      "褪色的", "受潮的", "劣質的", "笨重的", "被遺棄的"
-    ],
-    1: [
-      "精良的", "強化型", "士兵的", "磨練過的", "鋒利的", 
-      "堅固的", "偵察兵的", "鍛造師的", "洗鍊的", "標準的"
-    ],
-    2: [
-      "極致的", "大師級", "守護者的", "靈魂之", "英勇的", 
-      "榮耀的", "屠龍者的", "影之", "輝煌的", "不朽的"
-    ],
-    3: [
-      "神聖的", "滅世之", "上古遺留", "聖光護佑", "諸神的", 
-      "末日咆哮", "虛空之源", "創世神語", "永恆綻放", "深淵囚禁"
-    ]
-  };
-  
-  const namePool = {
-    head: [
-      "頭盔", "戰盔", "法帽", "冠冕", "面具", 
-      "護額", "兜帽", "全罩盔", "尖頂帽", "主教冠"
-    ],
-    top: [
-      "胸甲", "重鎧", "長袍", "鎖子甲", "皮衣", 
-      "軟甲", "法衣", "胸衣", "鏈甲", "戰鬥服"
-    ],
-    bottom: [
-      "護腿", "戰褲", "裙衣", "下裝", "綁腿", 
-      "鐵甲褲", "絲綢長褲", "布裙", "皮短褲", "重甲裙"
-    ],
-    shoes: [
-      "長靴", "鐵底靴", "輕靈靴", "戰靴", "草鞋", 
-      "布鞋", "涼鞋", "皮靴", "金屬靴", "疾風靴"
-    ],
-    mainHand: [
-      "長劍", "巨斧", "法杖", "戰錘", "短刀", 
-      "長矛", "弓箭", "雙手劍", "連枷", "權杖"
-    ],
-    offHand: [
-      "盾牌", "護腕", "副手咒文書", "圓盾", "披風", 
-      "箭筒", "火炬", "聖經", "護手", "法術球"
-    ],
-    necklace: [
-      "頸飾", "護身符", "項鍊", "墜飾", "十字架", 
-      "鎖骨鏈", "念珠", "吊墜", "魂石", "絲綢圍巾"
-    ],
-    ring1: [
-      "戒指", "指環", "印章", "指環王", "玉戒", 
-      "金戒", "鋼戒", "婚戒", "魔戒", "刻印戒"
-    ]
-  };
+      0: ["生鏽的", "破損的", "粗糙的", "普通的", "老舊的"],
+      1: ["精良的", "強化型", "士兵的", "磨練過的", "鋒利的", "堅固的"],
+      2: ["極致的", "大師級", "守護者", "靈魂之", "英勇的", "不朽的"],
+      3: ["神聖的", "滅世之", "上古遺留", "諸神的", "末日咆哮", "虛空之源"]
+    };
 
+    // 2. 詞綴屬性庫 (屬性加成)
+    const prefixBonus = {
+      "精良的": { hp: 10 * lv }, "強化型": { def: 2 * lv }, "鋒利的": { atk: 5 * lv },
+      "堅固的": { def: 4 * lv }, "極致的": { atk: 10 * lv, str: 5 },
+      "大師級": { str: 5, int: 5, agi: 5 }, "守護者": { def: 8 * lv, vit: 8 },
+      "不朽的": { hp: 100 * lv, vit: 10 }, "神聖的": { all: 5 * lv },
+      "滅世之": { atk: 30 * lv, luk: 15 }, "諸神的": { str: 15, int: 15, med: 15 },
+      "上古遺留": { hp: 100 * lv, def: 20 * lv }
+    };
 
-  const selectedPrefix = prefixes[r][Math.floor(Math.random() * prefixes[r].length)];
-  const selectedBaseName = namePool[type][Math.floor(Math.random() * namePool[type].length)];
+    // 3. 隨機抽取過程
+    const type = types[Math.floor(Math.random() * types.length)];
+    const roll = Math.random();
+    let r = 0;
+    if (roll < 0.01) r = 3;
+    else if (roll < 0.06) r = 2;
+    else if (roll < 0.31) r = 1;
 
-  // 2. 重新組合名稱格式
-  const finalName = `[Lv.${lv}] ${rarityNames[r]} · ${selectedPrefix}${selectedBaseName}`;
+    const pList = prefixes[r];
+    const selectedPrefix = pList[Math.floor(Math.random() * pList.length)];
+    const selectedBaseName = internalNames[type][Math.floor(Math.random() * internalNames[type].length)];
 
-  const baseMultiplier = (lv * 0.5);
-  const rarityMultiplier = (1 + r * 0.5);
-  let stats = { atk: 0, def: 0, hp: 0, str: 0, agi: 0, int: 0, vit: 0, luk: 0 };
+    // 4. 基礎數值計算
+    const baseMultiplier = (lv * 0.5);
+    const rarityMultiplier = (1 + r * 0.5);
+    let stats = { atk: 0, def: 0, hp: 0, str: 0, agi: 0, int: 0, vit: 0, luk: 0, med: 0 };
 
-  // 3. 屬性分配
-  switch (type) {
-    case "mainHand":
+    if (type === "mainHand") {
       stats.atk = Math.floor(20 * baseMultiplier * rarityMultiplier);
-      if (r >= 1) stats.str = Math.floor(lv * 0.5 * rarityMultiplier);
-      if (r >= 2) stats.luk = Math.floor(lv * 0.3 * rarityMultiplier);
-      break;
-    case "top":
-    case "bottom":
+    } else if (["top", "bottom"].includes(type)) {
       stats.def = Math.floor(10 * baseMultiplier * rarityMultiplier);
       stats.hp = Math.floor(50 * baseMultiplier * rarityMultiplier);
-      if (r >= 2) stats.vit = Math.floor(lv * 0.4 * rarityMultiplier);
-      break;
-    case "shoes":
-      stats.def = Math.floor(5 * baseMultiplier * rarityMultiplier);
-      stats.agi = Math.floor(lv * 0.8 * rarityMultiplier);
-      break;
-    case "head":
-      stats.hp = Math.floor(30 * baseMultiplier * rarityMultiplier);
-      stats.int = Math.floor(lv * 0.6 * rarityMultiplier);
-      if (r >= 3) stats.med = Math.floor(lv * 0.5);
-      break;
-    default:
+    } else {
       stats.hp = Math.floor(20 * baseMultiplier * rarityMultiplier);
-      stats.luk = Math.floor(lv * 0.5 * rarityMultiplier);
-  }
+    }
 
-  return {
-    id: Date.now() + Math.random(),
-    type: type,
-    rarity: r,
-    name: finalName,
-    atk: stats.atk,
-    def: stats.def,
-    hp: stats.hp,
-    extraStats: {
-      str: stats.str || 0,
-      agi: stats.agi || 0,
-      int: stats.int || 0,
-      vit: stats.vit || 0,
-      luk: stats.luk || 0,
-      med: stats.med || 0
-    },
-    icon: slotIcons[type] || "📦"
-  };
+    // 5. 注入前綴加成
+    const bonus = prefixBonus[selectedPrefix];
+    if (bonus) {
+      for (let key in bonus) {
+        if (key === 'all') {
+          ['str', 'agi', 'int', 'vit', 'luk', 'med'].forEach(s => stats[s] += (5 * lv));
+        } else {
+          stats[key] = (stats[key] || 0) + bonus[key];
+        }
+      }
+    }
+
+    // 6. 回傳最終裝備物件
+    return {
+      id: Date.now() + Math.random(),
+      type: type,
+      rarity: r,
+      name: `[Lv.${lv}] ${rarityNames[r]} · ${selectedPrefix}${selectedBaseName}`,
+      atk: stats.atk || 0,
+      def: stats.def || 0,
+      hp: stats.hp || 0,
+      extraStats: {
+        str: stats.str || 0,
+        agi: stats.agi || 0,
+        int: stats.int || 0,
+        vit: stats.vit || 0,
+        luk: stats.luk || 0,
+        med: stats.med || 0
+      },
+      icon: internalIcons[type]
+    };
+
+  } catch (error) {
+    console.error("Critical Error in generateRandomEquip:", error);
+    return null; // 防止整個遊戲崩潰
+  }
 }
 
+/**
+ * ============================================================
+ * 訂製裝備生成器 (Advanced Equipment Generator)
+ * ============================================================
+ */
+
+function createUniqueItem(templateId, lv = 1) {
+  const template = uniqueItemTemplates[templateId];
+  if (!template) return null;
+
+  let newItem = JSON.parse(JSON.stringify(template));
+  newItem.id = Date.now() + Math.random();
+  newItem.lv = lv;
+  newItem.templateId = templateId;
+  
+  // 初始化副屬性，避免 UI 渲染卡死
+  newItem.extraStats = newItem.extraStats || { str: 0, agi: 0, int: 0, vit: 0, luk: 0, med: 0 };
+
+  const prefixBonus = {
+    "精鍊的": { atk: 5 * lv }, "卓越之": { hp: 20 * lv }, "洗鍊的": { def: 3 * lv },
+    "堅固的": { def: 5 * lv }, "鋒利的": { atk: 8 * lv },
+    "極致的": { atk: 10 * lv, luk: 5 }, "大師級": { str: 5, agi: 5 }, 
+    "守護者": { def: 10 * lv, vit: 5 }, "不朽的": { hp: 50 * lv, med: 5 }, // 已修正名稱
+    "神聖的": { all: 5 * lv }, "諸神的": { str: 10, int: 10, med: 10 },
+    "滅世之": { atk: 25 * lv, luk: 10 }, "上古遺留": { hp: 100 * lv, def: 20 * lv }
+  };
+
+  const rarityPrefixes = {
+    0: ["特製的", "工匠的", "改良型"],
+    1: ["精鍊的", "卓越之", "洗鍊的", "堅固的", "鋒利的"],
+    2: ["極致的", "大師級", "守護者", "不朽的"], // 這裡修正了 "不朽 of"
+    3: ["神聖的", "諸神的", "滅世之", "上古遺留"]
+  };
+
+  const r = newItem.rarity || 0;
+  const pList = rarityPrefixes[r] || rarityPrefixes[0];
+  const randomPrefix = pList[Math.floor(Math.random() * pList.length)];
+  
+  const bonus = prefixBonus[randomPrefix];
+  if (bonus) {
+    for (let key in bonus) {
+      if (key === 'all') {
+        ['str', 'agi', 'int', 'vit', 'luk', 'med'].forEach(s => newItem.extraStats[s] = (newItem.extraStats[s] || 0) + (5 * lv));
+      } else if (['atk', 'def', 'hp'].includes(key)) {
+        newItem[key] = (newItem[key] || 0) + bonus[key];
+      } else {
+        newItem.extraStats[key] = (newItem.extraStats[key] || 0) + bonus[key];
+      }
+    }
+  }
+
+  const rarityNames = ["普通", "稀有", "史詩", "傳奇"];
+  newItem.name = `[Lv.${lv}] ${rarityNames[r]} · ${randomPrefix}${template.name.trim()}`;
+
+  if (newItem.ranges) {
+    const getRandomValue = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+    for (let stat in newItem.ranges) {
+      const val = newItem.ranges[stat];
+      let rolledVal = Array.isArray(val) ? getRandomValue(val[0], val[1]) : (val || 0);
+      if (['atk', 'def', 'hp'].includes(stat)) newItem[stat] = (newItem[stat] || 0) + rolledVal;
+      else newItem.extraStats[stat] = (newItem.extraStats[stat] || 0) + rolledVal;
+    }
+    delete newItem.ranges;
+  }
+
+  return newItem;
+}
 
 /**
  * ============================================================

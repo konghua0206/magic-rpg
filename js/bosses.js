@@ -5,43 +5,74 @@ const bossData = [
     atkRange: [25, 45], img: "images/dKH0NvpuvTolvO8P2rypx.jpg",
     dropMat: "古老鹿角", rewardMana: 3000 
   },
-{ 
-  id: "boss_mandrake_1", 
-  name: "腹黑曼德拉草", 
-  lv: 15, 
-  hp: 4500, 
-  def: 45, 
-  atkRange: [35, 60], 
-  img: "images/4SqKRuaqPjZlQHLEhZkmBK.jpg", 
-  dropMat: "曼德拉葉片", 
+{
+  id: "boss_mandrake_1",
+  name: "腹黑曼德拉草",
+  isBoss: true,
+  lv: 15,
+  hp: 4500,
+  maxHp: 4500,
+  def: 45,
+  atkRange: [35, 60],
+  img: "images/4SqKRuaqPjZlQHLEhZkmBK.jpg",
+  dropMat: "曼德拉葉片",
   rewardMana: 5000,
-  // BOSS 專屬技能程序化
+
+  // --- 死亡結算邏輯 ---
+  onDeath: function(currentMonster) {
+    let drops = [];
+    
+    // 1. 專屬裝備 (30%)
+    if (Math.random() < 0.3) {
+      const equip = createUniqueItem("mandrake_talisman", currentMonster.lv);
+      if (equip) {
+        drops.push(equip);
+      } else {
+        console.error("❌ 專屬裝備生成失敗：請檢查 uniqueItemTemplates 中是否有 'mandrake_talisman' 這個 ID");
+      }
+    }
+
+    // 2. 隨機裝備 (10%)
+    if (Math.random() < 0.1) {
+      const randomEquip = generateRandomEquip(currentMonster.lv);
+      if (randomEquip) {
+        // Boss 掉落保底：至少為稀有度 1
+        if (randomEquip.rarity < 1) randomEquip.rarity = 1;
+        drops.push(randomEquip);
+      }
+    }
+
+    return drops;
+  },
+
+  // --- 戰鬥技能數據 ---
   skills: [
-    { 
-      name: "曼德拉搗蛋", 
-      chance: 0.2, 
+    {
+      name: "曼德拉搗蛋",
+      chance: 0.2,
       color: "#e67e22",
       onEffect: (mBaseAtk, stats) => {
         const power = 1.5;
         let skillAtk = mBaseAtk * power;
-        let dmg = Math.max(1, Math.floor((skillAtk * skillAtk) / (skillAtk + stats.def)));
+        // 考慮防禦的傷害計算
+        let dmg = Math.max(1, Math.floor((skillAtk * skillAtk) / (skillAtk + (stats.def || 0))));
         return { 
           dmg: dmg, 
-          heal: 0,
+          heal: 0, 
           log: `使用了<span style="color:#e67e22">【曼德拉搗蛋】</span>，造成了 <span style="color:#e74c3c">${dmg}</span> 傷害！` 
         };
       }
     },
-    { 
-      name: "曼德拉遁地", 
-      chance: 0.1, 
+    {
+      name: "曼德拉遁地",
+      chance: 0.1,
       color: "#2ecc71",
       onEffect: (mBaseAtk, stats, currentMonster) => {
         // 回復 BOSS 最大血量的 10%
-        let healAmt = Math.floor(currentMonster.hp * 0.1);
+        let healAmt = Math.floor((currentMonster.maxHp || 4500) * 0.1);
         return { 
           dmg: 0, 
-          heal: healAmt,
+          heal: healAmt, 
           log: `使用了<span style="color:#2ecc71">【曼德拉遁地】</span>，回復了 <span style="color:#2ecc71">${healAmt}</span> HP！` 
         };
       }
