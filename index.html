@@ -633,26 +633,90 @@ window.addEventListener("beforeunload", function (e) {
 function showEquipDetail(slotId) {
     const item = game.equipment[slotId];
     if (!item) return;
-    document.getElementById("itemModal").style.display = "flex";
+
+    // 顯示彈窗
+    const modal = document.getElementById("itemModal");
+    modal.style.display = "flex";
+    
+    // 設定稀有度文字與顏色
     const rarityNames = ["普通", "稀有", "史詩", "傳奇"];
-    document.getElementById("modalRarity").innerText = rarityNames[item.rarity];
-    document.getElementById("modalRarity").style.color = `var(--rarity-${item.rarity})`;
+    const modalRarity = document.getElementById("modalRarity");
+    modalRarity.innerText = rarityNames[item.rarity];
+    modalRarity.style.color = `var(--rarity-${item.rarity})`;
+    
+    // 設定基本資訊
     document.getElementById("modalName").innerText = item.name;
     document.getElementById("modalIcon").innerText = item.icon;
-    document.getElementById("modalStats").innerHTML = `⚔️ ATK +${item.atk}<br>🛡️ DEF +${item.def}<br>❤️ HP +${item.hp}`;
-    document.getElementById("unequipBtn").onclick = () => unequipItem(slotId);
+
+    // 翻譯對照表 (純文字，無圖示)
+    const translation = {
+        atk: "攻擊", def: "防禦", hp: "血量",
+        str: "力量", agi: "敏捷", int: "智力",
+        vit: "體質", luk: "幸運", med: "冥想"
+    };
+
+    let statsLines = [];
+
+    // 1. 撈取基礎屬性 (第一層：atk, def, hp)
+    ['atk', 'def', 'hp'].forEach(key => {
+        if (item[key] > 0) {
+            statsLines.push(`${translation[key]} +${item[key]}`);
+        }
+    });
+
+    // 2. 撈取隨機屬性 (extraStats 層：str, agi, int, vit, luk, med)
+    if (item.extraStats) {
+        Object.keys(item.extraStats).forEach(key => {
+            if (item.extraStats[key] > 0) {
+                statsLines.push(`${translation[key] || key} +${item.extraStats[key]}`);
+            }
+        });
+    }
+
+    // 更新屬性顯示區域
+    document.getElementById("modalStats").innerHTML = statsLines.length > 0 
+        ? statsLines.join("<br>") 
+        : "無屬性加成";
+
+    // --- 修正按鈕事件 ---
+    const unequipBtn = document.getElementById("unequipBtn");
+    unequipBtn.onclick = (e) => {
+        e.stopPropagation(); // 防止點擊冒泡
+        unequipItem(slotId);
+        // unequipItem 內部已經有 closeModal()，所以這裡不需要再寫一次
+    };
 }
 
-function closeModal() { document.getElementById("itemModal").style.display = "none"; }
-
-// 卸下裝備
+// 卸下裝備邏輯
 function unequipItem(slotId) {
-    game.inventory.push(game.equipment[slotId]);
+    const item = game.equipment[slotId];
+    if (!item) return;
+
+    // 移回背包並清空槽位
+    game.inventory.push(item);
     game.equipment[slotId] = null;
+    
+    // 關鍵：先關閉彈窗，再更新介面與存檔
     closeModal();
-    updateUI();
+    updateUI(); 
     saveData();
 }
+
+// 關閉彈窗函式
+function closeModal() {
+    const modal = document.getElementById("itemModal");
+    if (modal) {
+        modal.style.display = "none";
+    }
+}
+
+// 額外建議：點擊彈窗外部黑色區域也應該關閉
+window.onclick = function(event) {
+    const modal = document.getElementById("itemModal");
+    if (event.target == modal) {
+        closeModal();
+    }
+};
 
 // 統一的裝備價值計算公式
 function getEquipValue(item) {
@@ -687,36 +751,86 @@ function renderInventory() {
 
   if (currentInvTab === 'equip') {
     if (game.inventory.length === 0) {
-      container.innerHTML = `<div class="small" style="text-align:center; padding:20px;">背包空空如也...</div>`;
+      container.innerHTML = `<div class="small" style="text-align:center; padding:20px;">背包目前沒有裝備</div>`;
       return;
     }
-    game.inventory.forEach(item => {
+
+    const translation = {
+      atk: "攻擊", def: "防禦", hp: "血量",
+      str: "力量", agi: "敏捷", int: "智力",
+      med: "冥想", vit: "體質", luk: "幸運"
+    };
+
+    game.inventory.forEach((item, index) => {
       let div = document.createElement("div");
       div.className = `item-card`;
-      div.style.borderLeftColor = `var(--rarity-${item.rarity})`;
+      div.style.borderLeft = `4px solid var(--rarity-${item.rarity})`;
+
+      // 1. 撈取屬性 (基礎 + extraStats)
+      let allStats = [];
+      ['atk', 'def', 'hp'].forEach(k => { if (item[k] > 0) allStats.push(`${translation[k]}: ${item[k]}`); });
+      if (item.extraStats) {
+        Object.keys(item.extraStats).forEach(k => { if (item.extraStats[k] > 0) allStats.push(`${translation[k] || k}: ${item.extraStats[k]}`); });
+      }
+
+      const statsString = allStats.length > 0 ? allStats.join(" / ") : "無屬性加成";
+      const contentId = `mq-${index}`;
+
       div.innerHTML = `
-        <div style="flex:1">
-          <strong>${item.icon} ${item.name}</strong><br>
-          <span class="small">⚔️${item.atk} 🛡️${item.def} ❤️${item.hp}</span>
+        <div style="flex:1; overflow:hidden; padding-right:8px;">
+          <div style="color: var(--rarity-${item.rarity}); font-weight:bold; font-size:12px;">
+            ${item.icon} ${item.name}
+          </div>
+          <div class="marquee-box">
+            <div id="${contentId}" class="marquee-content">${statsString}</div>
+          </div>
         </div>
-        <div style="display:flex; gap:5px;">
-          <button style="width:50px; padding:5px; font-size:11px; background:#28a745;" onclick="equipItem(${item.id})">穿上</button>
-          <button class="sell-btn" onclick="sellItem(${item.id})">販賣</button>
-        </div>`;
+        <div style="display:flex; gap:6px; flex-shrink:0;">
+          <button onclick="equipItem(${item.id})" style="background:#2ecc71; color:white; border:none; padding:6px 8px; border-radius:4px; font-size:11px; cursor:pointer;">裝備</button>
+          <button class="sell-btn" onclick="sellItem(${item.id})" style="background:#e74c3c; color:white; border:none; padding:6px 8px; border-radius:4px; font-size:11px; cursor:pointer;">販賣</button>
+        </div>
+      `;
       container.appendChild(div);
+
+      // 2. 精確判定寬度
+      setTimeout(() => {
+        const el = document.getElementById(contentId);
+        if (el) {
+          const containerWidth = el.parentElement.clientWidth;
+          const textWidth = el.scrollWidth;
+
+          // 只要超過 1 像素就跑
+          if (textWidth > containerWidth) {
+            const dist = containerWidth - textWidth - 5; // 額外多跑 5px 留點緩衝
+            
+            // 動態速度計算：文字越長，跑的時間越久，保持速度體感一致
+            const speed = Math.max(4, (textWidth / 50)) + "s"; 
+            
+            el.style.setProperty('--scroll-dist', `${dist}px`);
+            el.style.setProperty('--scroll-speed', speed);
+            el.classList.add('animate');
+          }
+        }
+      }, 0);
     });
   } else {
-    // 材料分頁邏輯
+    // 材料分頁邏輯 (維持純文字風格)
     let hasMaterial = false;
+    let materialHtml = "";
     for (let mat in game.materials) {
       if (game.materials[mat] > 0) {
         hasMaterial = true;
-        container.innerHTML += `<div class="item-card"><span>📦 ${mat}</span> <span>x${game.materials[mat]}</span></div>`;
+        materialHtml += `
+          <div class="item-card" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>📦 ${mat}</span>
+            <span style="color:var(--primary); font-weight:bold;">x${game.materials[mat]}</span>
+          </div>`;
       }
     }
-    if (!hasMaterial) container.innerHTML = `<div class="small" style="text-align:center; padding:20px;">尚無任何材料...</div>`;
+    container.innerHTML = hasMaterial ? materialHtml : `<div class="small" style="text-align:center; padding:20px;">尚無任何材料...</div>`;
   }
 }
+
 
 // 切換背包標籤
 function setInvTab(t) {
