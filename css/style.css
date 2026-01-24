@@ -306,6 +306,13 @@ button:active { transform: scale(0.96); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
   animation-play-state: paused;
 }
 
+/* 裝備加成文字樣式 */
+.bonus-text {
+  color: #2ecc71; /* 亮綠色 */
+  font-size: 0.85em;
+  margin-left: 4px;
+  font-weight: bold;
+}
 
 /* --- 版權 --- */
 .copyright-notice {

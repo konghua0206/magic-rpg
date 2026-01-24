@@ -63,10 +63,10 @@
     </div>
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
-      <div class="attr" style="font-size: 0.85em;"><span>⚔️ 攻擊: <span id="atk">0</span></span></div>
-      <div class="attr" style="font-size: 0.85em;"><span>🛡️ 防禦: <span id="def">0</span></span></div>
-      <div class="attr" style="font-size: 0.85em;"><span>🎯 暴擊: <span id="crit">0</span>%</span></div>
-      <div class="attr" style="font-size: 0.85em;"><span>🍃 閃避: <span id="dodge">0</span>%</span></div>
+      <div class="attr" style="font-size: 0.85em;"><span>⚔️ 攻擊: <span id="atk">0</span><span id="atk-bonus" class="bonus-text"></span></span></div>
+      <div class="attr" style="font-size: 0.85em;"><span>🛡️ 防禦: <span id="def">0</span><span id="def-bonus" class="bonus-text"></span></span></div>
+      <div class="attr" style="font-size: 0.85em;"><span>🎯 暴擊: <span id="crit">0</span>%<span id="crit-bonus" class="bonus-text"></span></span></div>
+      <div class="attr" style="font-size: 0.85em;"><span>🍃 閃避: <span id="dodge">0</span>%<span id="dodge-bonus" class="bonus-text"></span></span></div>
     </div>
 
     <hr style="opacity:0.1; margin: 15px 0;">
@@ -80,12 +80,12 @@
       </button>
     </div>
 
-    <div class="attr"><span>💪 力量：<span id="str">0</span></span> <button style="width:36px; padding:4px;" onclick="addAttr('str')">+</button></div>
-    <div class="attr"><span>🍃 敏捷：<span id="agi">0</span></span> <button style="width:36px; padding:4px;" onclick="addAttr('agi')">+</button></div>
-    <div class="attr"><span>📘 智力：<span id="int">0</span></span> <button style="width:36px; padding:4px;" onclick="addAttr('int')">+</button></div>
-    <div class="attr"><span>⏳ 冥想：<span id="med">0</span></span> <button style="width:36px; padding:4px;" onclick="addAttr('med')">+</button></div>
-    <div class="attr"><span>❤️ 體質：<span id="vit">0</span></span> <button style="width:36px; padding:4px;" onclick="addAttr('vit')">+</button></div>
-    <div class="attr"><span>🍀 幸運：<span id="luk">0</span></span> <button style="width:36px; padding:4px;" onclick="addAttr('luk')">+</button></div>
+    <div class="attr"><span>💪 力量：<span id="str">0</span><span id="str-bonus" class="bonus-text"></span></span> <button style="width:36px; padding:4px;" onclick="addAttr('str')">+</button></div>
+    <div class="attr"><span>🍃 敏捷：<span id="agi">0</span><span id="agi-bonus" class="bonus-text"></span></span> <button style="width:36px; padding:4px;" onclick="addAttr('agi')">+</button></div>
+    <div class="attr"><span>📘 智力：<span id="int">0</span><span id="int-bonus" class="bonus-text"></span></span> <button style="width:36px; padding:4px;" onclick="addAttr('int')">+</button></div>
+    <div class="attr"><span>⏳ 冥想：<span id="med">0</span><span id="med-bonus" class="bonus-text"></span></span> <button style="width:36px; padding:4px;" onclick="addAttr('med')">+</button></div>
+    <div class="attr"><span>❤️ 體質：<span id="vit">0</span><span id="vit-bonus" class="bonus-text"></span></span> <button style="width:36px; padding:4px;" onclick="addAttr('vit')">+</button></div>
+    <div class="attr"><span>🍀 幸運：<span id="luk">0</span><span id="luk-bonus" class="bonus-text"></span></span> <button style="width:36px; padding:4px;" onclick="addAttr('luk')">+</button></div>
 
     <button id="upgradeChar" style="margin-top: 15px; width: 100%;">角色等級提升 (<span id="charCost">0</span>✨)</button>
   </div>
@@ -226,7 +226,7 @@
   
   <div class="card">
     <div class="small" style="text-align: center;">
-      遊戲版本：v0.4.8<br>
+      遊戲版本：v0.4.9<br>
       最後存檔時間：<span id="lastSaveTime">--:--:--</span>
     </div>
   </div>
@@ -362,60 +362,55 @@ function getTotalStat(key) {
   return charBase + equipBonus;
 }
 
-// C. 核心戰鬥公式
+// C. 核心戰鬥公式 (平衡調整版)
 function getAtk() { 
   const e = getEquipStats();
-  // 公式：等級基礎 + (力量x10) + (智力x5) + 裝備攻擊
-  // 物理傷害核心，智力也提供少量輔助加成。
-  return (game.charLv * 5) + (getTotalStat('str') * 10) + (getTotalStat('int') * 5) + e.atk; 
+  // 算式：(等級 x 8) + (力量 x 4) + (智力 x 3) + 裝備攻擊
+  return (game.charLv * 8) + (getTotalStat('str') * 4) + (getTotalStat('int') * 3) + e.atk; 
 }
 
 function getDef() { 
   const e = getEquipStats();
-  // 公式：等級基礎 + (體質x3) + (力量x1) + 裝備防禦
-  // 體質為防禦主來源，力量可提供額外韌性。
-  return (game.charLv * 2) + (getTotalStat('vit') * 3) + (getTotalStat('str') * 1) + e.def; 
+  // 算式：(等級 x 3) + (體質 x 3) + (力量 x 0.5) + 裝備防禦
+  return (game.charLv * 3) + (getTotalStat('vit') * 3) + (getTotalStat('str') * 0.5) + e.def; 
 }
 
 function getMaxHp() {
   const e = getEquipStats();
-  // 公式：(等級基礎 + 裝備血量) * (1 + 體質x5%)
-  // 體質提供的是「百分比」加成，後期收益極高。
+  // 算式：(等級基礎 + 裝備血量) * (1 + 體質 x 5%)
   return Math.floor((100 + game.charLv * 30 + e.hp) * (1 + getTotalStat('vit') * 0.05));
 }
 
-// D. 機率與倍率 (飽和曲線：數值越高成長越慢，但永遠不超過 100%)
+// D. 機率與倍率 (飽和曲線)
 function getCritRate() {
-  const power = (getTotalStat('luk') * 0.8) + (getTotalStat('agi') * 0.2);
-  const rate = 100 * (1 - Math.pow(0.98, power));
-  // 幸運決定暴擊率，敏捷提供少量輔助。
+  const power = (getTotalStat('luk') * 0.4) + (getTotalStat('agi') * 0.1);
+  // 算式：100 * (1 - 0.992 ^ 威力值)
+  const rate = 100 * (1 - Math.pow(0.992, power));
   return rate.toFixed(1);
 }
 
 function getDodgeRate() {
-  const power = (getTotalStat('agi') * 1.0) + (getTotalStat('luk') * 0.2);
-  const rate = 100 * (1 - Math.pow(0.97, power));
-  // 敏捷決定閃避率，設有 90% 的硬上限。
-  return Math.min(90, rate).toFixed(1);
+  const power = (getTotalStat('agi') * 0.5) + (getTotalStat('luk') * 0.1);
+  // 算式：100 * (1 - 0.985 ^ 威力值)，最高 75%
+  const rate = 100 * (1 - Math.pow(0.985, power));
+  return Math.min(75, rate).toFixed(1);
 }
 
 function getCritMultiplier() {
-  const baseMulti = 2.0; 
-  const extraMulti = (getTotalStat('luk') * 0.01) + (getTotalStat('str') * 0.005);
-  // 基礎暴擊 2 倍，幸運與力量可額外提升傷害倍率。
+  const baseMulti = 1.5; 
+  // 算式：1.5 + (幸運 x 0.005) + (力量 x 0.002)
+  const extraMulti = (getTotalStat('luk') * 0.005) + (getTotalStat('str') * 0.002);
   return parseFloat((baseMulti + extraMulti).toFixed(2));
 }
 
 // E. 資源與回血
 function manaPerSecond() { 
-  // 公式：等級基礎 * (1 + 智力x2% + 冥想x5%)
-  // 智力與冥想等級越高，每秒產出的魔力就越多。
+  // 算式：(等級 x 2) * (1 + 智力 x 2% + 冥想 x 5%)
   return Math.floor((game.charLv * 2) * (1 + getTotalStat('int') * 0.02 + getTotalStat('med') * 0.05)); 
 }
 
 function getHpRegen() {
-  // 公式：(最大血量x1%) + (體質x2) + (冥想x5)
-  // 主要根據血量百分比回血，體質與冥想提供固定加成。
+  // 算式：(最大血量 x 1%) + (體質 x 2) + (冥想 x 5)
   return (getMaxHp() * 0.01) + (getTotalStat('vit') * 2) + (getTotalStat('med') * 5);
 }
 
@@ -438,29 +433,56 @@ function getCombatStats() {
  */
 
 function updateUI() {
+  // 0. 預先取得裝備加成數據與總體戰鬥數值
+  const e = getEquipStats(); 
+  const totalAtk = getAtk();
+  const totalDef = getDef();
+  const totalCrit = getCritRate();
+  const totalDodge = getDodgeRate();
+
   // --- 基礎資源與等級 ---
-  // 使用 .toLocaleString() 讓大數字顯示逗號（如 1,000），更像遊戲介面
   document.getElementById("mana").innerText = Math.floor(game.mana).toLocaleString();
   document.getElementById("mps").innerText = manaPerSecond();
   document.getElementById("charLv").innerText = game.charLv;
   document.getElementById("nameDisplay").innerText = game.charName;
   document.getElementById("charCost").innerText = Math.floor(50 * Math.pow(1.3, game.charLv - 1)).toLocaleString();
 
-  // --- 基礎屬性點 (六圍) ---
-  document.getElementById("points").innerText = game.points || 0;
-  document.getElementById("str").innerText = game.str || 0;
-  document.getElementById("agi").innerText = game.agi || 0;
-  document.getElementById("int").innerText = game.int || 0;
-  document.getElementById("med").innerText = game.med || 0;
-  document.getElementById("vit").innerText = game.vit || 0;
-  document.getElementById("luk").innerText = game.luk || 0;
+  // --- 基礎屬性點 (六圍) 加上 (+x) 顯示 ---
+  const coreAttrs = ['str', 'agi', 'int', 'med', 'vit', 'luk'];
+  coreAttrs.forEach(attr => {
+    const baseValue = game[attr] || 0;
+    const bonusValue = e[attr] || 0;
+    document.getElementById(attr).innerText = baseValue;
+    // 更新綠色加成文字
+    const bonusEl = document.getElementById(`${attr}-bonus`);
+    if (bonusEl) {
+      bonusEl.innerText = bonusValue > 0 ? ` (+${bonusValue})` : "";
+    }
+  });
 
-  // --- 戰鬥面板數值 ---
-  // 改為調用運算中心的新公式
-  document.getElementById("atk").innerText = getAtk();
-  document.getElementById("def").innerText = getDef();
-  document.getElementById("crit").innerText = getCritRate();   // 修正：使用新公式 getCritRate
-  document.getElementById("dodge").innerText = getDodgeRate(); // 修正：使用新公式 getDodgeRate
+  // --- 戰鬥面板數值 (總值 - 裝備加成 = 基礎值) ---
+  // 更新攻擊力
+  const equipAtk = e.atk || 0;
+  document.getElementById("atk").innerText = totalAtk - equipAtk;
+  document.getElementById("atk-bonus").innerText = equipAtk > 0 ? ` (+${equipAtk})` : "";
+
+  // 更新防禦力
+  const equipDef = e.def || 0;
+  document.getElementById("def").innerText = totalDef - equipDef;
+  document.getElementById("def-bonus").innerText = equipDef > 0 ? ` (+${equipDef})` : "";
+
+  // 更新暴擊 (假設 getCritRate 傳回的是數字或百分比字串)
+  const equipCrit = e.critRate || 0;
+  document.getElementById("crit").innerText = (parseFloat(totalCrit) - equipCrit).toFixed(1);
+  document.getElementById("crit-bonus").innerText = equipCrit > 0 ? ` (+${equipCrit}%)` : "";
+
+  // 更新閃避
+  const equipDodge = e.dodgeRate || 0;
+  document.getElementById("dodge").innerText = (parseFloat(totalDodge) - equipDodge).toFixed(1);
+  document.getElementById("dodge-bonus").innerText = equipDodge > 0 ? ` (+${equipDodge}%)` : "";
+
+  // --- 基礎屬性點 (剩餘可用點數) ---
+  document.getElementById("points").innerText = game.points || 0;
 
   // --- 血量條與數值 ---
   const mHp = getMaxHp();
@@ -470,7 +492,7 @@ function updateUI() {
   
   // --- 頭像與裝備槽位 ---
   if (game.avatarImage) document.getElementById("avatarImg").src = game.avatarImage;
-  renderEquipmentSlots(); // 呼叫輔助函式渲染裝備
+  renderEquipmentSlots(); 
 }
 
 // 輔助更新裝備槽
@@ -1012,11 +1034,28 @@ function learnSkill(id) {
   });
 
   const hasMana = game.mana >= skill.learnCost;
-  // 檢查所有素材是否達標
-  const hasMats = requirements.every(req => (game.materials[req.name] || 0) >= req.count);
 
-  if (!hasMana) { showNotification("領悟失敗：魔力不足"); return; }
-  if (!hasMats) { showNotification(`領悟失敗：材料不足 (${skill.requireMat})`); return; }
+ // --- 精確檢查材料缺口並準備彈窗文字 ---
+  let missingList = [];
+  requirements.forEach(req => {
+    const currentOwned = game.materials[req.name] || 0;
+    if (currentOwned < req.count) {
+      missingList.push(`❌ ${req.name}：還差 ${req.count - currentOwned} 個 (現有: ${currentOwned})`);
+    }
+  });
+
+  if (!hasMana) { 
+    alert(`【魔力不足】\n領悟需要: ${skill.learnCost}\n目前擁有: ${game.mana}`); 
+    return; 
+  }
+  
+  if (missingList.length > 0) { 
+    // 使用 alert 觸發強制彈窗
+    const msg = `領悟【${skill.name}】所需的材料不足：\n\n` + missingList.join('\n') + `\n\n快去狩獵對應的怪物吧！`;
+    alert(msg); 
+    return; 
+  }
+  // ----------------------------------
 
   if (confirm(`確定消耗 ${skill.learnCost} 魔力與相關材料領悟【${skill.name}】？`)) {
     game.mana -= skill.learnCost;
@@ -1348,45 +1387,63 @@ function battleTick() {
   currentMonster.curHp -= baseDmg;
   addBattleLog(`<div>${actionLog}造成 <span style="color: #2ecc71;">${baseDmg}</span> 傷害</div>`);
 
-// --- E. 怪物反擊判定 (全面程序化版本) ---
-  if (currentMonster.curHp > 0) {
-    // 玩家閃避判定
-    const isPlayerDodged = Math.random() * 100 < stats.dodgeRate;
+// --- E. 怪物反擊判定 (加入減傷判定版本) ---
+if (currentMonster.curHp > 0) {
+  // 玩家閃避判定
+  const isPlayerDodged = Math.random() * 100 < stats.dodgeRate;
 
-    if (isPlayerDodged) {
-      addBattleLog(`<div style="color: #3498db;">🍃 閃避！你輕巧地避開了 ${currentMonster.name} 的攻擊</div>`);
-    } else {
-      // 1. 基礎數值準備
-      let mAtkData = currentMonster.atkRange || [currentMonster.lv * 5, currentMonster.lv * 10];
-      let mBaseAtk = Math.floor(Math.random() * (mAtkData[1] - mAtkData[0] + 1)) + mAtkData[0];
-      let battleMsg = "";
+  if (isPlayerDodged) {
+    addBattleLog(`<div style="color: #3498db;">🍃 閃避！你輕巧地避開了 ${currentMonster.name} 的攻擊</div>`);
+  } else {
+    // 1. 基礎數值準備
+    let mAtkData = currentMonster.atkRange || [currentMonster.lv * 5, currentMonster.lv * 10];
+    let mBaseAtk = Math.floor(Math.random() * (mAtkData[1] - mAtkData[0] + 1)) + mAtkData[0];
+    let battleMsg = "";
 
-      // 2. 隨機挑選技能
-      let usedSkill = null;
-      if (currentMonster.skills && currentMonster.skills.length > 0 && Math.random() < 0.25) {
-        usedSkill = currentMonster.skills[Math.floor(Math.random() * currentMonster.skills.length)];
+    // 2. 隨機挑選技能
+    let usedSkill = null;
+    if (currentMonster.skills && currentMonster.skills.length > 0 && Math.random() < 0.25) {
+      usedSkill = currentMonster.skills[Math.floor(Math.random() * currentMonster.skills.length)];
+    }
+
+    // 3. 執行效果
+    if (usedSkill && typeof usedSkill.onEffect === "function") {
+      // 執行 BOSS 技能程序
+      const result = usedSkill.onEffect(mBaseAtk, stats, currentMonster);
+      
+      let finalDmg = result.dmg || 0;
+
+      // --- 【新增】技能傷害減傷判定 ---
+      if (finalDmg > 0 && game.shieldTime && Date.now() < game.shieldTime) {
+        const reduction = Math.floor(finalDmg * (game.shieldReduce || 0.3));
+        finalDmg -= reduction;
+        // 在日誌中加上微小的護盾提示
+        result.log += ` <span style="color:#3498db;">(🛡️-${reduction})</span>`;
       }
 
-      // 3. 執行效果
-      if (usedSkill && typeof usedSkill.onEffect === "function") {
-        // 執行 BOSS 技能程序
-        const result = usedSkill.onEffect(mBaseAtk, stats, currentMonster);
-        
-        // 根據回傳結果套用傷害或治療
-        if (result.dmg > 0) game.currentHp -= result.dmg;
-        if (result.heal > 0) currentMonster.curHp = Math.min(currentMonster.hp, currentMonster.curHp + result.heal);
-        
-        battleMsg = `<div style="color: ${usedSkill.color || '#f39c12'};">★ ${currentMonster.name} ${result.log}</div>`;
+      if (finalDmg > 0) game.currentHp -= finalDmg;
+      if (result.heal > 0) currentMonster.curHp = Math.min(currentMonster.hp, currentMonster.curHp + result.heal);
+      
+      battleMsg = `<div style="color: ${usedSkill.color || '#f39c12'};">★ ${currentMonster.name} ${result.log}</div>`;
+    } else {
+      // 普通反擊：使用標準公式
+      let mDamage = Math.max(1, Math.floor((mBaseAtk * mBaseAtk) / (mBaseAtk + stats.def)));
+
+      // --- 【新增】普通攻擊減傷判定 ---
+      if (game.shieldTime && Date.now() < game.shieldTime) {
+        const reduction = Math.floor(mDamage * (game.shieldReduce || 0.3));
+        mDamage -= reduction;
+        battleMsg = `<div style="color: #e74c3c;">${currentMonster.name} 反擊造成 ${mDamage} 傷害 <span style="color:#3498db;">(護盾吸收 ${reduction})</span></div>`;
       } else {
-        // 普通反擊：使用標準公式
-        let mDamage = Math.max(1, Math.floor((mBaseAtk * mBaseAtk) / (mBaseAtk + stats.def)));
-        game.currentHp -= mDamage;
         battleMsg = `<div style="color: #e74c3c;">${currentMonster.name} 反擊造成 ${mDamage} 傷害</div>`;
       }
-      
-      addBattleLog(battleMsg);
+
+      game.currentHp -= mDamage;
     }
+    
+    addBattleLog(battleMsg);
   }
+}
 
   // --- F. 勝負判定 ---
   updateBattleUI(); // 更新 UI 血條
@@ -1416,8 +1473,13 @@ function winBattle() {
   let dropItemName = currentMonster.dropMat || "未知材料";
   game.materials[dropItemName] = (game.materials[dropItemName] || 0) + 1;
   
-  let rewardMana = isBossBattle ? (currentMonster.rewardMana || currentMonster.lv * 500) : (currentMonster.lv * 100);
+  // --- 魔力獎勵指數化修改 ---
+let rewardMana = isBossBattle 
+    ? Math.floor(2000 * Math.pow(1.114, currentMonster.lv)) 
+    : Math.floor(250 * Math.pow(1.114, currentMonster.lv));
+  
   game.mana += rewardMana;
+  // -------------------------
 
   const log = document.getElementById("battleLog");
   let equipMsg = "";
@@ -1432,9 +1494,9 @@ function winBattle() {
 
   if (log) {
     if (isBossBattle) {
-      log.innerHTML = `<div style="color: #f1c40f; font-weight: bold; border: 1px solid #f1c40f; padding: 5px; border-radius: 5px; margin: 5px 0;">🏆 傳奇討伐成功！擊敗了 ${monsterName}<br>獲得 ${rewardMana} ✨ 與 ${dropItemName}${equipMsg}</div>` + log.innerHTML;
+      log.innerHTML = `<div style="color: #f1c40f; font-weight: bold; border: 1px solid #f1c40f; padding: 5px; border-radius: 5px; margin: 5px 0;">🏆 傳奇討伐成功！擊敗了 ${monsterName}<br>獲得 ${rewardMana.toLocaleString()} ✨ 與 ${dropItemName}${equipMsg}</div>` + log.innerHTML;
     } else {
-      log.innerHTML = `<div style="color: #3498db;">勝利！獲得 ${rewardMana} ✨ 與 ${dropItemName}${equipMsg}</div>` + log.innerHTML;
+      log.innerHTML = `<div style="color: #3498db;">勝利！獲得 ${rewardMana.toLocaleString()} ✨ 與 ${dropItemName}${equipMsg}</div>` + log.innerHTML;
     }
   }
 
