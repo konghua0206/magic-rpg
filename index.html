@@ -9,6 +9,7 @@
 
 <body>
 
+<!--導覽、全局狀態與側邊欄 (Global & Nav)-->
 <nav class="sidebar">
   <div class="nav-item active" onclick="switchPage('character')"><span>👤</span>角色</div>
   <div class="nav-item" onclick="switchPage('battle')"><span>⚔️</span>戰鬥</div>
@@ -20,8 +21,13 @@
 <div class="main-wrapper">
   <div class="main-content">
     <div class="magic">✨ <span id="mana">0</span></div>
-    <div class="mps" style="text-align:center; opacity:0.8; font-size:12px; margin-bottom: 15px;">魔力流動：<span id="mps">0</span>/s</div>
+    <div class="mps" style="text-align:center; opacity:0.8; font-size:12px; margin-bottom: 15px;">
+      魔力流動：<span id="mps">0</span>/s
+    </div>
 
+<!--分頁內容區 (Pages)-->
+
+<!--角色頁面 (Character Page)-->
 <div id="page-character" class="page active">
   <div style="text-align: center; margin-bottom: 15px;">
     <div id="nameDisplay" style="font-weight:bold; font-size:20px; color:var(--primary); letter-spacing: 1px;">未命名勇者</div>
@@ -40,102 +46,77 @@
       <div class="equip-slot" id="slot-head" data-label="頭部">🎓</div>
       <div class="equip-slot" id="slot-top" data-label="上衣">👘</div>
       <div class="equip-slot" id="slot-necklace" data-label="項鍊">📿</div>
-      
       <div class="equip-slot" id="slot-mainHand" data-label="主手">🗡️</div>
       <div class="equip-slot" id="slot-offHand" data-label="副手">🛡️</div>
       <div class="equip-slot" id="slot-ring1" data-label="戒指1">💍</div>
-
-      
       <div class="equip-slot" id="slot-bottom" data-label="下衣">👖</div>
       <div class="equip-slot" id="slot-shoes" data-label="鞋子">👞</div>
       <div class="equip-slot" id="slot-ring2" data-label="戒指2">💍</div>
-
     </div>
   </div>
 
   <div class="card">
-    <strong>📊 屬性面板</strong>
+    <strong>📊 戰鬥屬性</strong>
     <div class="small" style="margin: 10px 0;">生命值 HP: <span id="hpText">0 / 0</span></div>
     <div style="width: 100%; height: 10px; background: #441111; border-radius: 5px; overflow: hidden; margin-bottom: 15px;">
       <div id="hpBar" style="width: 100%; height: 100%; background: #ff4d4d; transition: width 0.3s;"></div>
     </div>
-    <div class="attr"><span>⚔️ 攻擊 ATK</span> <span id="atk">0</span></div>
-    <div class="attr"><span>🛡️ 防禦 DEF</span> <span id="def">0</span></div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+      <div class="attr" style="font-size: 0.85em;"><span>⚔️ 攻擊: <span id="atk">0</span></span></div>
+      <div class="attr" style="font-size: 0.85em;"><span>🛡️ 防禦: <span id="def">0</span></span></div>
+      <div class="attr" style="font-size: 0.85em;"><span>🎯 暴擊: <span id="crit">0</span>%</span></div>
+      <div class="attr" style="font-size: 0.85em;"><span>🍃 閃避: <span id="dodge">0</span>%</span></div>
+    </div>
+
     <hr style="opacity:0.1; margin: 15px 0;">
-    <div class="small" style="margin-bottom: 10px;">可用能力點：<span id="points">0</span></div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <div style="font-size: 0.9em; font-weight: bold;">
+        ✨ 可用能力點：<span id="points" style="color: var(--primary);">0</span>
+      </div>
+      <button onclick="resetStats()" style="padding: 5px 10px; font-size: 11px; background: rgba(255,118,117,0.1); color: #ff7675; border: 1px solid #ff7675; border-radius: 4px; cursor: pointer;">
+        🔄 重置配點
+      </button>
+    </div>
+
+    <div class="attr"><span>💪 力量：<span id="str">0</span></span> <button style="width:36px; padding:4px;" onclick="addAttr('str')">+</button></div>
+    <div class="attr"><span>🍃 敏捷：<span id="agi">0</span></span> <button style="width:36px; padding:4px;" onclick="addAttr('agi')">+</button></div>
     <div class="attr"><span>📘 智力：<span id="int">0</span></span> <button style="width:36px; padding:4px;" onclick="addAttr('int')">+</button></div>
     <div class="attr"><span>⏳ 冥想：<span id="med">0</span></span> <button style="width:36px; padding:4px;" onclick="addAttr('med')">+</button></div>
     <div class="attr"><span>❤️ 體質：<span id="vit">0</span></span> <button style="width:36px; padding:4px;" onclick="addAttr('vit')">+</button></div>
-    <button id="upgradeChar" style="margin-top: 10px;">角色升級 (<span id="charCost">0</span>✨)</button>
+    <div class="attr"><span>🍀 幸運：<span id="luk">0</span></span> <button style="width:36px; padding:4px;" onclick="addAttr('luk')">+</button></div>
+
+    <button id="upgradeChar" style="margin-top: 15px; width: 100%;">角色等級提升 (<span id="charCost">0</span>✨)</button>
   </div>
 </div>
 
-<div id="page-skills" class="page" style="display:none;">
-  <div class="card">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-      <strong>🔮 技能配置</strong>
-      <span class="small">已綁定: <span id="activeSkillCount">0</span> / 3</span>
-    </div>
-    
-    <div id="skillList" style="display:flex; flex-direction:column; gap:10px;">
-      </div>
-    
-    <div class="small" style="margin-top:15px; color:rgba(255,255,255,0.4); text-align:center;">
-      ※ 領悟技能需消耗魔力與特定 BOSS 材料
-    </div>
-  </div>
-</div>
-
-<div id="page-settings" class="page">
-  <div class="card">
-    <h3 style="margin-top: 0; color: var(--primary);">⚙️ 遊戲設定</h3>
-    <p class="small">在這裡管理你的冒險進度與遊戲選項。</p>
-    
-    <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 15px 0;">
-
-    <div class="card">
-  <strong style="color: var(--primary);">💾 存檔管理</strong>
-  <p class="small">將你的進度下載為檔案保存，或上傳檔案恢復進度。</p>
-  
-  <div style="display: flex; gap: 10px; margin-top: 10px;">
-    <button onclick="exportSaveFile()" style="flex: 1; background: #3498db;">下載存檔檔</button>
-    <button onclick="document.getElementById('importFileInput').click()" style="flex: 1; background: #2ecc71;">上傳存檔檔</button>
-  </div>
-  
-  <input type="file" id="importFileInput" style="display:none;" accept=".sav,.json" onchange="importSaveFile(this)">
-</div>
-
-    <div style="padding: 15px; border: 1px dashed #e74c3c; border-radius: 12px; background: rgba(231, 76, 60, 0.05);">
-      <strong style="color: #e74c3c; display: block; margin-bottom: 5px;">⚠️ 危險區域</strong>
-      <span class="small">刪除後將失去所有等級、裝備、材料與魔力。此操作無法撤銷。</span>
+<!--戰鬥頁面 (Battle Page)-->
+<div id="page-battle" class="page" style="width: 100%; max-width: 600px; margin: 0 auto;">
+  <div class="card" style="padding: 20px; width: auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px;">
       
-      <button class="danger-btn" onclick="confirmReset()" style="margin-top: 15px; background: #e74c3c;">
-        刪除所有遊戲紀錄
-      </button>
-    </div>
-  </div>
-  
-  <div class="card">
-    <div class="small" style="text-align: center;">
-      遊戲版本：v0.4.5<br>
-      最後存檔時間：<span id="lastSaveTime">--:--:--</span>
-    </div>
-  </div>
-</div>
-
-<div id="page-battle" class="page">
-  <div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-      <h3 style="margin: 0; color: var(--primary);">冒險與討伐</h3>
-      <div style="display: flex; gap: 5px;">
-        <button id="btnModeAdv" onclick="toggleBattleMode('adventure')" style="padding: 5px 10px; font-size: 12px;">冒險模式</button>
-        <button id="btnModeBoss" onclick="toggleBattleMode('boss')" style="padding: 5px 10px; font-size: 12px; background: #444;">BOSS 挑戰</button>
+      <h3 style="margin: 0; color: var(--primary); white-space: nowrap; font-size: 1.2rem; flex-shrink: 0;">
+        ⚔️ 冒險與討伐
+      </h3>
+      
+      <div style="display: flex; gap: 8px; flex-grow: 1; justify-content: flex-end;">
+        <button id="btnModeAdv" 
+                onclick="toggleBattleMode('adventure')" 
+                style="padding: 8px 16px; font-size: 13px; white-space: nowrap; min-width: 90px; cursor: pointer;">
+          冒險模式
+        </button>
+        <button id="btnModeBoss" 
+                onclick="toggleBattleMode('boss')" 
+                style="padding: 8px 16px; font-size: 13px; background: #444; white-space: nowrap; min-width: 90px; cursor: pointer;">
+          BOSS 挑戰
+        </button>
       </div>
+      
     </div>
 
     <div id="adventureControls">
-      <select id="regionSelect" onchange="changeRegion(this.value)" style="width: 100%; padding: 10px; background: #222; color: #fff; border: 1px solid var(--primary); border-radius: 8px; margin-bottom: 10px;">
-        </select>
+      <select id="regionSelect" onchange="changeRegion(this.value)" style="width: 100%; padding: 10px; background: #222; color: #fff; border: 1px solid var(--primary); border-radius: 8px; margin-bottom: 10px;"></select>
     </div>
 
     <div id="bossControls" style="display:none;">
@@ -145,34 +126,31 @@
 
     <div id="battleStatus" style="text-align: center; margin: 15px 0; min-height: 24px; color: #f1c40f;">準備就緒</div>
 
-<div id="battleDisplayArea" style="display: flex; flex-direction: column; gap: 12px;">
-  
-  <div id="playerBattleArea" class="card" style="display:none; position: relative; overflow: hidden; min-height: 130px; border-left: 5px solid var(--primary); padding: 15px; background: rgba(0,0,0,0.5);">
-    <img id="battlePlayerImg" src="" style="position: absolute; right: -5px; top: -5px; height: 130%; opacity: 0.7; pointer-events: none; mask-image: linear-gradient(to left, black, transparent); -webkit-mask-image: linear-gradient(to left, black, transparent); object-fit: contain; z-index: 0;">
-    
-    <div style="position: relative; z-index: 1; width: 60%;">
-      <div id="playerSideName" style="font-weight: bold; color: var(--primary); font-size: 18px; text-shadow: 0 0 5px #000;">【玩家】</div>
-      <div style="font-size: 14px; margin-top: 4px; color: #eee;">HP: <span id="pBattleHpText" style="font-family: monospace;">0 / 0</span></div>
-      <div style="width:100%; height:12px; background:rgba(0,0,0,0.6); border-radius:6px; overflow:hidden; margin-top:8px; border: 1px solid rgba(255,255,255,0.1);">
-        <div id="pBattleHpBar" style="width:100%; height:100%; background:linear-gradient(90deg, #2ecc71, #27ae60); transition: width 0.3s;"></div>
+    <div id="battleDisplayArea" style="display: flex; flex-direction: column; gap: 12px;">
+      <div id="playerBattleArea" class="card" style="display:none; position: relative; overflow: hidden; min-height: 130px; border-left: 5px solid var(--primary); padding: 15px; background: rgba(0,0,0,0.5);">
+        <img id="battlePlayerImg" src="" style="position: absolute; right: -5px; top: -5px; height: 130%; opacity: 0.7; pointer-events: none; mask-image: linear-gradient(to left, black, transparent); -webkit-mask-image: linear-gradient(to left, black, transparent); object-fit: contain; z-index: 0;">
+        <div style="position: relative; z-index: 1; width: 60%;">
+          <div id="playerSideName" style="font-weight: bold; color: var(--primary); font-size: 18px; text-shadow: 0 0 5px #000;">【玩家】</div>
+          <div style="font-size: 14px; margin-top: 4px; color: #eee;">HP: <span id="pBattleHpText" style="font-family: monospace;">0 / 0</span></div>
+          <div style="width:100%; height:12px; background:rgba(0,0,0,0.6); border-radius:6px; overflow:hidden; margin-top:8px; border: 1px solid rgba(255,255,255,0.1);">
+            <div id="pBattleHpBar" style="width:100%; height:100%; background:linear-gradient(90deg, #2ecc71, #27ae60); transition: width 0.3s;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="vsTitle" style="display:none; text-align: center; color: #666; font-weight: bold; font-style: italic; font-size: 20px; margin: -5px 0;">V.S.</div>
+
+      <div id="monsterArea" class="card" style="display:none; position: relative; overflow: hidden; min-height: 130px; border-right: 5px solid #e74c3c; padding: 15px; background: rgba(0,0,0,0.5);">
+        <img id="bossImg" src="" style="position: absolute; left: -5px; top: -5px; height: 130%; opacity: 0.7; pointer-events: none; mask-image: linear-gradient(to right, black, transparent); -webkit-mask-image: linear-gradient(to right, black, transparent); object-fit: contain; z-index: 0;">
+        <div style="position: relative; z-index: 1; width: 60%; margin-left: auto; text-align: right;">
+          <div id="mName" style="font-weight: bold; color: #e74c3c; font-size: 18px; text-shadow: 0 0 5px #000;">怪物名稱</div>
+          <div style="font-size: 14px; margin-top: 4px; color: #eee;">HP: <span id="mHpText" style="font-family: monospace;">0 / 0</span></div>
+          <div style="width:100%; height:12px; background:rgba(0,0,0,0.6); border-radius:6px; overflow:hidden; margin-top:8px; border: 1px solid rgba(255,255,255,0.1);">
+            <div id="mHpBar" style="width:100%; height:100%; background:linear-gradient(90deg, #ff4d4d, #ff9f43); transition: width 0.3s;"></div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-
-  <div id="vsTitle" style="display:none; text-align: center; color: #666; font-weight: bold; font-style: italic; font-size: 20px; margin: -5px 0;">V.S.</div>
-
-  <div id="monsterArea" class="card" style="display:none; position: relative; overflow: hidden; min-height: 130px; border-right: 5px solid #e74c3c; padding: 15px; background: rgba(0,0,0,0.5);">
-    <img id="bossImg" src="" style="position: absolute; left: -5px; top: -5px; height: 130%; opacity: 0.7; pointer-events: none; mask-image: linear-gradient(to right, black, transparent); -webkit-mask-image: linear-gradient(to right, black, transparent); object-fit: contain; z-index: 0;">
-    
-    <div style="position: relative; z-index: 1; width: 60%; margin-left: auto; text-align: right;">
-      <div id="mName" style="font-weight: bold; color: #e74c3c; font-size: 18px; text-shadow: 0 0 5px #000;">怪物名稱</div>
-      <div style="font-size: 14px; margin-top: 4px; color: #eee;">HP: <span id="mHpText" style="font-family: monospace;">0 / 0</span></div>
-      <div style="width:100%; height:12px; background:rgba(0,0,0,0.6); border-radius:6px; overflow:hidden; margin-top:8px; border: 1px solid rgba(255,255,255,0.1);">
-        <div id="mHpBar" style="width:100%; height:100%; background:linear-gradient(90deg, #ff4d4d, #ff9f43); transition: width 0.3s;"></div>
-      </div>
-    </div>
-  </div>
-</div>
 
     <button id="startBattleBtn" onclick="startBattle()" style="margin-top: 10px;">開始搜尋敵人</button>
     <button id="stopBattleBtn" onclick="stopBattle('已撤離戰場')" style="display:none; background:#555; margin-top: 10px;">撤退 / 停止</button>
@@ -183,6 +161,21 @@
   </div>
 </div>
 
+<!--技能頁面 (Skills Page)-->
+<div id="page-skills" class="page" style="display:none;">
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+      <strong>🔮 技能配置</strong>
+      <span class="small">已綁定: <span id="activeSkillCount">0</span> / 3</span>
+    </div>
+    <div id="skillList" style="display:flex; flex-direction:column; gap:10px;"></div>
+    <div class="small" style="margin-top:15px; color:rgba(255,255,255,0.4); text-align:center;">
+      ※ 領悟技能需消耗魔力與特定 BOSS 材料
+    </div>
+  </div>
+</div>
+
+<!--背包頁面 (Inventory Page)-->
 <div id="page-inventory" class="page">
   <div class="card">
     <div style="display:flex; gap:10px; margin-bottom:15px;">
@@ -206,20 +199,56 @@
   </div>
 </div>
 
-<div id="itemModal" class="modal-overlay" onclick="closeModal()">
-  <div class="modal-card" onclick="event.stopPropagation()">
-    <div id="modalRarity" class="modal-rarity">RARITY</div>
-    <div id="modalIcon" style="font-size: 40px; margin: 10px 0;">🛡️</div>
-    <strong id="modalName" style="font-size: 18px;">裝備名稱</strong>
-    <div id="modalStats" class="modal-stats" style="margin: 15px 0; line-height: 1.6;">屬性讀取中...</div>
-    <button id="unequipBtn" style="background: #444;">卸下裝備</button>
-    <button onclick="closeModal()" style="background: none; border: 1px solid #555; margin-top: 10px; font-size: 12px; width: auto; padding: 5px 15px;">關閉</button>
+<!--設定頁面 (Settings Page)-->
+<div id="page-settings" class="page">
+  <div class="card">
+    <h3 style="margin-top: 0; color: var(--primary);">⚙️ 遊戲設定</h3>
+    <p class="small">在這裡管理你的冒險進度與遊戲選項。</p>
+    
+    <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 15px 0;">
+
+    <div class="card">
+      <strong style="color: var(--primary);">💾 存檔管理</strong>
+      <p class="small">將你的進度下載為檔案保存，或上傳檔案恢復進度。</p>
+      <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <button onclick="exportSaveFile()" style="flex: 1; background: #3498db;">下載存檔檔</button>
+        <button onclick="document.getElementById('importFileInput').click()" style="flex: 1; background: #2ecc71;">上傳存檔檔</button>
+      </div>
+      <input type="file" id="importFileInput" style="display:none;" accept=".sav,.json" onchange="importSaveFile(this)">
+    </div>
+
+    <div style="padding: 15px; border: 1px dashed #e74c3c; border-radius: 12px; background: rgba(231, 76, 60, 0.05);">
+      <strong style="color: #e74c3c; display: block; margin-bottom: 5px;">⚠️ 危險區域</strong>
+      <span class="small">刪除後將失去所有等級、裝備、材料與魔力。此操作無法撤銷。</span>
+      <button class="danger-btn" onclick="confirmReset()" style="margin-top: 15px; background: #e74c3c;">刪除所有遊戲紀錄</button>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="small" style="text-align: center;">
+      遊戲版本：v0.4.5<br>
+      最後存檔時間：<span id="lastSaveTime">--:--:--</span>
+    </div>
   </div>
 </div>
 
-<footer class="copyright-notice">
-  &copy; 2026 konghua_0206. All Rights Reserved.
-</footer>
+<!--彈窗、頁尾與結束標籤 (Modals & Footer)-->
+</div> </div> <div id="itemModal" class="modal-overlay" onclick="closeModal()">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div id="modalRarity" class="modal-rarity">RARITY</div>
+      <div id="modalIcon" style="font-size: 40px; margin: 10px 0;">🛡️</div>
+      <strong id="modalName" style="font-size: 18px;">裝備名稱</strong>
+      <div id="modalStats" class="modal-stats" style="margin: 15px 0; line-height: 1.6;">屬性讀取中...</div>
+      <button id="unequipBtn" style="background: #444;">卸下裝備</button>
+      <button onclick="closeModal()" style="background: none; border: 1px solid #555; margin-top: 10px; font-size: 12px; width: auto; padding: 5px 15px;">關閉</button>
+    </div>
+  </div>
+
+  <footer class="copyright-notice">
+    &copy; 2026 konghua_0206. All Rights Reserved.
+  </footer>
+
+</body>
 
 <script src="js/skills.js"></script>
 <script src="js/monsters.js"></script>
@@ -227,18 +256,25 @@
 <script src="js/bosses.js"></script>
 
 <script>
-/**
+
+/** 
  * ============================================================
- * 核心數據初始化與持久化 (Core Data & Persistence)
- * 負責定義遊戲狀態、載入/儲存玩家進度
+ * 1. 核心數據定義與初始化
  * ============================================================
  */
 
-// 1. 定義唯一的存檔標籤
 const SAVE_KEY = "magicRPG_v2"; 
-const MAX_LEVEL = 100; // 玩家等級上限
+const MAX_LEVEL = 100; 
+const slotIcons = { head:"🎓", top:"👘", bottom:"👖", shoes:"👞", mainHand:"🗡️", offHand:"🛡️", necklace:"📿", ring1:"💍", ring2:"💍" };
 
-// 2. 定義產生初始資料的函式
+let game; // 全域遊戲狀態
+let isEditing = false;
+let currentInvTab = 'equip';
+let battleInterval = null;
+let currentMonster = null;
+let currentCooldowns = {}; // 格式如: { "fireball": 3, "heal": 0 }
+
+// 定義產生初始資料的函式
 function getDefaultGameData() {
   return {
     charName: "未命名勇者", 
@@ -246,24 +282,12 @@ function getDefaultGameData() {
     mana: 0, 
     charLv: 1, 
     points: 0, 
-    int: 0, 
-    med: 0, 
-    vit: 0, 
+    str: 0, agi: 0, luk: 0, int: 0, med: 0, vit: 0, 
     currentHp: 100,
-    
-    // --- 技能系統新增資料 ---
-    learnedSkills: [],    // 已習得技能的 ID 陣列 (例如: ["fireball"])
-    equippedSkills: [],   // 目前綁定在戰鬥中的技能 ID (最多 3 個)
-    
-    // --- 物品與材料 ---
+    learnedSkills: [], 
+    equippedSkills: [], 
     inventory: [], 
-    materials: {
-      "古老鹿角": 0,      // 預設列出基礎 BOSS 材料方便追踪
-      "守護者核心": 0,
-      "深淵靈魂": 0
-    },
-    
-    // --- 裝備槽位 ---
+    materials: { "古老鹿角": 0, "守護者核心": 0, "深淵靈魂": 0 },
     equipment: { 
       head: null, top: null, bottom: null, shoes: null, 
       mainHand: null, offHand: null, necklace: null, ring1: null, ring2: null 
@@ -271,15 +295,11 @@ function getDefaultGameData() {
   };
 }
 
-// 3. 宣告全域變數 game (先不賦值)
-let game;
-
-// 4. 初始化遊戲邏輯
+// 初始化遊戲邏輯
 function initGame() {
     const savedData = localStorage.getItem(SAVE_KEY);
     if (savedData) {
         try {
-            // 合併存檔與預設值，確保新舊版相容
             game = Object.assign(getDefaultGameData(), JSON.parse(savedData));
             console.log("存檔載入成功");
         } catch (e) {
@@ -290,114 +310,175 @@ function initGame() {
         game = getDefaultGameData();
         console.log("無存檔紀錄，開啟新遊戲");
     }
-        if (typeof renderRegionDropdown === "function") {
-        renderRegionDropdown();
-    }
-    // 確保所有 UI 顯示最新資料
+    
+    if (typeof renderRegionDropdown === "function") renderRegionDropdown();
     if (typeof updateUI === "function") updateUI(); 
 }
 
-// 5. 其他全域狀態
-let isEditing = false;
-let currentInvTab = 'equip';
-let battleInterval = null;
-let currentMonster = null;
-const slotIcons = { head:"🎓", top:"👘", bottom:"👖", shoes:"👞", mainHand:"🗡️", offHand:"🛡️", necklace:"📿", ring1:"💍", ring2:"💍" };
-
-// 6. 執行初始化 (放最後)
+// 執行初始化
 initGame();
-
-// 7. 定義統一的存檔函式
-function saveData() { 
-    localStorage.setItem(SAVE_KEY, JSON.stringify(game)); 
-    // 同步更新設定頁面的最後存檔時間
-    updateSaveTime(); 
-    console.log("遊戲已自動存檔");
-}
-
-// 8. 當瀏覽器視窗準備關閉或重新整理時，執行最後一次存檔
-window.addEventListener("beforeunload", function (e) {
-    // 只有在 canSave 許可的情況下才執行存檔
-    // 這樣在 confirmReset 或 importSaveFile 關閉許可後，就不會把舊資料寫回 LocalStorage
-    if (typeof canSave !== 'undefined' && canSave) {
-        saveData();
-    }
-});
 
 /**
  * ============================================================
- * 屬性數值運算中心 (Stat Calculation Engine)
- * 負責處理所有裝備加成、角色成長與即時數值轉換
+ * 2. 數值運算中心 (修復版：支援裝備額外屬性)
  * ============================================================
  */
 
-// 加總所有穿戴裝備的屬性
+// A. 基礎與額外屬性加總
 function getEquipStats() {
-  let s = { atk:0, def:0, hp:0 };
-  for(let k in game.equipment) { if(game.equipment[k]) { s.atk+=game.equipment[k].atk; s.def+=game.equipment[k].def; s.hp+=game.equipment[k].hp; } }
+  // 初始化所有可能從裝備獲得的數值
+  let s = { 
+    atk: 0, def: 0, hp: 0, 
+    str: 0, agi: 0, int: 0, vit: 0, luk: 0, med: 0 
+  };
+  
+  for (let k in game.equipment) { 
+    const item = game.equipment[k];
+    if (item) { 
+      // 1. 加總基礎三大屬性
+      s.atk += (item.atk || 0);
+      s.def += (item.def || 0);
+      s.hp  += (item.hp  || 0);
+      
+      // 2. 加總額外六圍屬性 (處理 generateRandomEquip 產生的 extraStats)
+      if (item.extraStats) {
+        for (let key in item.extraStats) {
+          if (s.hasOwnProperty(key)) {
+            s[key] += (item.extraStats[key] || 0);
+          }
+        }
+      }
+    } 
+  }
   return s;
 }
 
-// 取得當前最大血量 (整合你原本的公式)
-function getMaxHp() {
-  // 取得裝備加成 (確保 getEquipStats 函式存在)
-  const e = (typeof getEquipStats === "function") ? getEquipStats() : { hp: 0, atk: 0, def: 0 };
-  
-  // 原本公式：(基礎 + 等級加成 + 裝備加成) * (1 + 體質加成)
-  return Math.floor((100 + game.charLv * 30 + e.hp) * (1 + game.vit * 0.05));
+// B. 輔助工具：取得「角色 + 裝備」的總屬性
+function getTotalStat(key) {
+  const equip = getEquipStats();
+  // 確保 key 存在，不存在則回傳 0
+  const charBase = game[key] || 0;
+  const equipBonus = equip[key] || 0;
+  return charBase + equipBonus;
 }
 
-// 取得戰鬥用屬性 (整合攻擊與防禦)
+// C. 核心戰鬥公式
+function getAtk() { 
+  const e = getEquipStats();
+  // 公式：等級基礎 + (力量x10) + (智力x5) + 裝備攻擊
+  // 物理傷害核心，智力也提供少量輔助加成。
+  return (game.charLv * 5) + (getTotalStat('str') * 10) + (getTotalStat('int') * 5) + e.atk; 
+}
+
+function getDef() { 
+  const e = getEquipStats();
+  // 公式：等級基礎 + (體質x3) + (力量x1) + 裝備防禦
+  // 體質為防禦主來源，力量可提供額外韌性。
+  return (game.charLv * 2) + (getTotalStat('vit') * 3) + (getTotalStat('str') * 1) + e.def; 
+}
+
+function getMaxHp() {
+  const e = getEquipStats();
+  // 公式：(等級基礎 + 裝備血量) * (1 + 體質x5%)
+  // 體質提供的是「百分比」加成，後期收益極高。
+  return Math.floor((100 + game.charLv * 30 + e.hp) * (1 + getTotalStat('vit') * 0.05));
+}
+
+// D. 機率與倍率 (飽和曲線：數值越高成長越慢，但永遠不超過 100%)
+function getCritRate() {
+  const power = (getTotalStat('luk') * 0.8) + (getTotalStat('agi') * 0.2);
+  const rate = 100 * (1 - Math.pow(0.98, power));
+  // 幸運決定暴擊率，敏捷提供少量輔助。
+  return rate.toFixed(1);
+}
+
+function getDodgeRate() {
+  const power = (getTotalStat('agi') * 1.0) + (getTotalStat('luk') * 0.2);
+  const rate = 100 * (1 - Math.pow(0.97, power));
+  // 敏捷決定閃避率，設有 90% 的硬上限。
+  return Math.min(90, rate).toFixed(1);
+}
+
+function getCritMultiplier() {
+  const baseMulti = 2.0; 
+  const extraMulti = (getTotalStat('luk') * 0.01) + (getTotalStat('str') * 0.005);
+  // 基礎暴擊 2 倍，幸運與力量可額外提升傷害倍率。
+  return parseFloat((baseMulti + extraMulti).toFixed(2));
+}
+
+// E. 資源與回血
+function manaPerSecond() { 
+  // 公式：等級基礎 * (1 + 智力x2% + 冥想x5%)
+  // 智力與冥想等級越高，每秒產出的魔力就越多。
+  return Math.floor((game.charLv * 2) * (1 + getTotalStat('int') * 0.02 + getTotalStat('med') * 0.05)); 
+}
+
+function getHpRegen() {
+  // 公式：(最大血量x1%) + (體質x2) + (冥想x5)
+  // 主要根據血量百分比回血，體質與冥想提供固定加成。
+  return (getMaxHp() * 0.01) + (getTotalStat('vit') * 2) + (getTotalStat('med') * 5);
+}
+
+// F. 綜合戰鬥包
 function getCombatStats() {
-  const e = (typeof getEquipStats === "function") ? getEquipStats() : { hp: 0, atk: 0, def: 0 };
-  
   return {
-    atk: 10 + (game.int * 5) + (e.atk || 0),   // 智力加成 + 裝備攻擊
-    def: 5 + (game.vit * 2) + (e.def || 0),    // 體質加成 + 裝備防禦
-    maxHp: getMaxHp()                         // 直接調用你原本的公式
+    atk: getAtk(),
+    def: getDef(),
+    maxHp: getMaxHp(),
+    critRate: parseFloat(getCritRate()),
+    dodgeRate: parseFloat(getDodgeRate()),
+    critMulti: getCritMultiplier()
   };
 }
 
-// 計算總攻擊力 (等級基礎 + 智力加成 + 裝備)
-function getAtk() { return (game.charLv*5)+(game.int*8)+getEquipStats().atk; }
-
-// 計算總防禦力 (體力基礎 + 裝備)
-function getDef() { return (game.vit*2)+getEquipStats().def; }
-
-// 計算每秒產生的魔力 (MPS)
-function manaPerSecond() { return Math.floor((game.charLv*2)*(1+game.int*0.01)); }
-
-
-/**
+/** 
  * ============================================================
- * 使用者介面驅動 (UI Driving & Interaction)
- * 負責將數據變動反映到畫面，以及處理按鈕點擊事件
+ * 3. UI 介面驅動與分頁控制
  * ============================================================
  */
 
-// 更新畫面上所有的數值與進度條
 function updateUI() {
-  document.getElementById("mana").innerText = Math.floor(game.mana);
+  // --- 基礎資源與等級 ---
+  // 使用 .toLocaleString() 讓大數字顯示逗號（如 1,000），更像遊戲介面
+  document.getElementById("mana").innerText = Math.floor(game.mana).toLocaleString();
   document.getElementById("mps").innerText = manaPerSecond();
   document.getElementById("charLv").innerText = game.charLv;
   document.getElementById("nameDisplay").innerText = game.charName;
-  document.getElementById("points").innerText = game.points;
-  document.getElementById("int").innerText = game.int;
-  document.getElementById("med").innerText = game.med;
-  document.getElementById("vit").innerText = game.vit;
+  document.getElementById("charCost").innerText = Math.floor(50 * Math.pow(1.3, game.charLv - 1)).toLocaleString();
+
+  // --- 基礎屬性點 (六圍) ---
+  document.getElementById("points").innerText = game.points || 0;
+  document.getElementById("str").innerText = game.str || 0;
+  document.getElementById("agi").innerText = game.agi || 0;
+  document.getElementById("int").innerText = game.int || 0;
+  document.getElementById("med").innerText = game.med || 0;
+  document.getElementById("vit").innerText = game.vit || 0;
+  document.getElementById("luk").innerText = game.luk || 0;
+
+  // --- 戰鬥面板數值 ---
+  // 改為調用運算中心的新公式
   document.getElementById("atk").innerText = getAtk();
   document.getElementById("def").innerText = getDef();
-  document.getElementById("charCost").innerText = Math.floor(50 * Math.pow(1.3, game.charLv-1));
-  
-  const mHp = getMaxHp();
-  document.getElementById("hpText").innerText = `${Math.floor(game.currentHp)} / ${mHp}`;
-  document.getElementById("hpBar").style.width = (game.currentHp/mHp*100) + "%";
-  if(game.avatarImage) document.getElementById("avatarImg").src = game.avatarImage;
+  document.getElementById("crit").innerText = getCritRate();   // 修正：使用新公式 getCritRate
+  document.getElementById("dodge").innerText = getDodgeRate(); // 修正：使用新公式 getDodgeRate
 
-  // 渲染裝備槽位狀態
+  // --- 血量條與數值 ---
+  const mHp = getMaxHp();
+  const curHp = Math.max(0, Math.floor(game.currentHp));
+  document.getElementById("hpText").innerText = `${curHp} / ${mHp}`;
+  document.getElementById("hpBar").style.width = (curHp / mHp * 100) + "%";
+  
+  // --- 頭像與裝備槽位 ---
+  if (game.avatarImage) document.getElementById("avatarImg").src = game.avatarImage;
+  renderEquipmentSlots(); // 呼叫輔助函式渲染裝備
+}
+
+// 輔助更新裝備槽
+function renderEquipmentSlots() {
   for (let sid in slotIcons) {
     let el = document.getElementById(`slot-${sid}`);
-    if (game.equipment[sid]) {
+    if (!el) continue;
+    if (game.equipment && game.equipment[sid]) {
       el.innerText = game.equipment[sid].icon;
       el.className = "equip-slot occupied";
       el.style.borderColor = `var(--rarity-${game.equipment[sid].rarity})`;
@@ -411,9 +492,8 @@ function updateUI() {
   }
 }
 
-// 切換主頁面分頁
+// 分頁切換邏輯
 function switchPage(p) {
-  // 1. 切換分頁顯示
   document.querySelectorAll('.page').forEach(pg => {
     pg.classList.remove('active');
     pg.style.display = 'none';
@@ -425,57 +505,84 @@ function switchPage(p) {
     target.style.display = 'block';
   }
 
-  // 2. 更新側邊欄按鈕高亮
   document.querySelectorAll('.nav-item').forEach(nav => {
     nav.classList.remove('active');
-    // 增加安全性檢查，確保 onclick 屬性存在
     const clickAttr = nav.getAttribute('onclick');
-    if (clickAttr && clickAttr.includes(`'${p}'`)) {
-      nav.classList.add('active');
-    }
+    if (clickAttr && clickAttr.includes(`'${p}'`)) nav.classList.add('active');
   });
 
-  // 3. 根據分頁執行對應的渲染邏輯
-  if (p === 'inventory') {
-    renderInventory();
-  }
-  
-  if (p === 'battle') {
-    updateBattleUI();
-  }
-
-  // ✅ 新增：如果是切換到技能分頁，執行技能列表渲染
-  if (p === 'skills') {
-    if (typeof renderSkills === "function") {
-      renderSkills();
-    } else {
-      console.warn("renderSkills 函式尚未定義，請確保技能系統代碼已加入腳本中。");
-    }
-  }
+  if (p === 'inventory') renderInventory();
+  if (p === 'battle') updateBattleUI();
+  if (p === 'skills' && typeof renderSkills === "function") renderSkills();
 }
 
-// 屬性點加點處理
+// 按鈕事件：點數與升級
 function addAttr(a) { if(game.points > 0) { game[a]++; game.points--; updateUI(); saveData(); } }
 
-// 角色等級提升處理
 document.getElementById("upgradeChar").onclick = () => {
   let cost = Math.floor(50 * Math.pow(1.3, game.charLv-1));
   if (game.mana >= cost) { game.mana -= cost; game.charLv++; game.points += 5; updateUI(); saveData(); }
 };
 
+// 重置屬性點數功能
+function resetStats() {
+  // 核心修正：初始值為 0，所以直接加總所有屬性值即為「已分配點數」
+  const totalAllocated = 
+    (game.str || 0) + 
+    (game.agi || 0) + 
+    (game.int || 0) + 
+    (game.med || 0) + 
+    (game.vit || 0) + 
+    (game.luk || 0);
+  
+  // 檢查是否有點數可以重置
+  if (totalAllocated <= 0) {
+    alert("目前屬性皆為初始值，無需重置。");
+    return;
+  }
 
-/**
+  if (confirm(`確定要重置所有屬性點嗎？\n將歸還 ${totalAllocated} 點至可用能力點。`)) {
+    // 1. 點數歸還 (加回原本剩餘的 points 中)
+    game.points = (game.points || 0) + totalAllocated;
+    
+    // 2. 全部屬性回歸初始值 0
+    game.str = 0;
+    game.agi = 0;
+    game.int = 0;
+    game.med = 0;
+    game.vit = 0;
+    game.luk = 0;
+    
+    // 3. 數據持久化與畫面同步
+    if (typeof saveGame === "function") saveGame(); // 執行存檔
+    
+    // 重新渲染角色面板與更新頂部 UI
+    renderCharacter(); 
+    updateUI();
+    
+    alert("屬性重置成功！所有點數已退還。");
+  }
+}
+
+/** 
  * ============================================================
- * 角色檔案管理 (Profile & Avatar Management)
- * 負責處理更名與大頭貼上傳
+ * 4. 個人檔案與存檔管理
  * ============================================================
  */
 
-// 處理編輯資料模式切換
+// 統一存檔函式
+function saveData() { 
+    localStorage.setItem(SAVE_KEY, JSON.stringify(game)); 
+    if (typeof updateSaveTime === "function") updateSaveTime(); 
+    console.log("遊戲已自動存檔");
+}
+
+// 編輯模式切換
 document.getElementById("editBtn").onclick = function() {
   isEditing = !isEditing;
   const nameDisplay = document.getElementById("nameDisplay");
   const nameInput = document.getElementById("nameInput");
+  
   if (isEditing) {
     this.innerText = "儲存資料";
     nameDisplay.style.display = "none";
@@ -492,7 +599,7 @@ document.getElementById("editBtn").onclick = function() {
   }
 };
 
-// 處理大頭貼圖片讀取 (Base64)
+// 處理大頭貼圖片讀取
 document.getElementById("avatarInput").onchange = (e) => {
   const file = e.target.files[0];
   if (file && file.size < 1024 * 1024) {
@@ -502,6 +609,12 @@ document.getElementById("avatarInput").onchange = (e) => {
   } else if(file) alert("圖片太大囉 (限 1MB)");
 };
 
+// 關閉視窗前自動存檔
+window.addEventListener("beforeunload", function (e) {
+    if (typeof canSave !== 'undefined' && canSave) {
+        saveData();
+    }
+});
 
 /**
  * ============================================================
@@ -673,7 +786,7 @@ function bulkSell() {
 
 // 渲染技能列表
 function renderSkills() {
-  const container = document.getElementById("skillList");
+  const container = document.getElementById("skillList"); // 確保 ID 與 HTML 對應
   if (!container) return;
   container.innerHTML = "";
   
@@ -683,16 +796,27 @@ function renderSkills() {
     
     const div = document.createElement("div");
     div.className = "item-card";
-    div.style = `border-left: 4px solid ${isLearned ? skill.color : '#555'}; 
-                 display:flex; justify-content:space-between; align-items:center; 
-                 margin-bottom:10px; padding:12px; background:rgba(255,255,255,0.05); 
-                 border-radius:8px;`;
     
+    // 基本樣式設定
+    div.style = `
+      border-left: 4px solid ${isLearned ? skill.color : '#555'}; 
+      display: flex; 
+      align-items: center; 
+      margin-bottom: 10px; 
+      padding: 12px; 
+      background: rgba(255,255,255,0.05); 
+      border-radius: 8px;
+      gap: 12px;
+    `;
+    
+    // --- 技能資訊 HTML 模板 ---
+    let skillContent = "";
     if (isLearned) {
-      // 已習得：顯示裝備功能
-      div.innerHTML = `
+      skillContent = `
         <div style="flex:1;">
-          <div style="font-weight:bold; color:${skill.color}">${skill.name} <span style="font-size:10px; color:#aaa;">(消耗: ${skill.cost}✨)</span></div>
+          <div style="font-weight:bold; color:${skill.color}">${skill.name} 
+            <span style="font-size:10px; color:#aaa;">(消耗: ${skill.cost}✨ | CD: ${skill.cooldown}s)</span>
+          </div>
           <div class="small" style="color:#ccc;">${skill.desc}</div>
         </div>
         <button onclick="toggleSkill('${skill.id}')" style="width:80px; padding:8px; font-size:12px; background:${isEquipped ? '#e74c3c' : 'var(--primary)'}">
@@ -700,22 +824,34 @@ function renderSkills() {
         </button>
       `;
     } else {
-      // 未習得：顯示學習要求
-      div.innerHTML = `
+      skillContent = `
         <div style="flex:1;">
           <div style="font-weight:bold; color:#888;">${skill.name} (尚未領悟)</div>
           <div class="small" style="color:#777;">需求: ${skill.learnCost.toLocaleString()} ✨</div>
-          <div class="small" style="color:#f1c40f;">材料: ${skill.requireMat} x1</div>
+          <div class="small" style="color:#f1c40f;">材料: ${skill.requireMat}</div>
         </div>
         <button onclick="learnSkill('${skill.id}')" style="width:80px; padding:8px; font-size:12px; background:#2c3e50; border:1px solid #f1c40f; color:#f1c40f;">
           領悟
         </button>
       `;
     }
+
+    // 將圖示插入到最前方
+    div.innerHTML = `
+      <div class="skill-icon-box" style="flex-shrink:0;">
+        <img src="${skill.icon}" alt="${skill.name}" 
+             onerror="this.style.display='none'; this.parentElement.style.background='${skill.color}'; this.parentElement.style.opacity='0.5';"
+             style="width:40px; height:40px; border-radius:6px; object-fit:cover; display:block; border:1px solid rgba(255,255,255,0.1);">
+      </div>
+      ${skillContent}
+    `;
+    
     container.appendChild(div);
   });
   
-  document.getElementById("activeSkillCount").innerText = game.equippedSkills.length;
+  // 更新已裝備數量顯示
+  const countEl = document.getElementById("activeSkillCount");
+  if (countEl) countEl.innerText = game.equippedSkills.length;
 }
 
 // 領悟技能邏輯
@@ -723,22 +859,30 @@ function learnSkill(id) {
   const skill = allSkills.find(s => s.id === id);
   if (!skill) return;
 
-  // 檢查資源
+  // 解析 "素材 x數量" 的複合格式
+  const requirements = skill.requireMat.split(',').map(item => {
+    const parts = item.trim().split(' x');
+    return { name: parts[0], count: parseInt(parts[1]) || 1 };
+  });
+
   const hasMana = game.mana >= skill.learnCost;
-  const hasMat = (game.materials[skill.requireMat] || 0) >= 1;
+  // 檢查所有素材是否達標
+  const hasMats = requirements.every(req => (game.materials[req.name] || 0) >= req.count);
 
-  if (!hasMana) { alert("魔力不足！"); return; }
-  if (!hasMat) { alert(`缺乏材料: ${skill.requireMat}`); return; }
+  if (!hasMana) { showNotification("領悟失敗：魔力不足"); return; }
+  if (!hasMats) { showNotification(`領悟失敗：材料不足 (${skill.requireMat})`); return; }
 
-  if (confirm(`是否消耗 ${skill.learnCost} 魔力與 ${skill.requireMat} 領悟【${skill.name}】？`)) {
+  if (confirm(`確定消耗 ${skill.learnCost} 魔力與相關材料領悟【${skill.name}】？`)) {
     game.mana -= skill.learnCost;
-    game.materials[skill.requireMat] = Math.max(0, (game.materials[skill.requireMat] || 0) - 1);
+    // 扣除所有要求的素材
+    requirements.forEach(req => {
+      game.materials[req.name] -= req.count;
+    });
     game.learnedSkills.push(id);
-    
-    alert(`🎉 成功領悟了 ${skill.name}！`);
     renderSkills();
-    saveData();
     updateUI();
+    saveData();
+    showNotification(`成功領悟技能：${skill.name}！`);
   }
 }
 
@@ -815,36 +959,14 @@ function spawnSkillEffect(skill) {
   
 /**
  * ============================================================
- * 完整戰鬥系統 (Combat System)
- * 包含：隨機裝備生成、血條歸零緩衝、自動續戰
+ * 戰鬥系統整理 (Combat System)
  * ============================================================
  */
+// 區域與模式變數
+let currentRegion = "新手森林"; 
+let battleMode = 'adventure'; 
 
-let currentRegion = "新手森林"; // 預設區域
-
-let battleMode = 'adventure'; // 'adventure' or 'boss'
-
-// 2. 隨機裝備生成器
-function generateRandomEquip(lv) {
-  const types = ["head", "top", "bottom", "shoes", "mainHand", "offHand"];
-  const type = types[Math.floor(Math.random() * types.length)];
-  const r = Math.random() < 0.05 ? 3 : (Math.random() < 0.15 ? 2 : (Math.random() < 0.4 ? 1 : 0));
-  const rarityNames = ["普通", "稀有", "史詩", "傳奇"];
-  const multiplier = (1 + r * 0.5) * (lv / 5);
-  
-  return {
-    id: Date.now() + Math.random(),
-    type: type,
-    rarity: r,
-    name: `${rarityNames[r]}的 Lv.${lv} 裝備`,
-    atk: Math.floor(10 * multiplier),
-    def: Math.floor(5 * multiplier),
-    hp: Math.floor(20 * multiplier),
-    icon: slotIcons[type]
-  };
-}
-
-// 2. 切換模式
+// 切換戰鬥模式 (冒險/BOSS)
 function toggleBattleMode(mode) {
   if (battleInterval) {
     alert("戰鬥中無法切換模式！");
@@ -859,7 +981,7 @@ function toggleBattleMode(mode) {
   if (mode === 'boss') renderBossList();
 }
 
-// 3. 渲染 BOSS 列表
+// 渲染 BOSS 挑戰列表
 function renderBossList() {
   const list = document.getElementById("bossList");
   if (!list) return;
@@ -867,14 +989,14 @@ function renderBossList() {
 
   bossData.forEach(boss => {
     const card = document.createElement("div");
-    // 設定卡片樣式
+    // 保留原本的寬高、背景與滾軸對齊屬性
     card.style = `
       flex: 0 0 140px;
-      height: 160px;
+      height: 180px; 
       background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
       border: 1px solid #f1c40f;
       border-radius: 12px;
-      padding: 12px;
+      padding: 10px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -887,46 +1009,84 @@ function renderBossList() {
       box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     `;
     
-    // 滑鼠移入效果
     card.onmouseover = () => card.style.transform = "translateY(-5px)";
     card.onmouseout = () => card.style.transform = "translateY(0)";
     card.onclick = () => startBossBattle(boss);
 
     card.innerHTML = `
-      <div style="position:absolute; top:-8px; left:10px; background:#f1c40f; color:#000; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:bold;">
+      <div style="position:absolute; top:-8px; left:10px; background:#f1c40f; color:#000; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:bold; z-index:1;">
         Lv.${boss.lv}
       </div>
-      <div style="font-size: 24px; margin-top:10px;">💀</div>
-      <div style="font-weight: bold; font-size: 13px; color: #fff; margin: 5px 0;">${boss.name}</div>
-      <div style="font-size: 11px; color: #f1c40f;">✨ ${boss.rewardMana.toLocaleString()}</div>
-      <button style="
-        width: 100%; 
-        padding: 5px; 
-        font-size: 11px; 
-        background: #e74c3c; 
-        border: none; 
-        border-radius: 4px; 
-        color: white; 
-        font-weight: bold;
-        margin-top: 5px;
-      ">挑戰</button>
+
+      <div style="width: 70px; height: 70px; margin-top: 5px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(241, 196, 15, 0.3);">
+        <img src="${boss.img}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='https://via.placeholder.com/70?text=BOSS'">
+      </div>
+
+      <div style="width: 100%;">
+        <div style="font-weight: bold; font-size: 13px; color: #fff; margin: 5px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+          ${boss.name}
+        </div>
+        <div style="font-size: 10px; color: #f1c40f;">✨ ${boss.rewardMana.toLocaleString()}</div>
+      </div>
+
+      <button style="width: 100%; padding: 5px; font-size: 11px; background: #e74c3c; border: none; border-radius: 4px; color: white; font-weight: bold; cursor: pointer;">
+        挑戰
+      </button>
     `;
     list.appendChild(card);
   });
 }
 
-// 3.1 切換區域
+// 切換冒險區域
 function changeRegion(val) {
   if (battleInterval) {
     alert("戰鬥中無法切換區域！");
-    document.getElementById("regionSelect").value = currentRegion; // 跳回原位
+    document.getElementById("regionSelect").value = currentRegion;
     return;
   }
   currentRegion = val;
   document.getElementById("battleStatus").innerText = `已抵達：${currentRegion}`;
 }
 
-// 3.2 開始戰鬥
+// 新增戰鬥訊息到日誌
+function addBattleLog(msg) {
+  const log = document.getElementById("battleLog");
+  if (log) {
+    const div = document.createElement("div");
+    div.innerHTML = msg;
+    log.insertBefore(div, log.firstChild);
+  }
+}
+
+// 更新戰鬥相關血條與數據 UI
+function updateBattleUI() {
+  const stats = getCombatStats();
+  const curHp = Math.max(0, Math.floor(game.currentHp));
+  const maxHp = stats.maxHp;
+
+  const pText = document.getElementById("pBattleHpText");
+  const pBar = document.getElementById("pBattleHpBar");
+  if (pText) pText.innerText = `${curHp} / ${maxHp}`;
+  if (pBar) pBar.style.width = (curHp / maxHp * 100) + "%";
+
+  if (currentMonster) {
+    const mHp = Math.max(0, Math.floor(currentMonster.curHp));
+    const mText = document.getElementById("mHpText");
+    const mBar = document.getElementById("mHpBar");
+    if (mText) mText.innerText = `${mHp} / ${currentMonster.maxHp}`;
+    if (mBar) mBar.style.width = (mHp / currentMonster.maxHp * 100) + "%";
+  }
+
+  const mainHpText = document.getElementById("hpText");
+  const mainHpBar = document.getElementById("hpBar");
+  if (mainHpText) mainHpText.innerText = `${curHp} / ${maxHp}`;
+  if (mainHpBar) mainHpBar.style.width = (curHp / maxHp * 100) + "%";
+  
+  const manaEl = document.getElementById("mana");
+  if (manaEl) manaEl.innerText = Math.floor(game.mana).toLocaleString();
+}
+
+// 開始一般冒險戰鬥
 function startBattle() {
   if (battleInterval || game.currentHp <= 0) return;
   const areaData = regions[currentRegion];
@@ -934,12 +1094,10 @@ function startBattle() {
   const rand = Math.floor(Math.random() * monsterList.length);
   currentMonster = { ...monsterList[rand], maxHp: monsterList[rand].hp, curHp: monsterList[rand].hp };
 
-  // 鏡像資訊
   document.getElementById("battlePlayerImg").src = document.getElementById("avatarImg").src;
   document.getElementById("playerSideName").innerText = `【${document.getElementById("nameDisplay").innerText}】`;
-  document.getElementById("bossImg").src = ""; // 一般怪不顯圖或顯示預設圖
+  document.getElementById("bossImg").src = "";
 
-  // UI 切換
   document.getElementById("playerBattleArea").style.display = "block";
   document.getElementById("monsterArea").style.display = "block";
   document.getElementById("vsTitle").style.display = "block";
@@ -951,11 +1109,10 @@ function startBattle() {
   battleInterval = setInterval(battleTick, 1000);
 }
 
-// 4. 開始 BOSS 戰鬥
+// 開始 BOSS 戰鬥
 function startBossBattle(boss) {
   if (game.currentHp <= 0) { alert("體力不足！"); return; }
   
-  // 鏡像資訊
   document.getElementById("battlePlayerImg").src = document.getElementById("avatarImg").src;
   document.getElementById("playerSideName").innerText = `【${document.getElementById("nameDisplay").innerText}】`;
   
@@ -963,7 +1120,6 @@ function startBossBattle(boss) {
   document.getElementById("bossImg").src = boss.img;
   document.getElementById("mName").innerText = `【BOSS】${currentMonster.name}`;
 
-  // UI 切換
   document.getElementById("bossControls").style.display = "none";
   document.getElementById("playerBattleArea").style.display = "block";
   document.getElementById("monsterArea").style.display = "block";
@@ -975,115 +1131,125 @@ function startBossBattle(boss) {
   battleInterval = setInterval(battleTick, 1000);
 }
 
-// 4. 戰鬥循環邏輯 (每一秒觸發一次)
+// 戰鬥計時循環邏輯 (Enhanced Combat Loop)
 function battleTick() {
   if (!currentMonster) return;
 
-  // 1. 取得計算後的數值 (包含裝備與等級加成)
-  const stats = getCombatStats();
-  
-  // 2. 玩家行動準備
+  const stats = getCombatStats(); // 取得包含裝備加成後的總屬性
   let baseDmg = 0;
   let actionLog = ""; 
   let skillTriggered = false;
 
-  // --- A. 技能判定 ---
-  if (game.equippedSkills && game.equippedSkills.length > 0) {
-    const randomId = game.equippedSkills[Math.floor(Math.random() * game.equippedSkills.length)];
-    const skill = allSkills.find(s => s.id === randomId);
+  // --- A. 冷卻時間處理 ---
+  // 確保 currentCooldowns 已初始化
+  if (typeof currentCooldowns === 'undefined') window.currentCooldowns = {};
+  
+  // 每一回合（秒），將所有冷卻中的技能倒數 -1
+  for (let skillId in currentCooldowns) {
+    if (currentCooldowns[skillId] > 0) {
+      currentCooldowns[skillId]--;
+    }
+  }
 
-    // 判定機率與魔力
-    if (skill && Math.random() < skill.chance) {
-      if (game.mana >= skill.cost) {
+  // --- B. 玩家攻擊判定 ---
+  if (game.equippedSkills && game.equippedSkills.length > 0) {
+    // 篩選出：已裝備、沒在冷卻、且魔力足夠的技能
+    const availableSkills = game.equippedSkills.filter(id => {
+      const s = allSkills.find(sk => sk.id === id);
+      return s && (currentCooldowns[id] || 0) <= 0 && game.mana >= s.cost;
+    });
+
+    if (availableSkills.length > 0) {
+      // 從可用技能中隨機選一個
+      const randomId = availableSkills[Math.floor(Math.random() * availableSkills.length)];
+      const skill = allSkills.find(s => s.id === randomId);
+
+      // 判定發動機率
+      if (skill && Math.random() < skill.chance) {
         game.mana -= skill.cost;
         skillTriggered = true;
 
-        // 【新增：觸發視覺特效】
-        // 這裡調用之前建立的特效函數，傳入當前發動的技能物件
-        if (typeof spawnSkillEffect === "function") {
-          spawnSkillEffect(skill);
-        }
+        // 從技能數據庫讀取 cooldown 並寫入追蹤器
+        currentCooldowns[skill.id] = skill.cooldown;
 
-        if (skill.multiplier) {
-          // 技能倍率作用於基礎攻擊力
-          let effectiveAtk = stats.atk * skill.multiplier;
-          baseDmg = Math.max(1, Math.floor((effectiveAtk * effectiveAtk) / (effectiveAtk + currentMonster.def)));
-          actionLog = `<span style="color:${skill.color}">【${skill.name}】發動！</span> `;
-        }
-        
-        if (skill.type === "heal") {
-          let healAmt = Math.floor((stats.maxHp - game.currentHp) * (skill.ratio || 0));
-          game.currentHp = Math.min(stats.maxHp, game.currentHp + healAmt);
-          actionLog = `<span style="color:${skill.color}">【${skill.name}】治癒 ${healAmt} HP！</span> `;
-          // 治癒術若無攻擊力，基礎傷害則走普攻
-          let pAtk = stats.atk;
-          baseDmg = Math.max(1, Math.floor((pAtk * pAtk) / (pAtk + currentMonster.def)));
-        }
-      } else {
-        actionLog = `<span style="color:rgba(255,255,255,0.3); font-size:11px;">(魔力不足施展 ${skill.name})</span> `;
+        // 執行視覺特效
+        if (typeof spawnSkillEffect === "function") spawnSkillEffect(skill);
+
+        // 執行技能獨立程序 (計算傷害與日誌文字)
+        const result = skill.onEffect(stats, currentMonster);
+        baseDmg = result.dmg;
+        actionLog = `<span style="color:${skill.color}">【${skill.name}】</span> ${result.log}`;
       }
     }
   }
 
-
-  // --- B. 普攻計算 (若未觸發攻擊型技能) ---
+  // --- C. 若未觸發技能則執行普攻 ---
   if (!skillTriggered) {
-    if (actionLog === "") actionLog = `<span style="color:#ccc;">普通攻擊：</span> `;
-    let pAtk = stats.atk;
-    baseDmg = Math.max(1, Math.floor((pAtk * pAtk) / (pAtk + currentMonster.def)));
+    baseDmg = Math.max(1, Math.floor((stats.atk * stats.atk) / (stats.atk + currentMonster.def)));
+    actionLog = `<span style="color:#ccc;">普通攻擊：</span> `;
   }
 
-  // 玩家造成傷害
+  // --- D. 暴擊判定 (普攻與技能皆可暴擊) ---
+  const isPlayerCrit = Math.random() * 100 < stats.critRate;
+  if (isPlayerCrit) {
+    // 使用 stats.critMulti 動態倍率
+    const critDmg = Math.floor(baseDmg * stats.critMulti);
+    baseDmg = critDmg;
+    actionLog += `<span style="color:#f1c40f; font-weight:bold;">[暴擊 x${stats.critMulti.toFixed(1)}!!] </span>`;
+  }
+
+  // 套用傷害到怪物並記錄
   currentMonster.curHp -= baseDmg;
   addBattleLog(`<div>${actionLog}造成 <span style="color: #2ecc71;">${baseDmg}</span> 傷害</div>`);
 
-  // --- C. 怪物反擊計算 (僅在怪物存活時) ---
+// --- E. 怪物反擊判定 (全面程序化版本) ---
   if (currentMonster.curHp > 0) {
-    let mAtkData = currentMonster.atkRange || [currentMonster.lv * 5, currentMonster.lv * 10];
-    let mBaseAtk = Math.floor(Math.random() * (mAtkData[1] - mAtkData[0] + 1)) + mAtkData[0];
-    let mDamage = 0;
-    let battleMsg = "";
+    // 玩家閃避判定
+    const isPlayerDodged = Math.random() * 100 < stats.dodgeRate;
 
-    // --- 技能發動判斷 ---
-    let usedSkill = null;
-    // 檢查怪物是否有技能，並設定 25% 的總技能發動率
-    if (currentMonster.skills && currentMonster.skills.length > 0 && Math.random() < 0.25) {
-      usedSkill = currentMonster.skills[Math.floor(Math.random() * currentMonster.skills.length)];
-    }
-
-    if (usedSkill) {
-      if (usedSkill.heal) {
-        // A. 治療型技能
-        let healAmt = Math.floor(currentMonster.hp * usedSkill.heal);
-        currentMonster.curHp = Math.min(currentMonster.hp, currentMonster.curHp + healAmt);
-        battleMsg = `<div style="color: #2ecc71;">${currentMonster.name} ${usedSkill.msg} (+${healAmt} HP)</div>`;
-      } else {
-        // B. 傷害型技能 (套用技能倍率 power)
-        let skillAtk = mBaseAtk * (usedSkill.power || 1);
-        mDamage = Math.max(1, Math.floor((skillAtk * skillAtk) / (skillAtk + stats.def)));
-        game.currentHp -= mDamage;
-        battleMsg = `<div style="color: #f39c12;">★ ${currentMonster.name} ${usedSkill.msg} 造成 ${mDamage} 傷害</div>`;
-      }
+    if (isPlayerDodged) {
+      addBattleLog(`<div style="color: #3498db;">🍃 閃避！你輕巧地避開了 ${currentMonster.name} 的攻擊</div>`);
     } else {
-      // C. 普通攻擊 (您原本的遞減曲線公式)
-      mDamage = Math.max(1, Math.floor((mBaseAtk * mBaseAtk) / (mBaseAtk + stats.def)));
-      game.currentHp -= mDamage;
-      battleMsg = `<div style="color: #e74c3c;">${currentMonster.name} 反擊造成 ${mDamage} 傷害</div>`;
-    }
+      // 1. 基礎數值準備
+      let mAtkData = currentMonster.atkRange || [currentMonster.lv * 5, currentMonster.lv * 10];
+      let mBaseAtk = Math.floor(Math.random() * (mAtkData[1] - mAtkData[0] + 1)) + mAtkData[0];
+      let battleMsg = "";
 
-    addBattleLog(battleMsg);
+      // 2. 隨機挑選技能
+      let usedSkill = null;
+      if (currentMonster.skills && currentMonster.skills.length > 0 && Math.random() < 0.25) {
+        usedSkill = currentMonster.skills[Math.floor(Math.random() * currentMonster.skills.length)];
+      }
+
+      // 3. 執行效果
+      if (usedSkill && typeof usedSkill.onEffect === "function") {
+        // 執行 BOSS 技能程序
+        const result = usedSkill.onEffect(mBaseAtk, stats, currentMonster);
+        
+        // 根據回傳結果套用傷害或治療
+        if (result.dmg > 0) game.currentHp -= result.dmg;
+        if (result.heal > 0) currentMonster.curHp = Math.min(currentMonster.hp, currentMonster.curHp + result.heal);
+        
+        battleMsg = `<div style="color: ${usedSkill.color || '#f39c12'};">★ ${currentMonster.name} ${result.log}</div>`;
+      } else {
+        // 普通反擊：使用標準公式
+        let mDamage = Math.max(1, Math.floor((mBaseAtk * mBaseAtk) / (mBaseAtk + stats.def)));
+        game.currentHp -= mDamage;
+        battleMsg = `<div style="color: #e74c3c;">${currentMonster.name} 反擊造成 ${mDamage} 傷害</div>`;
+      }
+      
+      addBattleLog(battleMsg);
+    }
   }
 
-  // --- D. 視覺更新與勝負判定 ---
-  updateBattleUI();
+  // --- F. 勝負判定 ---
+  updateBattleUI(); // 更新 UI 血條
 
   if (currentMonster.curHp <= 0) {
-    // 停止計時器，防止在 setTimeout 期間多打一下
     clearInterval(battleInterval);
     battleInterval = null;
     currentMonster.curHp = 0;
     updateBattleUI();
-    // 延遲結算，提升視覺體驗
     setTimeout(winBattle, 300);
   } else if (game.currentHp <= 0) {
     game.currentHp = 0;
@@ -1094,53 +1260,33 @@ function battleTick() {
   }
 }
 
-// 輔助函式：新增戰鬥訊息到日誌
-function addBattleLog(msg) {
-  const log = document.getElementById("battleLog");
-  if (log) {
-    // 使用 innerHTML 並結合 flex-direction: column-reverse 讓新訊息在最上方
-    const div = document.createElement("div");
-    div.innerHTML = msg;
-    log.insertBefore(div, log.firstChild);
-  }
-}
-
-// 5. 勝利結算
+// 勝利結算
 function winBattle() {
   if (!currentMonster) return;
 
-  // 1. 紀錄當前是否為 BOSS 戰
   const isBossBattle = currentMonster.isBoss === true;
   const monsterName = currentMonster.name;
 
-  // 2. 結算基礎獎勵
   let dropItemName = currentMonster.dropMat || "未知材料";
   game.materials[dropItemName] = (game.materials[dropItemName] || 0) + 1;
   
-  // 如果是 BOSS，給予額外的魔力獎勵 (使用數據庫設定的或預設 5 倍)
   let rewardMana = isBossBattle ? (currentMonster.rewardMana || currentMonster.lv * 500) : (currentMonster.lv * 100);
   game.mana += rewardMana;
 
   const log = document.getElementById("battleLog");
   let equipMsg = "";
 
-  // 3. 裝備掉落邏輯 (BOSS 100% 掉落，一般怪 30%)
   let dropChance = isBossBattle ? 1.0 : 0.3;
   if (Math.random() < dropChance) {
     const newEquip = generateRandomEquip(currentMonster.lv);
-    // BOSS 掉落保底至少是「稀有(1)」以上
     if (isBossBattle && newEquip.rarity < 1) newEquip.rarity = 1;
-    
     game.inventory.push(newEquip);
     equipMsg = ` 並獲得了 <span style="color: var(--rarity-${newEquip.rarity})">[${newEquip.name}]</span>`;
   }
 
-  // 4. 更新日誌顯示
   if (log) {
     if (isBossBattle) {
-      log.innerHTML = `<div style="color: #f1c40f; font-weight: bold; border: 1px solid #f1c40f; padding: 5px; border-radius: 5px; margin: 5px 0;">
-        🏆 傳奇討伐成功！擊敗了 ${monsterName}<br>獲得 ${rewardMana} ✨ 與 ${dropItemName}${equipMsg}
-      </div>` + log.innerHTML;
+      log.innerHTML = `<div style="color: #f1c40f; font-weight: bold; border: 1px solid #f1c40f; padding: 5px; border-radius: 5px; margin: 5px 0;">🏆 傳奇討伐成功！擊敗了 ${monsterName}<br>獲得 ${rewardMana} ✨ 與 ${dropItemName}${equipMsg}</div>` + log.innerHTML;
     } else {
       log.innerHTML = `<div style="color: #3498db;">勝利！獲得 ${rewardMana} ✨ 與 ${dropItemName}${equipMsg}</div>` + log.innerHTML;
     }
@@ -1148,18 +1294,14 @@ function winBattle() {
 
   document.getElementById("battleStatus").innerText = isBossBattle ? `首領挑戰成功！` : `勝利！獲得獎勵...`;
   
-  // 5. 核心修改：判斷續戰邏輯
   if (isBossBattle) {
-    // 如果是 BOSS，直接呼叫停止戰鬥，不進入下方的 setTimeout
     stopBattle(`成功擊敗了首領 ${monsterName}！`);
-    saveData(); // 擊敗 BOSS 務必立即存檔
+    saveData();
   } else {
-    // 如果是一般怪物，清空實體並準備下一場
     currentMonster = null;
     saveData();
     
     setTimeout(() => {
-      // 確保在延遲期間玩家沒有手動停止戰鬥
       if (game.currentHp > 0) {
         startBattle(); 
       } else {
@@ -1169,7 +1311,7 @@ function winBattle() {
   }
 }
 
-// 6. 終止戰鬥與復原介面
+// 終止戰鬥與復原介面
 function stopBattle(reason = "戰鬥停止") {
   if (battleInterval) { clearInterval(battleInterval); battleInterval = null; }
   currentMonster = null;
@@ -1188,36 +1330,92 @@ function stopBattle(reason = "戰鬥停止") {
   updateUI();
 }
 
-// 7. 更新戰鬥相關 UI
-function updateBattleUI() {
-  const stats = getCombatStats();
-  const curHp = Math.max(0, Math.floor(game.currentHp));
-  const maxHp = stats.maxHp;
+/**
+ * ============================================================
+ * 進階隨機裝備生成器 (Advanced Equipment Generator)
+ * ============================================================
+ */
+function generateRandomEquip(lv) {
+  const types = ["head", "top", "bottom", "shoes", "mainHand", "offHand", "necklace", "ring1"];
+  const type = types[Math.floor(Math.random() * types.length)];
+  const r = Math.random() < 0.05 ? 3 : (Math.random() < 0.15 ? 2 : (Math.random() < 0.4 ? 1 : 0));
+  const rarityNames = ["普通", "稀有", "史詩", "傳奇"];
+  
+  // 1. 定義名稱庫與隨機前綴
+  const prefixes = {
+    0: ["生鏽的", "破損的", "粗糙的", "普通的"],
+    1: ["精良的", "強化型", "士兵的", "磨練過的"],
+    2: ["極致的", "大師級", "守護者的", "靈魂之"],
+    3: ["神聖的", "滅世之", "上古遺留", "聖光護佑"]
+  };
+  
+  const namePool = {
+    head: ["頭盔", "戰盔", "法帽"],
+    top: ["胸甲", "重鎧", "長袍"],
+    bottom: ["護腿", "戰褲", "裙衣"],
+    shoes: ["長靴", "鐵底靴", "輕靈靴"],
+    mainHand: ["長劍", "巨斧", "法杖", "戰錘"],
+    offHand: ["盾牌", "護腕", "副手咒文書"],
+    necklace: ["頸飾", "護身符", "項鍊"],
+    ring1: ["戒指", "指環", "印章"]
+  };
 
-  // 更新戰鬥分頁血條
-  const pText = document.getElementById("pBattleHpText");
-  const pBar = document.getElementById("pBattleHpBar");
-  if (pText) pText.innerText = `${curHp} / ${maxHp}`;
-  if (pBar) pBar.style.width = (curHp / maxHp * 100) + "%";
+  const selectedPrefix = prefixes[r][Math.floor(Math.random() * prefixes[r].length)];
+  const selectedBaseName = namePool[type][Math.floor(Math.random() * namePool[type].length)];
 
-  // 更新怪物血條
-  if (currentMonster) {
-    const mHp = Math.max(0, Math.floor(currentMonster.curHp));
-    const mText = document.getElementById("mHpText");
-    const mBar = document.getElementById("mHpBar");
-    if (mText) mText.innerText = `${mHp} / ${currentMonster.maxHp}`;
-    if (mBar) mBar.style.width = (mHp / currentMonster.maxHp * 100) + "%";
+  // 2. 重新組合名稱格式： [Lv.XX] 稀有度 · 前綴 + 名稱
+  // 範例：[Lv.15] 傳奇 · 神聖的盾牌
+  const finalName = `[Lv.${lv}] ${rarityNames[r]} · ${selectedPrefix}${selectedBaseName}`;
+
+  const baseMultiplier = (lv * 0.5);
+  const rarityMultiplier = (1 + r * 0.5);
+  let stats = { atk: 0, def: 0, hp: 0, str: 0, agi: 0, int: 0, vit: 0, luk: 0 };
+
+  // 3. 屬性分配 (維持上次修復的邏輯)
+  switch (type) {
+    case "mainHand":
+      stats.atk = Math.floor(20 * baseMultiplier * rarityMultiplier);
+      if (r >= 1) stats.str = Math.floor(lv * 0.5 * rarityMultiplier);
+      if (r >= 2) stats.luk = Math.floor(lv * 0.3 * rarityMultiplier);
+      break;
+    case "top":
+    case "bottom":
+      stats.def = Math.floor(10 * baseMultiplier * rarityMultiplier);
+      stats.hp = Math.floor(50 * baseMultiplier * rarityMultiplier);
+      if (r >= 2) stats.vit = Math.floor(lv * 0.4 * rarityMultiplier);
+      break;
+    case "shoes":
+      stats.def = Math.floor(5 * baseMultiplier * rarityMultiplier);
+      stats.agi = Math.floor(lv * 0.8 * rarityMultiplier);
+      break;
+    case "head":
+      stats.hp = Math.floor(30 * baseMultiplier * rarityMultiplier);
+      stats.int = Math.floor(lv * 0.6 * rarityMultiplier);
+      if (r >= 3) stats.med = Math.floor(lv * 0.5);
+      break;
+    default:
+      stats.hp = Math.floor(20 * baseMultiplier * rarityMultiplier);
+      stats.luk = Math.floor(lv * 0.5 * rarityMultiplier);
   }
 
-  // 同步更新主介面左上角血條 (不呼叫耗能的 updateUI)
-  const mainHpText = document.getElementById("hpText");
-  const mainHpBar = document.getElementById("hpBar");
-  if (mainHpText) mainHpText.innerText = `${curHp} / ${maxHp}`;
-  if (mainHpBar) mainHpBar.style.width = (curHp / maxHp * 100) + "%";
-  
-  // 更新魔力顯示
-  const manaEl = document.getElementById("mana");
-  if (manaEl) manaEl.innerText = Math.floor(game.mana).toLocaleString();
+  return {
+    id: Date.now() + Math.random(),
+    type: type,
+    rarity: r,
+    name: finalName, // 使用新的組合名稱
+    atk: stats.atk,
+    def: stats.def,
+    hp: stats.hp,
+    extraStats: {
+      str: stats.str || 0,
+      agi: stats.agi || 0,
+      int: stats.int || 0,
+      vit: stats.vit || 0,
+      luk: stats.luk || 0,
+      med: stats.med || 0
+    },
+    icon: slotIcons[type] || "📦"
+  };
 }
 
 /**

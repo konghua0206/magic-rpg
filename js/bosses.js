@@ -5,15 +5,49 @@ const bossData = [
     atkRange: [25, 45], img: "images/dKH0NvpuvTolvO8P2rypx.jpg",
     dropMat: "古老鹿角", rewardMana: 3000 
   },
-  { 
-    id: "boss_mandrake_1", name: "腹黑曼德拉草", lv: 15, hp: 4500, def: 45, 
-    atkRange: [35, 60], img: "images/4SqKRuaqPjZlQHLEhZkmBK.jpg", 
-    dropMat: "曼德拉葉片", rewardMana: 5000,
-    skills: [
-      { name: "曼德拉搗蛋", chance: 0.2, power: 1.5, msg: "使用了【曼德拉搗蛋】，造成了大量傷害！" },
-      { name: "曼德拉遁地", chance: 0.1, heal: 0.1, msg: "使用了【曼德拉遁地】，回復了大量血量！" }
-    ]
-  },
+{ 
+  id: "boss_mandrake_1", 
+  name: "腹黑曼德拉草", 
+  lv: 15, 
+  hp: 4500, 
+  def: 45, 
+  atkRange: [35, 60], 
+  img: "images/4SqKRuaqPjZlQHLEhZkmBK.jpg", 
+  dropMat: "曼德拉葉片", 
+  rewardMana: 5000,
+  // BOSS 專屬技能程序化
+  skills: [
+    { 
+      name: "曼德拉搗蛋", 
+      chance: 0.2, 
+      color: "#e67e22",
+      onEffect: (mBaseAtk, stats) => {
+        const power = 1.5;
+        let skillAtk = mBaseAtk * power;
+        let dmg = Math.max(1, Math.floor((skillAtk * skillAtk) / (skillAtk + stats.def)));
+        return { 
+          dmg: dmg, 
+          heal: 0,
+          log: `使用了<span style="color:#e67e22">【曼德拉搗蛋】</span>，造成了 <span style="color:#e74c3c">${dmg}</span> 傷害！` 
+        };
+      }
+    },
+    { 
+      name: "曼德拉遁地", 
+      chance: 0.1, 
+      color: "#2ecc71",
+      onEffect: (mBaseAtk, stats, currentMonster) => {
+        // 回復 BOSS 最大血量的 10%
+        let healAmt = Math.floor(currentMonster.hp * 0.1);
+        return { 
+          dmg: 0, 
+          heal: healAmt,
+          log: `使用了<span style="color:#2ecc71">【曼德拉遁地】</span>，回復了 <span style="color:#2ecc71">${healAmt}</span> HP！` 
+        };
+      }
+    }
+  ]
+},
   { 
     id: "boss_2", name: "遺蹟守護者", lv: 20, hp: 8000, def: 65, 
     atkRange: [50, 80], img: "images/dKH0NvpuvTolvO8P2rypx.jpg",
@@ -44,14 +78,121 @@ const bossData = [
     atkRange: [3500, 5000], img: "images/dKH0NvpuvTolvO8P2rypx.jpg",
     dropMat: "墮落碎片", rewardMana: 2000000 
   }, 
-  { 
-    id: "boss_final_1", name: "埋まるです", lv: 100, hp: 5000000, def: 8000, 
-    atkRange: [12000, 18000], img: "images/p1nVQhClPae02nucYwaa4.jpg", 
-    dropMat: "神聖遺物", rewardMana: 10000000,
-    skills: [
-      { name: "懶散光束", chance: 0.2, power: 1.5, msg: "使用了【懶散光束】，造成大量傷害！" },
-      { name: "可樂噴射", chance: 0.15, power: 2.5, msg: "瘋狂搖晃可樂瓶後噴射！爆發性傷害！" },
-      { name: "深夜零食時間", chance: 0.1, heal: 0.2, msg: "開始吃起零食，回復了 20% 的生命值！" }
-    ]
-  }
+{ 
+  id: "boss_shark_liver", 
+  name: "公鯊小心肝", 
+  lv: 95, 
+  hp: 3800000, 
+  def: 6500, 
+  atkRange: [9000, 14000], 
+  img: "images/2Q.png", 
+  dropMat: "小心肝的精華", 
+  rewardMana: 5000000,
+  // 內部狀態追蹤：是否已幻化
+  isTransformed: false,
+  skills: [
+    { 
+      name: "巨鯊幻化", 
+      chance: 0.2, 
+      color: "#3498db",
+      onEffect: (mBaseAtk, stats, currentMonster) => {
+        // 設定幻化狀態
+        currentMonster.isTransformed = true; 
+        return { 
+          dmg: 0, 
+          log: `<span style="color:#3498db">幻化成鯊魚，攻擊力大幅提升了！</span> (接下來的攻擊將更致命)` 
+        };
+      }
+    },
+    { 
+      name: "心肝撞擊", 
+      chance: 0.2, 
+      color: "#e74c3c",
+      onEffect: (mBaseAtk, stats, currentMonster) => {
+        // 判定：若已幻化傷害 2.5 倍，否則只有 1.2 倍
+        const power = currentMonster.isTransformed ? 2.5 : 1.2;
+        let skillAtk = mBaseAtk * power;
+        let dmg = Math.max(1, Math.floor((skillAtk * skillAtk) / (skillAtk + stats.def)));
+        
+        // 攻擊後解除幻化狀態（或者你可以移除這一行讓它一直強下去）
+        currentMonster.isTransformed = false;
+
+        return { 
+          dmg: dmg, 
+          log: `針對肝臟進行撞擊！造成了 <span style="color:#ff4d4d">${dmg}</span> 傷害！${power > 2 ? '<b>(幻化加成！)</b>' : ''}` 
+        };
+      }
+    },
+    { 
+      name: "狗鯊召喚", 
+      chance: 0.1, 
+      color: "#95a5a6",
+      onEffect: (mBaseAtk, stats, currentMonster) => {
+        // 混合型技能：造成 1.0 倍傷害並回復 5% 生命
+        let dmg = Math.max(1, Math.floor((mBaseAtk * mBaseAtk) / (mBaseAtk + stats.def)));
+        let healAmt = Math.floor(currentMonster.hp * 0.05);
+        return { 
+          dmg: dmg,
+          heal: healAmt,
+          log: `召喚了大量狗鯊助陣！造成 ${dmg} 傷害並共同分食回復了 <span style="color:#2ecc71">${healAmt.toLocaleString()}</span> HP！` 
+        };
+      }
+    }
+  ]
+},
+{ 
+  id: "boss_final_1", 
+  name: "埋まるです", 
+  lv: 100, 
+  hp: 5000000, 
+  def: 8000, 
+  atkRange: [12000, 18000], 
+  img: "images/p1nVQhClPae02nucYwaa4.jpg", 
+  dropMat: "神聖遺物", 
+  rewardMana: 10000000,
+  // BOSS 專屬技能程序化版本
+  skills: [
+    { 
+      name: "懶散光束", 
+      chance: 0.2, 
+      color: "#ff7675",
+      onEffect: (mBaseAtk, stats) => {
+        const power = 1.5;
+        let skillAtk = mBaseAtk * power;
+        let dmg = Math.max(1, Math.floor((skillAtk * skillAtk) / (skillAtk + stats.def)));
+        return { 
+          dmg: dmg, 
+          log: `使用了<span style="color:#ff7675">【懶散光束】</span>，雖然看起來很懶散但威力驚人，造成了 <span style="color:#ff4d4d">${dmg}</span> 傷害！` 
+        };
+      }
+    },
+    { 
+      name: "可樂噴射", 
+      chance: 0.15, 
+      color: "#fab1a0",
+      onEffect: (mBaseAtk, stats) => {
+        const power = 2.5;
+        let skillAtk = mBaseAtk * power;
+        let dmg = Math.max(1, Math.floor((skillAtk * skillAtk) / (skillAtk + stats.def)));
+        return { 
+          dmg: dmg, 
+          log: `瘋狂搖晃可樂瓶後發動<span style="color:#fab1a0">【可樂噴射】</span>！氣體爆發造成了 <span style="color:#ff4d4d">${dmg}</span> 傷害！` 
+        };
+      }
+    },
+    { 
+      name: "深夜零食時間", 
+      chance: 0.1, 
+      color: "#55efc4",
+      onEffect: (mBaseAtk, stats, currentMonster) => {
+        // 回復 20% 生命值
+        let healAmt = Math.floor(currentMonster.hp * 0.2);
+        return { 
+          heal: healAmt, 
+          log: `進入了<span style="color:#55efc4">【深夜零食時間】</span>，大口吃起洋芋片回復了 <span style="color:#2ecc71">${healAmt.toLocaleString()}</span> HP！` 
+        };
+      }
+    }
+  ]
+}
 ];
