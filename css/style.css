@@ -1,0 +1,250 @@
+:root {
+  --primary: #9b5cff;
+  --secondary: #5a2cff;
+  --bg-dark: #0d0818;
+  --card-bg: rgba(255, 255, 255, 0.08);
+  --rarity-0: #ffffff;
+  --rarity-1: #3498db;
+  --rarity-2: #9b59b6;
+  --rarity-3: #f1c40f;
+}
+
+* { box-sizing: border-box; } 
+
+body {
+  margin: 0;
+  background: #0d0818 linear-gradient(180deg, #1a0b2e 0%, #0d0818 100%) fixed;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #fff;
+  display: flex;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* --- 側邊選單 --- */
+.sidebar {
+  width: 70px;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  height: 100vh;
+  position: fixed;
+  left: 0; top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 20px;
+  border-right: 1px solid rgba(255,255,255,0.1);
+  z-index: 100;
+}
+
+.nav-item {
+  width: 50px; height: 50px; margin-bottom: 20px; border-radius: 12px;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  cursor: pointer; font-size: 10px; color: rgba(255,255,255,0.5);
+  transition: 0.3s;
+}
+.nav-item span { font-size: 20px; }
+.nav-item.active { background: var(--primary); color: #fff; box-shadow: 0 0 15px var(--primary); }
+
+/* --- 主要內容區 --- */
+.main-wrapper {
+  margin-left: 70px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.main-content {
+  width: 100%; 
+  max-width: 480px; 
+  padding: 15px;
+}
+
+.page { display: none; }
+.page.active { display: block; animation: fadeIn 0.3s ease-out; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* --- 核心元件 --- */
+.card { 
+  background: var(--card-bg); border-radius: 20px; padding: 20px; 
+  margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.magic { 
+  font-size: 36px; font-weight: bold; text-align: center;
+  background: linear-gradient(to bottom, #fff, var(--primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 15px rgba(155, 92, 255, 0.5);
+  margin-top: 10px;
+}
+
+/* --- 裝備九宮格佈局 --- */
+.equip-grid-new {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px 10px; /* 上下間距留給 label，左右適中 */
+  justify-items: center;
+  margin: 10px 0 20px 0;
+}
+
+.equip-slot {
+  width: 60px; height: 60px; 
+  background: rgba(0,0,0,0.4); 
+  border: 1px dashed rgba(155,92,255,0.5);
+  border-radius: 12px; 
+  display: flex; justify-content: center; align-items: center; 
+  font-size: 24px; position: relative; cursor: pointer;
+  transition: all 0.2s;
+}
+.equip-slot.occupied { 
+  border: 2px solid var(--primary); 
+  background: rgba(155,92,255,0.15); 
+  box-shadow: 0 0 10px rgba(155,92,255,0.2);
+}
+.equip-slot:active { transform: scale(0.9); }
+
+.equip-slot::after { 
+  content: attr(data-label); 
+  position: absolute; bottom: -18px; 
+  font-size: 10px; color: #aaa; white-space: nowrap; 
+}
+
+/* --- 屬性與數值 --- */
+.attr { 
+  display: flex; justify-content: space-between; align-items: center; 
+  margin: 8px 0; background: rgba(255,255,255,0.04); 
+  padding: 8px 12px; border-radius: 10px;
+}
+.small { font-size: 12px; color: #888; }
+
+/* --- 按鈕樣式 --- */
+button {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: #fff; border: none; border-radius: 12px; padding: 12px;
+  font-weight: bold; cursor: pointer; transition: 0.2s;
+  width: 100%; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+button:active { transform: scale(0.96); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+
+/* --- 背包物品 --- */
+.item-card {
+  background: rgba(255,255,255,0.06); border-radius: 12px; padding: 12px;
+  margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
+  border-left: 4px solid #fff; transition: 0.2s;
+}
+.sell-btn { background: #e74c3c !important; font-size: 11px; padding: 6px 12px; width: auto; margin: 0; }
+
+/* --- 彈窗優化 --- */
+.modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.9); z-index: 200; justify-content: center; align-items: center;
+  backdrop-filter: blur(5px);
+}
+.modal-card {
+  background: #1a1525; border: 1px solid var(--primary); border-radius: 24px;
+  padding: 30px; width: 300px; text-align: center;
+}
+
+/* --- 名稱輸入框 --- */
+#nameInput { 
+  background: rgba(0,0,0,0.6); border: 1px solid var(--primary); 
+  color: #fff; border-radius: 6px; padding: 4px 10px; 
+  text-align: center; width: 120px; font-size: 16px;
+}
+#nameDisplay {
+  font-size: 60px;           /* 增大字體 */
+  font-weight: 900;          /* 極粗體 */
+  color: #fff;               /* 白色字體 */
+  text-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary); /* 紫色發光 */
+  display: block;            /* 確保佔據整列 */
+  margin-bottom: 5px;        /* 與下方的距離 */
+  letter-spacing: 2px;       /* 字距微調，更有質感 */
+}
+
+/* 美化 BOSS 列表捲軸 */
+#bossList::-webkit-scrollbar {
+  height: 6px;
+}
+#bossList::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+#bossList::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 10px;
+}
+
+/* 技能圖標飄浮動畫 */
+@keyframes skill-float-up {
+  0% {
+    transform: translate(-50%, 0) scale(0.3); /* 圖片從較小開始噴出 */
+    opacity: 0;
+  }
+  25% {
+    transform: translate(-50%, -40px) scale(1.1); /* 噴射到高點，稍微放大 */
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -120px) scale(1); /* 緩慢漂浮並消失 */
+    opacity: 0;
+  }
+}
+
+.skill-popup {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1000;
+  /* 移除字體大小，改用 flex 容器控制圖片 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* 動畫設定 */
+  animation: skill-float-up 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  
+  /* 初始過濾器：確保圖片在 JS 加載前不會有奇怪的殘影 */
+  will-change: transform, opacity; 
+}
+
+/* 針對內含圖片的特別設定 */
+.skill-popup img {
+  width: 60px;  /* 你可以根據需求調整圖片大小 */
+  height: 60px;
+  object-fit: contain;
+  /* 讓圖片邊緣清晰，並增加一點基礎亮度 */
+  filter: brightness(1.1);
+}
+
+/* 如果你保留部分 Emoji，這行可以確保它們依然好看 */
+.skill-popup span {
+  font-size: 40px;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+}
+
+
+/* --- 版權 --- */
+.copyright-notice {
+  position: fixed;
+  bottom: 10px;        /* 距離底部 10 像素 */
+  left: 70px;          /* 避開你的側邊選單寬度 */
+  right: 0;
+  text-align: center;
+  font-size: 10px;     /* 小字體 */
+  color: rgba(255, 255, 255, 0.3); /* 半透明白色，不干擾視覺 */
+  z-index: 50;         /* 確保在內容之上，但在彈窗之下 */
+  pointer-events: none; /* 讓這行字不影響點擊操作 */
+  letter-spacing: 1px;
+}
+
+/* 手機版微調：如果你的側邊欄在手機上會隱藏或變動，可以調整 left */
+@media (max-width: 600px) {
+  .copyright-notice {
+    left: 0;
+    bottom: 5px;
+  }
+}
