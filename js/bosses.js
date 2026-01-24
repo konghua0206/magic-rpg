@@ -7,7 +7,7 @@ const bossData = [
   },
   { 
     id: "boss_mandrake_1", name: "腹黑曼德拉草", lv: 15, hp: 4500, def: 45, 
-    atkRange: [35, 60], img: "images/4SqKRuaqPjZlQHLEhZkmBK.png", 
+    atkRange: [35, 60], img: "images/4SqKRuaqPjZlQHLEhZkmBK.jpg", 
     dropMat: "曼德拉葉片", rewardMana: 5000,
     skills: [
       { name: "曼德拉搗蛋", chance: 0.2, power: 1.5, msg: "使用了【曼德拉搗蛋】，造成了大量傷害！" },
@@ -46,7 +46,7 @@ const bossData = [
   }, 
   { 
     id: "boss_final_1", name: "埋まるです", lv: 100, hp: 5000000, def: 8000, 
-    atkRange: [12000, 18000], img: "images/p1nVQhClPae02nucYwaa4.png", 
+    atkRange: [12000, 18000], img: "images/p1nVQhClPae02nucYwaa4.jpg", 
     dropMat: "神聖遺物", rewardMana: 10000000,
     skills: [
       { name: "懶散光束", chance: 0.2, power: 1.5, msg: "使用了【懶散光束】，造成大量傷害！" },
