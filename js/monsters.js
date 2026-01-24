@@ -1,3 +1,4 @@
+// 區域怪物數據庫
 const regions = {
   "新手森林": {
     minLv: 1,

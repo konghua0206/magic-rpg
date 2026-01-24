@@ -1,3 +1,4 @@
+// BOSS數據庫
 const bossData = [
   { 
     id: "boss_1", name: "森林之王 · 巨角鹿", lv: 10, hp: 2500, def: 30, 

@@ -1,3 +1,4 @@
+// 技能數據庫
 const allSkills = [
   { 
     id: "fireball", name: "火球術", desc: "造成 150% 傷害", 

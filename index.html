@@ -135,13 +135,7 @@
 
     <div id="adventureControls">
       <select id="regionSelect" onchange="changeRegion(this.value)" style="width: 100%; padding: 10px; background: #222; color: #fff; border: 1px solid var(--primary); border-radius: 8px; margin-bottom: 10px;">
-        <option value="新手森林">新手森林 (Lv.1+)</option>
-        <option value="墮落遺蹟">墮落遺蹟 (Lv.10+)</option>
-        <option value="幽影深淵">幽影深淵 (Lv.25+)</option>
-        <option value="灼熱熔岩區">灼熱熔岩區 (Lv.35+)</option>
-        <option value="極北凍原">極北凍原 (Lv.50+)</option>
-        <option value="天空島嶼">天空島嶼 (Lv.65+)</option>
-      </select>
+        </select>
     </div>
 
     <div id="bossControls" style="display:none;">
@@ -229,6 +223,7 @@
 
 <script src="js/skills.js"></script>
 <script src="js/monsters.js"></script>
+<script src="js/monsters_dropdown.js"></script>
 <script src="js/bosses.js"></script>
 
 <script>
@@ -294,6 +289,9 @@ function initGame() {
     } else {
         game = getDefaultGameData();
         console.log("無存檔紀錄，開啟新遊戲");
+    }
+        if (typeof renderRegionDropdown === "function") {
+        renderRegionDropdown();
     }
     // 確保所有 UI 顯示最新資料
     if (typeof updateUI === "function") updateUI(); 
