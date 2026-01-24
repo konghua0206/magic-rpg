@@ -526,26 +526,25 @@ document.getElementById("upgradeChar").onclick = () => {
 
 // 重置屬性點數功能
 function resetStats() {
-  // 核心修正：初始值為 0，所以直接加總所有屬性值即為「已分配點數」
+  // 1. 確保讀取數值時，若不存在則設為 0，避免出現 NaN
   const totalAllocated = 
-    (game.str || 0) + 
-    (game.agi || 0) + 
-    (game.int || 0) + 
-    (game.med || 0) + 
-    (game.vit || 0) + 
-    (game.luk || 0);
+    (Number(game.str) || 0) + 
+    (Number(game.agi) || 0) + 
+    (Number(game.int) || 0) + 
+    (Number(game.med) || 0) + 
+    (Number(game.vit) || 0) + 
+    (Number(game.luk) || 0);
   
-  // 檢查是否有點數可以重置
   if (totalAllocated <= 0) {
     alert("目前屬性皆為初始值，無需重置。");
     return;
   }
 
   if (confirm(`確定要重置所有屬性點嗎？\n將歸還 ${totalAllocated} 點至可用能力點。`)) {
-    // 1. 點數歸還 (加回原本剩餘的 points 中)
-    game.points = (game.points || 0) + totalAllocated;
+    // 2. 點數歸還 (注意變數名稱必須是 game.points)
+    game.points = (Number(game.points) || 0) + totalAllocated;
     
-    // 2. 全部屬性回歸初始值 0
+    // 3. 屬性確實歸零
     game.str = 0;
     game.agi = 0;
     game.int = 0;
@@ -553,16 +552,23 @@ function resetStats() {
     game.vit = 0;
     game.luk = 0;
     
-    // 3. 數據持久化與畫面同步
-    if (typeof saveGame === "function") saveGame(); // 執行存檔
+    // 4. 關鍵修正：呼叫你檔案中確實存在的函式
+    updateUI();       // 更新魔力與頂部數值
+    saveData();       // 你檔案中的存檔函式名稱是 saveData
     
-    // 重新渲染角色面板與更新頂部 UI
-    renderCharacter(); 
-    updateUI();
-    
+    // 5. 手動刷新角色面板的文字 (因為你沒有 renderCharacter 函式)
+    document.getElementById("points").innerText = game.points;
+    document.getElementById("str").innerText = game.str;
+    document.getElementById("agi").innerText = game.agi;
+    document.getElementById("int").innerText = game.int;
+    document.getElementById("med").innerText = game.med;
+    document.getElementById("vit").innerText = game.vit;
+    document.getElementById("luk").innerText = game.luk;
+
     alert("屬性重置成功！所有點數已退還。");
   }
 }
+
 
 /** 
  * ============================================================
