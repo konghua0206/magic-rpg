@@ -534,16 +534,27 @@ function renderEquipmentSlots() {
       // 1. 設定基礎狀態
       el.className = "equip-slot occupied";
       el.style.borderColor = `var(--rarity-${item.rarity})`;
+      el.style.display = "flex";
+      el.style.alignItems = "center";
+      el.style.justifyContent = "center";
+      el.style.overflow = "hidden"; // 確保圖片不超出格線
 
-      // 2. 新撈法：判斷 icon 類型並渲染
+      // 2. 判斷 icon 類型並分別設定大小
       const isPath = item.icon && (item.icon.includes('/') || item.icon.includes('.'));
       
       if (isPath) {
-        // 圖片路徑：插入 img 標籤
-        el.innerHTML = `<img src="${item.icon}" class="equip-icon-img">`;
+        // --- 情況 A: 圖片路徑 ---
+        // 圖片設為 85% 寬度以保留一點邊距，或 100% 填滿
+        el.innerHTML = `
+          <img src="${item.icon}" 
+               style="width: 85%; height: 85%; object-fit: contain; display: block;">`;
       } else {
-        // 非路徑（Emoji）：插入一個 span 並強制給予顏色，避免被 CSS transparent 覆蓋
-        el.innerHTML = `<span class="equip-icon-text" style="color: white !important;">${item.icon || "❓"}</span>`;
+        // --- 情況 B: Emoji ---
+        // Emoji 建議設定在 24px - 28px 之間，視您的格子大小調整
+        el.innerHTML = `
+          <span style="font-size: 26px; color: white !important; line-height: 1;">
+            ${item.icon || "❓"}
+          </span>`;
       }
 
       el.onclick = () => showEquipDetail(sid);
@@ -552,8 +563,8 @@ function renderEquipmentSlots() {
       // --- 若無裝備，恢復預設狀態 ---
       el.className = "equip-slot";
       el.style.borderColor = "";
-      // 顯示預設輔助 Emoji，此時沒 occupied 類別，顏色正常
-      el.innerHTML = slotIcons[sid]; 
+      // 預設圖標大小（通常較淡、較小）
+      el.innerHTML = `<span style="font-size: 20px; opacity: 0.5;">${slotIcons[sid]}</span>`; 
       el.onclick = null;
       el.style.cursor = "default";
     }
@@ -809,12 +820,26 @@ function renderItemToElement(item, prefix) {
     document.getElementById(`${prefix}Rarity`).style.color = `var(--rarity-${item.rarity})`;
     document.getElementById(`${prefix}Name`).innerText = item.name;
     
-    // Icon
+    // Icon 顯示處理
     const iconEl = document.getElementById(`${prefix}Icon`);
-    if (item.icon && (item.icon.includes('/') || item.icon.includes('.'))) {
-        iconEl.innerHTML = `<img src="${item.icon}" style="width:40px; height:40px; object-fit:contain;">`;
+    const isImagePath = item.icon && (item.icon.includes('/') || item.icon.includes('.'));
+
+    if (isImagePath) {
+        // --- 情況 A: 圖片路徑 (Image) ---
+        iconEl.innerHTML = `
+            <img src="${item.icon}" 
+                 style="width: 128px; height: 128px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));">
+        `;
     } else {
-        iconEl.innerHTML = item.icon || "❓";
+        // --- 情況 B: Emoji 或純文字 (Icon) ---
+        iconEl.style.display = "flex";
+        iconEl.style.justifyContent = "center";
+        iconEl.style.alignItems = "center";
+        iconEl.innerHTML = `
+            <span style="font-size: 60px; line-height: 1; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.3));">
+                ${item.icon || "❓"}
+            </span>
+        `;
     }
 
     // 屬性清單
