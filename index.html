@@ -226,7 +226,7 @@
   
   <div class="card">
     <div class="small" style="text-align: center;">
-      遊戲版本：v0.4.6<br>
+      遊戲版本：v0.4.7<br>
       最後存檔時間：<span id="lastSaveTime">--:--:--</span>
     </div>
   </div>
@@ -720,9 +720,34 @@ window.onclick = function(event) {
 
 // 統一的裝備價值計算公式
 function getEquipValue(item) {
-    // 基礎價值 50，每提升一個品質等級增加 50
-    // 公式：(0+1)*50=50, (1+1)*50=100, (2+1)*50=150...
-    return (item.rarity + 1) * 50;
+  // 1. 取得等級 (Lv)
+  const lvMatch = item.name.match(/\[Lv\.(\d+)\]/);
+  const lv = lvMatch ? parseInt(lvMatch[1]) : 1;
+
+  // 2. 參數設定
+  const baseValue = 100;       // 底價 100
+  const growthRate = 1.14;     // 每級成長 14% (精準控制 60 等破百萬)
+  
+  // 3. 稀有度倍率 (跳躍式成長)
+  // 普通: 1x, 稀有: 2x, 史詩: 4x, 傳奇: 10x
+  const rarityMults = [1, 2, 4, 10];
+  const rMult = rarityMults[item.rarity] || 1;
+
+  // 4. 屬性加成 (乘法加成)
+  let statsMult = 1;
+  if (item.extraStats) {
+    const statsSum = Object.values(item.extraStats).reduce((a, b) => a + b, 0);
+    // 每 1 點屬性點增加 2% 總價值
+    statsMult = 1 + (statsSum * 0.02);
+  }
+
+  // 5. 最終計算
+  // 公式：底價 * (1.14 ^ Lv) * 稀有度倍率 * 屬性倍率
+  const finalValue = Math.floor(
+    baseValue * Math.pow(growthRate, lv) * rMult * statsMult
+  );
+
+  return finalValue;
 }
 
 // 販賣背包物品
