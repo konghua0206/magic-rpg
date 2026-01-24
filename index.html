@@ -226,7 +226,7 @@
   
   <div class="card">
     <div class="small" style="text-align: center;">
-      遊戲版本：v0.4.7<br>
+      遊戲版本：v0.4.8<br>
       最後存檔時間：<span id="lastSaveTime">--:--:--</span>
     </div>
   </div>
@@ -725,30 +725,31 @@ function getEquipValue(item) {
   const lv = lvMatch ? parseInt(lvMatch[1]) : 1;
 
   // 2. 參數設定
-  const baseValue = 100;       // 底價 100
-  const growthRate = 1.14;     // 每級成長 14% (精準控制 60 等破百萬)
+  const baseValue = 50;        // 初始底價下修，讓前期數字更漂亮
+  const growthRate = 1.08;     // 8% 成長率，確保 80 等白裝約為 2~3 萬
   
-  // 3. 稀有度倍率 (跳躍式成長)
-  // 普通: 1x, 稀有: 2x, 史詩: 4x, 傳奇: 10x
-  const rarityMults = [1, 2, 4, 10];
+  // 3. 數量級倍率 (關鍵修改：每階差 10 倍)
+  // 普通: 1x (萬級), 稀有: 10x (十萬級), 史詩: 100x (百萬級), 傳奇: 1000x (千萬級)
+  const rarityMults = [1, 10, 100, 1000];
   const rMult = rarityMults[item.rarity] || 1;
 
-  // 4. 屬性加成 (乘法加成)
+  // 4. 屬性加成 (維持微幅溢價)
   let statsMult = 1;
   if (item.extraStats) {
     const statsSum = Object.values(item.extraStats).reduce((a, b) => a + b, 0);
-    // 每 1 點屬性點增加 2% 總價值
-    statsMult = 1 + (statsSum * 0.02);
+    // 每點屬性提供 1% 額外價值，避免破壞數量級結構
+    statsMult = 1 + (statsSum * 0.01);
   }
 
   // 5. 最終計算
-  // 公式：底價 * (1.14 ^ Lv) * 稀有度倍率 * 屬性倍率
+  // 公式：底價 * (1.08 ^ Lv) * 稀有度倍率 * 屬性倍率
   const finalValue = Math.floor(
     baseValue * Math.pow(growthRate, lv) * rMult * statsMult
   );
 
   return finalValue;
 }
+
 
 // 販賣背包物品
 function sellItem(id) {
