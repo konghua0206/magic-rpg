@@ -93,27 +93,30 @@
 
 <!--戰鬥頁面 (Battle Page)-->
 <div id="page-battle" class="page" style="width: 100%; max-width: 600px; margin: 0 auto;">
-  <div class="card" style="padding: 20px; width: auto;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px;">
+  <div class="card" style="padding: 15px; width: auto;">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px;">
       
-      <h3 style="margin: 0; color: var(--primary); white-space: nowrap; font-size: 1.2rem; flex-shrink: 0;">
+      <h3 style="margin: 0; color: var(--primary); font-size: 1.1rem; flex: 1 1 auto; min-width: 120px;">
         ⚔️ 冒險與討伐
       </h3>
       
-      <div style="display: flex; gap: 8px; flex-grow: 1; justify-content: flex-end;">
+      <div style="display: flex; gap: 5px; flex: 1 1 auto; justify-content: flex-end;">
         <button id="btnModeAdv" 
                 onclick="toggleBattleMode('adventure')" 
-                style="padding: 8px 16px; font-size: 13px; white-space: nowrap; min-width: 90px; cursor: pointer;">
+                style="padding: 8px 10px; font-size: 12px; white-space: nowrap; flex: 1; max-width: 110px; cursor: pointer;">
           冒險模式
         </button>
         <button id="btnModeBoss" 
                 onclick="toggleBattleMode('boss')" 
-                style="padding: 8px 16px; font-size: 13px; background: #444; white-space: nowrap; min-width: 90px; cursor: pointer;">
+                style="padding: 8px 10px; font-size: 12px; background: #444; white-space: nowrap; flex: 1; max-width: 110px; cursor: pointer;">
           BOSS 挑戰
         </button>
       </div>
       
     </div>
+    
+    </div>
+
 
     <div id="adventureControls">
       <select id="regionSelect" onchange="changeRegion(this.value)" style="width: 100%; padding: 10px; background: #222; color: #fff; border: 1px solid var(--primary); border-radius: 8px; margin-bottom: 10px;"></select>
