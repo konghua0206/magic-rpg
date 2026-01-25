@@ -297,69 +297,61 @@
 <div id="itemModal" class="modal-overlay" onclick="closeModal()">
   <div class="modal-container" onclick="event.stopPropagation()" style="
     display: flex; 
-    flex-direction: column; /* 強制垂直排列 */
+    flex-direction: column; 
     gap: 10px; 
     align-items: center; 
     width: 90%; 
-    max-width: 380px; /* PC端關鍵限制：這讓它看起來像手機比例 */
+    max-width: 380px; 
     max-height: 95vh; 
     overflow-y: auto;
-    scrollbar-width: none; /* Firefox 隱藏滾動條 */
   ">
     
-    <div id="compareCard" style="
-      display: none; 
-      width: 100%; 
-      background: rgba(26, 26, 46, 0.8);
-      border: 1px dashed #7b1fa2; 
-      padding: 12px;
-      border-radius: 12px;
-      box-sizing: border-box;
-    ">
-      <div style="font-size: 11px; color: #b39ddb; text-align: center; margin-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">當前穿戴</div>
-      <div id="compRarity" class="modal-rarity" style="text-align: center; font-size: 12px;"></div>
-      <div id="compIcon" style="text-align: center; margin: 5px 0;"></div>
-      <strong id="compName" style="font-size: 16px; display: block; text-align: center; color: #fff;"></strong>
+    <div id="compareCard" class="modal-card" style="display: none; width: 100%; background: rgba(26, 26, 46, 0.8); border: 1px dashed #7b1fa2; padding: 12px; border-radius: 12px;">
+      <div style="font-size: 11px; color: #b39ddb; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; margin-bottom: 8px;">當前穿戴</div>
+      <div id="compRarity" class="modal-rarity"></div>
+      <div id="compIcon" style="text-align: center;"></div>
+      <strong id="compName" style="display: block; text-align: center;"></strong>
       
-      <div id="compStats" style="font-size: 12px; margin: 8px 0; color: #ccc; line-height: 1.4;"></div>
-      <div id="compSkills" style="font-size: 11px;"></div>
-      <div id="compPassive" style="font-size: 11px;"></div>
-      <div id="compDesc" style="opacity: 0.5; font-size: 10px; font-style: italic;"></div>
+      <div id="compStats" style="
+        display: grid; 
+        grid-template-columns: 1fr 1fr; /* 關鍵：雙欄 */
+        gap: 4px; 
+        font-size: 12px; 
+        margin: 10px 0;
+        color: #ccc;
+      "></div>
+      
+      <div id="compSkills"></div>
+      <div id="compPassive"></div>
+      <div id="compDesc"></div>
     </div>
 
-    <div class="modal-card" style="
-      width: 100%; 
-      background: #1a1a2e; 
-      border: 1px solid #4a148c; 
-      padding: 18px; 
-      border-radius: 16px;
-      box-sizing: border-box;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-      position: relative;
-    ">
-      <div id="targetLabel" style="font-size: 10px; color: #888; text-align: center; margin-bottom: 5px; letter-spacing: 1px;">選中物品</div>
-      <div id="modalRarity" class="modal-rarity" style="text-align: center;"></div>
+    <div class="modal-card" style="width: 100%; background: #1a1a2e; border: 1px solid #4a148c; padding: 18px; border-radius: 16px;">
+      <div id="modalRarity" class="modal-rarity"></div>
+      <div id="modalIcon" style="text-align: center; margin: 10px 0;"></div>
+      <strong id="modalName" style="font-size: 20px; display: block; text-align: center; color: #fff;"></strong>
       
-      <div id="modalIcon" style="text-align: center; margin: 15px 0;"></div>
+      <div id="modalStats" style="
+        display: grid; 
+        grid-template-columns: 1fr 1fr; /* 關鍵：雙欄 */
+        gap: 6px; 
+        margin: 15px 0; 
+        padding: 12px 0; 
+        border-top: 1px solid rgba(255,255,255,0.1); 
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        color: #2ecc71; 
+        font-size: 13px;
+      "></div>
       
-      <strong id="modalName" style="font-size: 20px; display: block; text-align: center; color: #fff; margin-bottom: 10px;"></strong>
-      
-      <div id="modalStats" style="margin: 10px 0; padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); color: #2ecc71; font-weight: bold; font-size: 14px; line-height: 1.6;"></div>
-      
-      <div id="modalSkills" style="margin-bottom: 8px;"></div>
-      <div id="modalPassive" style="margin-bottom: 8px;"></div>
-      <div id="modalDesc" style="margin-bottom: 20px;"></div>
+      <div id="modalSkills"></div>
+      <div id="modalPassive"></div>
+      <div id="modalDesc" style="margin-bottom: 15px;"></div>
       
       <div style="display: flex; flex-direction: column; gap: 8px;">
-        <button id="unequipBtn" style="padding: 14px; border-radius: 10px; border: none; color: white; font-weight: bold; cursor: pointer; font-size: 16px; background: #2ecc71; box-shadow: 0 4px 0 #27ae60;">
-          裝備 / 替換
-        </button>
-        <button onclick="closeModal()" style="background: rgba(255,255,255,0.05); border: 1px solid #444; color: #aaa; padding: 8px; border-radius: 8px; font-size: 12px; cursor: pointer;">
-          返回背包
-        </button>
+        <button id="unequipBtn" style="padding: 14px; border-radius: 10px; background: #2ecc71; color: white; border: none; font-weight: bold; cursor: pointer;">裝備 / 替換</button>
+        <button onclick="closeModal()" style="background: none; border: 1px solid #444; color: #aaa; padding: 8px; border-radius: 8px; cursor: pointer;">返回</button>
       </div>
     </div>
-
   </div>
 </div>
 
@@ -911,79 +903,65 @@ function renderItemToElement(item, prefix) {
     const rarityNames = ["普通", "稀有", "史詩", "傳奇"];
     const translation = { atk: "攻擊", def: "防禦", hp: "血量", str: "力量", agi: "敏捷", int: "智力", vit: "體質", luk: "幸運", med: "冥想" };
 
+    // 基礎顯示更新
     document.getElementById(`${prefix}Rarity`).innerText = rarityNames[item.rarity];
     document.getElementById(`${prefix}Rarity`).style.color = `var(--rarity-${item.rarity})`;
     document.getElementById(`${prefix}Name`).innerText = item.name;
     
-    // Icon 顯示處理
+    // Icon 渲染 (保持你原本的代碼)
     const iconEl = document.getElementById(`${prefix}Icon`);
-    const isImagePath = item.icon && (item.icon.includes('/') || item.icon.includes('.'));
-
-    if (isImagePath) {
-        iconEl.innerHTML = `
-            <img src="${item.icon}" 
-                 style="width: 128px; height: 128px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));">
-        `;
+    if (item.icon && (item.icon.includes('/') || item.icon.includes('.'))) {
+        iconEl.innerHTML = `<img src="${item.icon}" style="width: 80px; height: 80px; object-fit: contain;">`;
     } else {
-        iconEl.style.display = "flex";
-        iconEl.style.justifyContent = "center";
-        iconEl.style.alignItems = "center";
-        iconEl.innerHTML = `
-            <span style="font-size: 60px; line-height: 1; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.3));">
-                ${item.icon || "❓"}
-            </span>
-        `;
+        iconEl.innerHTML = `<span style="font-size: 48px;">${item.icon || "❓"}</span>`;
     }
 
-    // 1. 屬性清單 (Atk, Def, Hp, ExtraStats)
-    let stats = [];
-    ['atk', 'def', 'hp'].forEach(k => { if (item[k]) stats.push(`${translation[k]} +${item[k]}`); });
+    // --- 核心變動：動態網格屬性渲染 ---
+    let statsHtml = "";
+    
+    // 1. 處理基礎屬性
+    ['atk', 'def', 'hp'].forEach(k => { 
+        if (item[k]) {
+            statsHtml += `<div class="stat-item"><b>${translation[k]}</b> +${item[k]}</div>`;
+        }
+    });
+    
+    // 2. 處理額外屬性 (力量、智力等)
     if (item.extraStats) {
-        Object.keys(item.extraStats).forEach(k => { if (item.extraStats[k]) stats.push(`${translation[k] || k} +${item.extraStats[k]}`); });
+        Object.keys(item.extraStats).forEach(k => { 
+            if (item.extraStats[k]) {
+                statsHtml += `<div class="stat-item"><b>${translation[k] || k}</b> +${item.extraStats[k]}</div>`;
+            }
+        });
     }
-    document.getElementById(`${prefix}Stats`).innerHTML = stats.join("<br>");
+    
+    // 填入網格容器
+    document.getElementById(`${prefix}Stats`).innerHTML = statsHtml;
 
-    // 2. 新增：處理裝備技能 (skills)
+    // --- 技能、被動、描述 (保持之前的優化) ---
     const skillsEl = document.getElementById(`${prefix}Skills`);
     if (skillsEl) {
-        if (item.skills && Array.isArray(item.skills) && item.skills.length > 0) {
-            const skillHtml = item.skills.map(sName => {
-                const dbInfo = (typeof equipSkillsDB !== 'undefined') ? equipSkillsDB[sName] : null;
-                const color = dbInfo ? dbInfo.color : "#a29bfe";
-                return `<div style="color:${color}; margin-top:4px;"><b>★ 技能：</b>${sName}</div>`;
-            }).join("");
-            skillsEl.innerHTML = skillHtml;
+        if (item.skills && item.skills.length > 0) {
+            skillsEl.innerHTML = item.skills.map(s => `<div style="color:#a29bfe; font-size:12px; margin-top:4px;">★ ${s}</div>`).join("");
             skillsEl.style.display = "block";
         } else {
-            skillsEl.innerHTML = "";
             skillsEl.style.display = "none";
         }
     }
 
-    // 3. 新增：處理被動效果 (passive)
     const passiveEl = document.getElementById(`${prefix}Passive`);
     if (passiveEl) {
-        if (item.passive) {
-            passiveEl.innerHTML = `<div style="color: #f1c40f; margin-top:8px; font-size: 13px; border-top: 1px solid rgba(255,255,255,0.1); padding-top:4px;"><b>💎 被動：</b>${item.passive}</div>`;
-            passiveEl.style.display = "block";
-        } else {
-            passiveEl.innerHTML = "";
-            passiveEl.style.display = "none";
-        }
+        passiveEl.innerHTML = item.passive ? `<div style="color:#f1c40f; font-size:12px; margin-top:6px; border-top:1px solid rgba(255,255,255,0.1); padding-top:4px;">💎 ${item.passive}</div>` : "";
+        passiveEl.style.display = item.passive ? "block" : "none";
     }
 
-    // 4. 新增：處理裝備描述 (description)
     const descEl = document.getElementById(`${prefix}Desc`);
     if (descEl) {
-        if (item.description) {
-            descEl.innerHTML = `<div style="color: #999; font-style: italic; margin-top:10px; font-size: 12px; line-height:1.4;">"${item.description}"</div>`;
-            descEl.style.display = "block";
-        } else {
-            descEl.innerHTML = "";
-            descEl.style.display = "none";
-        }
+        descEl.innerHTML = item.description ? `<div style="color:#888; font-size:11px; font-style:italic; margin-top:8px;">"${item.description}"</div>` : "";
+        descEl.style.display = item.description ? "block" : "none";
     }
 }
+
 
 // 卸下裝備邏輯
 function unequipItem(slotId) {
