@@ -112,31 +112,54 @@ const bossData = [
   { 
   id: "boss_mandrake_ascended", 
   name: "次元歸來 · 腹黑曼德拉皇", 
+  isBoss: true, // 確保繼承 Boss 屬性
   lv: 90, 
-  hp: 25000000, // 兩千五百萬 HP，符合後期 BOSS 門檻
+  hp: 25000000, 
+  maxHp: 25000000, 
   def: 8500, 
   atkRange: [45000, 72000], 
   img: "images/4SqKRuaqPjZlQHLEhZkmBK.jpg", 
   dropMat: "時空曼德拉根鬚", 
-  rewardMana: 15000000, // 1500萬魔力獎勵
-  // BOSS 專屬技能程序化
+  rewardMana: 15000000, 
+
+  // --- 死亡結算邏輯 ---
+  onDeath: function(currentMonster) {
+    let drops = [];
+    
+    // 1. 次元專屬傳奇裝備
+    if (Math.random() < 0.3) {
+      const equip = createUniqueItem("mandrake_talisman_ascended", currentMonster.lv);
+      if (equip) {
+        drops.push(equip);
+      }
+    }
+
+    // 2. 高階隨機裝備
+    if (Math.random() < 0.15) {
+      const randomEquip = generateRandomEquip(currentMonster.lv);
+      if (randomEquip) {
+        // Boss 掉落保底：高等級 Boss 至少為史詩(2)
+        if (randomEquip.rarity < 2) randomEquip.rarity = 2;
+        drops.push(randomEquip);
+      }
+    }
+
+    return drops;
+  },
+
+  // 技能數據 (維持你設定的次元邏輯)
   skills: [
     { 
       name: "因果律搗蛋", 
       chance: 0.25, 
-      color: "#9b59b6", // 紫色，象徵時空能量
+      color: "#9b59b6",
       onEffect: (mBaseAtk, stats) => {
-        // 穿越歸來的力量：3 倍攻擊，並附加無視防禦的因果傷害
         const power = 3.0;
         let skillAtk = mBaseAtk * power;
-        let baseDmg = Math.max(1, Math.floor((skillAtk * skillAtk) / (skillAtk + stats.def)));
-        let piercingDmg = Math.floor(skillAtk * 0.2); // 附加 20% 攻擊力的無視防禦傷害
+        let baseDmg = Math.max(1, Math.floor((skillAtk * skillAtk) / (skillAtk + (stats.def || 0))));
+        let piercingDmg = Math.floor(skillAtk * 0.2);
         let totalDmg = baseDmg + piercingDmg;
-        return { 
-          dmg: totalDmg, 
-          heal: 0,
-          log: `發動時空打擊<span style="color:#9b59b6">【因果律搗蛋】</span>，扭曲現實造成 <span style="color:#e74c3c">${totalDmg}</span> 傷害！` 
-        };
+        return { dmg: totalDmg, log: `發動時空打擊<span style="color:#9b59b6">【因果律搗蛋】</span>，扭曲現實造成 <span style="color:#e74c3c">${totalDmg}</span> 傷害！` };
       }
     },
     { 
@@ -144,13 +167,8 @@ const bossData = [
       chance: 0.15, 
       color: "#34495e",
       onEffect: (mBaseAtk, stats, currentMonster) => {
-        // 穿越者的恢復：回復最大血量的 15%，並隨等級成長
-        let healAmt = Math.floor(currentMonster.hp * 0.15);
-        return { 
-          dmg: 0, 
-          heal: healAmt,
-          log: `遁入<span style="color:#34495e">【次元裂縫】</span>避開了因果，瞬間恢復 <span style="color:#2ecc71">${healAmt}</span> HP！` 
-        };
+        let healAmt = Math.floor((currentMonster.maxHp || 25000000) * 0.15);
+        return { dmg: 0, heal: healAmt, log: `遁入<span style="color:#34495e">【次元裂縫】</span>避開了因果，瞬間恢復 <span style="color:#2ecc71">${healAmt}</span> HP！` };
       }
     },
     {
@@ -158,13 +176,9 @@ const bossData = [
       chance: 0.05, 
       color: "#e74c3c",
       onEffect: (mBaseAtk, stats, currentMonster, playerCurrentHp) => {
-        // 奧義：造成玩家當前血量 50% 的真實傷害（最少不低於 BOSS 基礎攻擊）
-        let gravityDmg = Math.max(mBaseAtk * 2, Math.floor(playerCurrentHp * 0.5));
-        return { 
-          dmg: gravityDmg, 
-          heal: 0,
-          log: `釋放穿越禁術<span style="color:#e74c3c">【萬根歸宗】</span>，抽取世界線力量造成 <span style="color:#c0392b">${gravityDmg}</span> 點絕對衝擊！` 
-        };
+        // 使用傳入的玩家當前血量計算百分比傷害
+        let gravityDmg = Math.max(mBaseAtk * 2, Math.floor((playerCurrentHp || 0) * 0.5));
+        return { dmg: gravityDmg, log: `釋放穿越禁術<span style="color:#e74c3c">【萬根歸宗】</span>，抽取世界線力量造成 <span style="color:#c0392b">${gravityDmg}</span> 點絕對衝擊！` };
       }
     }
   ]

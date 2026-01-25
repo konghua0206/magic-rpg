@@ -14,6 +14,22 @@ const uniqueItemTemplates = {
     description: "如果你仔細聽，還能聽到這片葉子發出的細微尖叫聲..."
   },
 
+  "mandrake_talisman_ascended": {
+    type: "necklace",
+    rarity: 3, // 傳奇等級
+    name: "曼德拉皇的末日鳴響",
+    ranges: {
+      hp: [10000, 20000],   
+      str: [40, 100],       
+      int: [60, 150],       
+      med: [80, 200]        
+    },
+    skills: ["靈魂尖叫"],    
+    passive: "受攻擊時有機率使敵人防禦下降 10%", 
+    icon: "images/equip/CHS_it_eq_hayate_acce.png", 
+    description: "這片葉子不再發出尖叫，而是低沉的次元回響，那是萬物終焉的旋律。"
+  },
+
   "divine_crown": {
     type: "head",
     rarity: 3, // 0:普通, 1:稀有, 2:史詩, 3:傳奇
