@@ -1859,23 +1859,49 @@ function battleTick() {
         const eSkill = (typeof equipSkillsDB !== 'undefined') ? equipSkillsDB[skillName] : null;
         if (eSkill && Math.random() < eSkill.chance) {
           try {
+            // 執行技能邏輯計算
             const eResult = eSkill.onEffect(stats, currentMonster);
-            equipSkillTotalDmg += eResult.dmg;
-            addBattleLog(`<div><span style="color:${eSkill.color}">【裝備技能：${eSkill.name}】</span> ${eResult.log} 造成 <span style="color:#2ecc71;">${eResult.dmg}</span> 傷害</div>`);
+            
+            // --- 【安全性核心：統一處理數值】 ---
+            const dmgVal = Number(eResult.dmg) || 0;
+            const healVal = Number(eResult.heal) || 0;
+            const manaVal = Number(eResult.manaGain) || 0; // 配合新版技能回傳
+
+            // 累加傷害
+            equipSkillTotalDmg += dmgVal;
+
+            // 處理補血 (深夜零食時間的主要功能)
+            if (healVal > 0) {
+              const maxHp = (typeof getTotalStat === 'function' ? getTotalStat('hp') : (game.hp || 100));
+              let safeCurrentHp = Number(game.currentHp) || 0;
+              // 確保不會補過頭，且強制數值化防止 NaN
+              game.currentHp = Math.min(maxHp, safeCurrentHp + healVal);
+            }
+
+            // 處理魔力
+            if (manaVal > 0) {
+              game.mana = (Number(game.mana) || 0) + manaVal;
+            }
+            // ------------------------------------
+
+            addBattleLog(`<div><span style="color:${eSkill.color}">【裝備技能：${eSkill.name}】</span> ${eResult.log} 造成 <span style="color:#2ecc71;">${dmgVal}</span> 傷害</div>`);
             if (typeof spawnSkillEffect === "function") spawnSkillEffect(eSkill);
-          } catch (err) { console.error(`裝備技能 [${skillName}] 失敗:`, err); }
+            
+          } catch (err) { 
+            console.error(`裝備技能 [${skillName}] 執行出錯，已跳過以防止遊戲卡死:`, err); 
+          }
         }
       });
     }
   }
 
-  // 立即套用裝備技能傷害
+  // 立即套用裝備技能傷害 (加上 Number 保護)
   if (equipSkillTotalDmg > 0 && currentMonster) {
-    currentMonster.curHp -= equipSkillTotalDmg;
+    currentMonster.curHp = Math.max(0, (Number(currentMonster.curHp) || 0) - equipSkillTotalDmg);
     updateBattleUI();
     if (currentMonster.curHp <= 0) {
        currentMonster.curHp = 0;
-       clearInterval(battleInterval); battleInterval = null;
+       if (battleInterval) { clearInterval(battleInterval); battleInterval = null; }
        setTimeout(winBattle, 300); return; 
     }
   }
@@ -2556,4 +2582,5 @@ updateUI();
 </body>
 
 </html>
+
 
