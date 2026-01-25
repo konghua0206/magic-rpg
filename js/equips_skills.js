@@ -47,36 +47,33 @@ const equipSkillsDB = {
       };
     }
   },
-
+  
   "深夜零食時間": {
     name: "深夜零食時間",
-    desc: "裝備特效：攻擊時 10% 機率恢復 15% 已損失生命值，並增加魔力。",
+    desc: "裝備特效：攻擊時 10% 機率恢復 10% 最大生命值，並固定增加魔力。",
     chance: 0.10,
     color: "#55efc4",
     glowColor: "rgba(85, 239, 196, 0.8)",
     icon: "images/equip/CHS_it_eq_cri_hammer.png", 
     onEffect: (stats, monster) => {
-      // 1. 取得數值，加上強力的 NaN 保護
+      // 1. 取得最大血量，確保絕對有數字
       const maxHp = (typeof getTotalStat === 'function' ? getTotalStat('hp') : (game.hp || 100)) || 100;
-      const currentHp = (typeof game !== 'undefined' && game.currentHp !== undefined) ? game.currentHp : maxHp;
       
-      // 2. 計算邏輯：恢復已損失血量 15% + 等級保底
-      const lostHp = Math.max(0, maxHp - currentHp);
-      let healAmt = Math.floor(lostHp * 0.15) + ((game.lv || 1) * 2); 
+      // 2. 改為簡單的固定比例：最大血量的 10% + 等級加成
+      const healAmt = Math.floor(maxHp * 0.10) + ((game.lv || 1) * 5); 
       
-      const pMed = (stats && stats.med) || (typeof getTotalStat === 'function' ? getTotalStat('med') : 0) || 0;
-      const manaGain = pMed * 10;
+      // 3. 固定魔力回報 (不依賴複雜屬性)
+      const manaGain = 100 + ((game.lv || 1) * 10);
       
-      // 【重要】這裡不再直接修改 game.currentHp，只負責計算並回傳
       return { 
         dmg: 0, 
         heal: healAmt, 
         manaGain: manaGain, 
-        log: `🍟 <span style="color:#55efc4">【深夜零食時間】</span>！回復了 <span style="color:#2ecc71">${healAmt}</span> HP！` 
+        log: `🍟 <span style="color:#55efc4">【深夜零食時間】</span>！恢復了 <span style="color:#2ecc71">${healAmt}</span> HP！` 
       };
     }
-},
-
+  },
+  
   "懶散光束": {
     name: "懶散光束",
     desc: "裝備特效：12% 機率造成智力 300% 以上的無視防禦傷害。",
@@ -187,3 +184,4 @@ const equipSkillsDB = {
 
 
 console.log("✅ 技能系統備忘錄載入完成，開發時請遵循數值安全檢查。");
+
