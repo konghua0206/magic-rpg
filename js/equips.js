@@ -19,10 +19,10 @@ const uniqueItemTemplates = {
     rarity: 3, // 傳奇等級
     name: "曼德拉皇的末日鳴響",
     ranges: {
-      hp: [10000, 20000],   
-      str: [40, 100],       
-      int: [60, 150],       
-      med: [80, 200]        
+      hp: [6000, 10000],   
+      str: [25, 40],       
+      int: [40, 70],       
+      med: [50, 90]        
     },
     skills: ["靈魂尖叫"],    
     passive: "受攻擊時有機率使敵人防禦下降 10%", 
