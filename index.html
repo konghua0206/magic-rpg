@@ -1771,6 +1771,8 @@ function startBattle() {
   // 4. 同步 UI 與啟動計時器
   updateBattleUI();
   updateBattleBuffs(); 
+  initializeBattle();
+  
   battleInterval = setInterval(battleTick, 1000);
 }
 
@@ -1810,6 +1812,7 @@ function startBossBattle(boss) {
   // 4. 更新 UI 與啟動計時器
   updateBattleUI();
   updateBattleBuffs(); 
+  initializeBattle();
 
   battleInterval = setInterval(battleTick, 1000);
 }
@@ -1818,233 +1821,456 @@ function startBossBattle(boss) {
  * ============================================================
  * 戰鬥計時循環邏輯 (Battle Tick)
  * ============================================================
- */
+ * 
 function battleTick() {
-  if (!currentMonster) return;
-
-  // 1. 取得基礎屬性並計算裝備被動加成
-  const stats = getCombatStats(); 
-  for (let slot in game.equipment) {
-    const item = game.equipment[slot];
-    if (item && item.name) {
-      for (let keyword in equipPassivesDB) {
-        if (item.name.includes(keyword)) {
-          const p = equipPassivesDB[keyword];
-          if (p.battleStats) {
-            if (p.battleStats.atkMulti) stats.atk *= (1 + p.battleStats.atkMulti);
-            if (p.battleStats.intMulti) stats.int *= (1 + p.battleStats.intMulti);
-            if (p.battleStats.defMulti) stats.def *= (1 + p.battleStats.defMulti);
-            if (p.battleStats.critRateAdd) stats.critRate += p.battleStats.critRateAdd;
-          }
+    // 1. 安全檢查：如果戰鬥已結束或怪物不存在，立即清理並退出
+    if (!currentMonster || game.currentHp <= 0 || currentMonster.curHp <= 0) {
+        if (battleInterval) {
+            clearInterval(battleInterval);
+            battleInterval = null;
         }
-      }
+        return;
     }
-  }
 
-  let baseDmg = 0;
-  let actionLog = ""; 
-  let skillTriggered = false;
-  // 2. 冷卻時間處理
-  if (typeof currentCooldowns === 'undefined') window.currentCooldowns = {};
-  for (let skillId in currentCooldowns) {
-    if (currentCooldowns[skillId] > 0) currentCooldowns[skillId]--;
-  }
-
-  // 3裝備技能判定 (邏輯分流版)
-  let equipSkillTotalDmg = 0;
-  
-  for (let slot in game.equipment) {
-    const item = game.equipment[slot];
-    if (item && item.skills && Array.isArray(item.skills)) {
-      item.skills.forEach(skillName => {
-        const eSkill = (typeof equipSkillsDB !== 'undefined') ? equipSkillsDB[skillName] : null;
-        
-        // 觸發判定
-        if (eSkill && Math.random() < (eSkill.chance || 0)) {
-          try {
-            // 執行技能運算，獲取結果物件
-            const eResult = eSkill.onEffect(stats, currentMonster);
-            if (!eResult) return;
-
-            // --- 邏輯分流處理 ---
-
-            // A. 傷害類處理 (如果有 dmg)
-            if (eResult.dmg > 0) {
-              const sDmg = Number(eResult.dmg) || 0;
-              equipSkillTotalDmg += sDmg;
-            }
-
-            // B. 恢復類處理 (如果有 heal)
-            if (eResult.heal > 0) {
-              const maxHp = (typeof getTotalStat === 'function' ? getTotalStat('hp') : (game.hp || 100));
-              let safeCurrentHp = Number(game.currentHp);
-              // 若目前的血量已經壞掉 (NaN)，則以最大血量為基準校正
-              if (isNaN(safeCurrentHp)) safeCurrentHp = 0; 
-              
-              const sHeal = Number(eResult.heal) || 0;
-              game.currentHp = Math.min(maxHp, safeCurrentHp + sHeal);
-            }
-
-            // C. 資源類處理 (如果有 manaGain)
-            if (eResult.manaGain > 0) {
-              game.mana = (Number(game.mana) || 0) + (Number(eResult.manaGain) || 0);
-            }
-
-            // D. 日誌與特效 (統一處理)
-            let logMsg = eResult.log || "";
-            let dmgText = eResult.dmg > 0 ? ` 造成 <span style="color:#2ecc71;">${Math.floor(eResult.dmg)}</span> 傷害` : "";
-            
-            addBattleLog(`<div><span style="color:${eSkill.color}">【裝備技能：${eSkill.name}】</span> ${logMsg}${dmgText}</div>`);
-            
-            if (typeof spawnSkillEffect === "function") {
-              spawnSkillEffect(eSkill);
-            }
-
-          } catch (err) { 
-            console.error(`裝備技能 [${skillName}] 執行衝突:`, err); 
-          }
-        }
-      });
+    // 2. 數據同步：確保戰鬥上下文存在 (如果意外丟失則補齊)
+    if (!window.battleContext) {
+        window.battleContext = { stats: getCombatStats(), turnCount: 0 };
     }
-  }
+    window.battleContext.turnCount++;
 
-  // 裝備技能總傷害套用 (確保傷害是數字)
-  if (equipSkillTotalDmg > 0 && currentMonster) {
-    const safeMonsterHp = Number(currentMonster.curHp) || 0;
-    currentMonster.curHp = Math.max(0, safeMonsterHp - equipSkillTotalDmg);
+    // 3. 原有邏輯適配：冷卻時間處理 (保持原有變量名)
+    if (typeof currentCooldowns === 'undefined') window.currentCooldowns = {};
+    for (let skillId in currentCooldowns) {
+        if (currentCooldowns[skillId] > 0) currentCooldowns[skillId]--;
+    }
+
+    // --- 核心重構模塊呼叫 ---
     
-    updateBattleUI();
-    
-    // 檢查怪物死亡
+    // 執行裝備被動與主動技能 (處理 dmg, heal, mana)
+    processEquipmentActions(); 
+
+    // 再次檢查怪物血量 (防止裝備技能直接擊殺)
     if (currentMonster.curHp <= 0) {
-       currentMonster.curHp = 0;
-       if (battleInterval) {
-         clearInterval(battleInterval);
-         battleInterval = null;
-       }
-       setTimeout(winBattle, 300);
-       return; // 怪物已死，中斷後續 battleTick
+        finalizeBattle("win");
+        return;
     }
-  }
 
-  // 4. 玩家主動技能判定
-  if (game.equippedSkills && game.equippedSkills.length > 0) {
-    const availableSkills = game.equippedSkills.filter(id => {
-      const s = allSkills.find(sk => sk.id === id);
-      return s && (currentCooldowns[id] || 0) <= 0 && game.mana >= s.cost;
-    });
+    // 執行玩家行動 (主動技能或普攻)
+    processPlayerAction();
 
-    if (availableSkills.length > 0) {
-      const randomId = availableSkills[Math.floor(Math.random() * availableSkills.length)];
-      const skill = allSkills.find(s => s.id === randomId);
-      if (skill && Math.random() < skill.chance) {
-        game.mana -= skill.cost;
-        skillTriggered = true;
-        currentCooldowns[skill.id] = skill.cooldown;
-        if (typeof spawnSkillEffect === "function") spawnSkillEffect(skill);
-        const result = skill.onEffect(stats, currentMonster);
-        baseDmg = result.dmg;
-        actionLog = `<span style="color:${skill.color}">【${skill.name}】</span> ${result.log}`;
-      }
+    // 再次檢查怪物血量
+    if (currentMonster.curHp <= 0) {
+        finalizeBattle("win");
+        return;
     }
-  }
 
-  // 5. 普攻與暴擊計算
-  if (!skillTriggered) {
-    baseDmg = Math.max(1, Math.floor((stats.atk * stats.atk) / (stats.atk + currentMonster.def)));
-    actionLog = `<span style="color:#ccc;">普通攻擊：</span> `;
-  }
+    // 執行怪物行動與玩家反制
+    processMonsterAction();
 
-  const isPlayerCrit = Math.random() * 100 < stats.critRate;
-  if (isPlayerCrit) {
-    baseDmg = Math.floor(baseDmg * stats.critMulti);
-    actionLog += `<span style="color:#f1c40f; font-weight:bold;">[暴擊 x${stats.critMulti.toFixed(1)}!!] </span>`;
-  }
+    // 執行玩家死亡檢查
+    if (game.currentHp <= 0) {
+        finalizeBattle("lose");
+        return;
+    }
 
-  currentMonster.curHp -= baseDmg;
-  addBattleLog(`<div>${actionLog}造成 <span style="color: #2ecc71;">${baseDmg}</span> 傷害</div>`);
+    // 4. UI 統一更新 (調用你原本的函式)
+    updateBattleUI();
+}
 
-  // 6. 怪物反擊判定 (含閃避、護盾、被動觸發)
-if (currentMonster.curHp > 0) {
-    const isPlayerDodged = Math.random() * 100 < stats.dodgeRate;
-    if (isPlayerDodged) {
-        addBattleLog(`<div style="color: #3498db;">🍃 閃避！你避開了 ${currentMonster.name} 的攻擊</div>`);
+/**
+ * 戰鬥終點適配器
+ * 確保調用你原有的 winBattle 或 stopBattle
+ */
+function finalizeBattle(result) {
+    if (battleInterval) {
+        clearInterval(battleInterval);
+        battleInterval = null;
+    }
+
+    if (result === "win") {
+        currentMonster.curHp = 0;
+        updateBattleUI();
+        // 調用你原有的勝利邏輯 (含掉落、經驗計算)
+        if (typeof winBattle === "function") setTimeout(winBattle, 300);
     } else {
-        // 1. 確保怪物攻擊力數據合法，防止 NaN
-        let mAtkData = currentMonster.atkRange || [1, 10];
-        // 額外保險：防止 atkRange 被技能弄壞成非數字
-        let mMin = Number(mAtkData[0]) || 1;
-        let mMax = Number(mAtkData[1]) || mMin + 1;
+        game.currentHp = 0;
+        updateBattleUI();
+        // 調用你原有的失敗邏輯
+        if (typeof stopBattle === "function") stopBattle("你被打敗了，撤退回家...");
+    }
+}
+
+/**
+ * 戰鬥初始化邏輯
+ * 處理所有「進場時」觸發的效果
+ */
+function initializeBattle() {
+    if (!currentMonster) return;
+
+    addBattleLog(`<div style="color:#f39c12;">⚔️ 與 ${currentMonster.name} 的戰鬥開始了！</div>`);
+
+    // 1. 初始化戰鬥上下文 (Combat Context)
+    // 將所有戰鬥中會變動的加成暫存在這裡，不影響原始存檔數據
+    window.battleContext = {
+        stats: getCombatStats(), // 基礎屬性複本
+        buffs: [],               // 存放戰鬥中獲得的增益
+        turnCount: 0,
+        isFinished: false
+    };
+
+    // 2. 處理裝備被動/技能的入場效果
+    processEntryEffects(game.equipment, "equipment");
+
+    // 3. 處理玩家技能的入場效果 (例如被動技能)
+    if (game.equippedSkills) {
+        processEntryEffects(game.equippedSkills, "skills");
+    }
+
+    // 4. 更新一次 UI，確保加成後的血量/屬性正確顯示
+    updateBattleUI();
+}
+
+/**
+ * 統一處理入場效果的輔助函式
+ * @param {Object|Array} sources 來源對象 (裝備列或技能陣列)
+ * @param {String} type 類型標記
+ */
+function processEntryEffects(sources, type) {
+    for (let key in sources) {
+        const item = sources[key];
+        if (!item) continue;
+
+        // 邏輯 A：如果是裝備，檢查其關鍵字對應的被動庫
+        if (type === "equipment" && item.name) {
+            for (let keyword in equipPassivesDB) {
+                if (item.name.includes(keyword)) {
+                    const passive = equipPassivesDB[keyword];
+                    if (passive.onBattleStart) {
+                        executeEntryLogic(passive, "被動", item.name);
+                    }
+                }
+            }
+        }
         
-        let mBaseAtk = Math.floor(Math.random() * (mMax - mMin + 1)) + mMin;
-        let finalPlayerDamage = 0; // 統一計算總傷害量
-        let battleMsg = "";
-
-        // 2. 判斷怪物技能或普攻
-        let usedSkill = (currentMonster.skills && currentMonster.skills.length > 0 && Math.random() < 0.25) 
-                        ? currentMonster.skills[Math.floor(Math.random() * currentMonster.skills.length)] : null;
-
-        if (usedSkill) {
-            const result = usedSkill.onEffect(mBaseAtk, stats, currentMonster);
-            finalPlayerDamage = result.dmg || 0;
-            // 處理怪物回血
-            if (result.heal > 0) currentMonster.curHp = Math.min(currentMonster.hp, currentMonster.curHp + result.heal);
-            battleMsg = `<div style="color: ${usedSkill.color || '#f39c12'};">★ ${currentMonster.name} ${result.log}</div>`;
-        } else {
-            finalPlayerDamage = Math.max(1, Math.floor((mBaseAtk * mBaseAtk) / (mBaseAtk + stats.def + 1)));
-            battleMsg = `<div style="color: #e74c3c;">${currentMonster.name} 反擊造成 ${finalPlayerDamage} 傷害</div>`;
+        // 邏輯 B：直接檢查對象是否內建 onBattleStart (適用於技能或特定物件)
+        if (item.onBattleStart) {
+            executeEntryLogic(item, "效果", item.name || item.id);
         }
+    }
+}
 
-        // 3. 護盾減傷處理 (在套用到 game.currentHp 之前完成計算)
-        if (finalPlayerDamage > 0 && game.shieldTime && Date.now() < game.shieldTime) {
-            const reduction = Math.floor(finalPlayerDamage * (game.shieldReduce || 0.3));
-            finalPlayerDamage -= reduction;
-            battleMsg += ` <span style="color:#3498db;">(🛡️ 吸收 ${reduction})</span>`;
+/**
+ * 執行具體的入場邏輯
+ */
+function executeEntryLogic(effectObj, prefix, sourceName) {
+    try {
+        // 傳入當前上下文供效果函數修改屬性或執行動作
+        const result = effectObj.onBattleStart(window.battleContext, currentMonster);
+        
+        if (result && result.log) {
+            addBattleLog(`<div><span style="color:#9b59b6;">【${prefix}：${sourceName}】</span> ${result.log}</div>`);
         }
+        
+        // 如果有特效，在此觸發
+        if (effectObj.effectType && typeof spawnSkillEffect === "function") {
+            spawnSkillEffect(effectObj);
+        }
+    } catch (err) {
+        console.error(`入場效果執行失敗 [${sourceName}]:`, err);
+    }
+}
 
-        // 4. 【關鍵修復】執行血量扣除，並加入安全檢查
-        finalPlayerDamage = Number(finalPlayerDamage) || 0;
-        game.currentHp = Math.max(0, (Number(game.currentHp) || 0) - finalPlayerDamage);
-        addBattleLog(battleMsg);
+/**
+ * 處理裝備與被動的主動觸發邏輯
+ * 包含：傷害、恢復、輔助(Buff)
+ */
+function processEquipmentActions() {
+    let phaseResults = {
+        totalDmg: 0,
+        totalHeal: 0,
+        manaGain: 0,
+        buffsApplied: []
+    };
 
-        // 5. 【關鍵修復】受擊被動延後執行
-        // 只有在扣完血且人還活著時，才觸發「廢人領域」等回血被動
-        if (game.currentHp > 0) {
-            for (let slot in game.equipment) {
-                const item = game.equipment[slot];
-                if (item && item.name) {
-                    for (let keyword in equipPassivesDB) {
-                        if (item.name.includes(keyword)) {
-                            const p = equipPassivesDB[keyword];
-                            if (p.onBeingHit && Math.random() < (p.chance || 1)) {
-                                const res = p.onBeingHit(currentMonster);
-                                if (res && res.success) {
-                                    addBattleLog(res.log);
-                                    // 更新 UI 以反映被動帶來的血量變化 (例如回血)
-                                    updateBattleUI(); 
-                                }
-                            }
+    for (let slot in game.equipment) {
+        const item = game.equipment[slot];
+        if (!item || !item.skills) continue;
+
+        item.skills.forEach(skillName => {
+            const eSkill = (typeof equipSkillsDB !== 'undefined') ? equipSkillsDB[skillName] : null;
+            
+            // 1. 觸發判定
+            if (eSkill && Math.random() < (eSkill.chance || 0)) {
+                // 2. 執行效果並獲取結果物件
+                // 傳入 battleContext 確保裝備能根據當前戰鬥屬性計算
+                const result = eSkill.onEffect(window.battleContext.stats, currentMonster);
+                
+                if (!result) return;
+
+                // 3. 根據效果類型進行「結果累加」
+                if (result.dmg) phaseResults.totalDmg += Number(result.dmg);
+                if (result.heal) phaseResults.totalHeal += Number(result.heal);
+                if (result.manaGain) phaseResults.manaGain += Number(result.manaGain);
+                
+                // 4. 處理輔助類效果 (例如增加臨時防禦、暴擊等)
+                if (result.buff) {
+                    // 將 buff 推入 context 中，供後續環節判定
+                    window.battleContext.buffs.push({
+                        name: eSkill.name,
+                        effect: result.buff, // 例如 { defAdd: 10 }
+                        duration: result.duration || 1
+                    });
+                }
+
+                // 5. 統一渲染日誌與特效
+                renderActionLog(eSkill, result);
+            }
+        });
+    }
+
+    // 6. 統一結算階段結果 (Settle)
+    settlePhaseResults(phaseResults);
+}
+
+/**
+ * 結算器：統一處理數值變更
+ */
+function settlePhaseResults(results) {
+    // 處理傷害
+    if (results.totalDmg > 0) {
+        currentMonster.curHp = Math.max(0, (Number(currentMonster.curHp) || 0) - results.totalDmg);
+    }
+
+    // 處理治療 (確保不溢出)
+    if (results.totalHeal > 0) {
+        const maxHp = getTotalStat('hp');
+        game.currentHp = Math.min(maxHp, (Number(game.currentHp) || 0) + results.totalHeal);
+    }
+
+    // 處理資源
+    if (results.manaGain > 0) {
+        game.mana = (Number(game.mana) || 0) + results.manaGain;
+    }
+
+    updateBattleUI();
+}
+
+/**
+ * 格式化輸出裝備動作日誌
+ */
+function renderActionLog(config, result) {
+    let msg = `<span style="color:${config.color}">【裝備技能：${config.name}】</span> ${result.log || ""}`;
+    
+    let details = [];
+    if (result.dmg > 0) details.push(`造成 <span style="color:#2ecc71;">${Math.floor(result.dmg)}</span> 傷害`);
+    if (result.heal > 0) details.push(`恢復 <span style="color:#ff7675;">${Math.floor(result.heal)}</span> HP`);
+    if (result.manaGain > 0) details.push(`回覆 <span style="color:#3498db;">${result.manaGain}</span> MP`);
+    
+    addBattleLog(`<div>${msg} ${details.join('，')}</div>`);
+    
+    if (typeof spawnSkillEffect === "function") spawnSkillEffect(config);
+}
+
+/**
+ * 處理玩家行動階段
+ * 優先級：主動技能 > 普通攻擊 (普攻會觸發怪物技能判定)
+ */
+function processPlayerAction() {
+    // 1. 檢查玩家是否有可用的主動技能
+    const skillToUse = getAvailableSkill();
+
+    if (skillToUse) {
+        // --- 執行技能邏輯 ---
+        executePlayerSkill(skillToUse);
+    } else {
+        // --- 執行普通攻擊邏輯 (含怪物反制) ---
+        executeNormalAttack();
+    }
+}
+
+/**
+ * 尋找當前可釋放的技能
+ */
+function getAvailableSkill() {
+    if (!game.equippedSkills || game.equippedSkills.length === 0) return null;
+
+    const available = game.equippedSkills
+        .map(id => allSkills.find(s => s.id === id))
+        .filter(s => s && (currentCooldowns[s.id] || 0) <= 0 && game.mana >= s.cost);
+
+    if (available.length > 0) {
+        // 隨機選一個符合觸發機率的技能
+        const candidate = available[Math.floor(Math.random() * available.length)];
+        return (Math.random() < candidate.chance) ? candidate : null;
+    }
+    return null;
+}
+
+/**
+ * 執行玩家主動技能 (傷害/輔助/恢復)
+ */
+function executePlayerSkill(skill) {
+    game.mana -= skill.cost;
+    currentCooldowns[skill.id] = skill.cooldown;
+
+    const result = skill.onEffect(window.battleContext.stats, currentMonster);
+    
+    // 技能通常具有高優先級，直接結算效果 (不觸發怪物的普攻反制)
+    let logMsg = `<span style="color:${skill.color}">【${skill.name}】</span> ${result.log}`;
+    addBattleLog(`<div>${logMsg} 造成 <span style="color:#2ecc71;">${Math.floor(result.dmg || 0)}</span> 傷害</div>`);
+
+    // 結算技能數值
+    if (result.dmg) {
+        currentMonster.curHp = Math.max(0, currentMonster.curHp - result.dmg);
+    }
+    if (result.heal) {
+        const maxHp = getTotalStat('hp');
+        game.currentHp = Math.min(maxHp, game.currentHp + result.heal);
+    }
+
+    if (typeof spawnSkillEffect === "function") spawnSkillEffect(skill);
+    updateBattleUI();
+}
+
+/**
+ * 執行普通攻擊邏輯
+ * 這裡包含你要求的：判斷是否觸發怪物技能反制
+ */
+function executeNormalAttack() {
+    const stats = window.battleContext.stats;
+    let actionLog = `<span style="color:#ccc;">普通攻擊：</span> `;
+
+    // 1. 判定怪物是否在玩家普攻時觸發技能 (反制)
+    // 假設怪物有 20% 機率在玩家普攻時「閃避並反擊」或「發動防禦技能」
+    const monsterCounterSkill = (currentMonster.skills && Math.random() < 0.2) 
+        ? currentMonster.skills[Math.floor(Math.random() * currentMonster.skills.length)] 
+        : null;
+
+    if (monsterCounterSkill) {
+        // 怪物發動了技能反制，玩家普攻被中斷或受到影響
+        const mResult = monsterCounterSkill.onEffect(0, stats, currentMonster); // 傳入 0 表示這是反制觸發
+        addBattleLog(`<div style="color:#e67e22;">⚡ 警告！${currentMonster.name} 在你攻擊時發動了 ${mResult.log}</div>`);
+        
+        // 如果怪物技能帶有傷害，直接扣除玩家血量
+        if (mResult.dmg) {
+            game.currentHp = Math.max(0, game.currentHp - mResult.dmg);
+        }
+        return; // 普攻被中斷
+    }
+
+    // 2. 正常的普攻傷害計算
+    let baseDmg = Math.max(1, Math.floor((stats.atk * stats.atk) / (stats.atk + currentMonster.def)));
+    
+    // 暴擊判定
+    const isCrit = Math.random() * 100 < stats.critRate;
+    if (isCrit) {
+        baseDmg = Math.floor(baseDmg * stats.critMulti);
+        actionLog += `<span style="color:#f1c40f; font-weight:bold;">[暴擊 x${stats.critMulti.toFixed(1)}!!] </span>`;
+    }
+
+    currentMonster.curHp = Math.max(0, currentMonster.curHp - baseDmg);
+    addBattleLog(`<div>${actionLog}造成 <span style="color: #2ecc71;">${baseDmg}</span> 傷害</div>`);
+    updateBattleUI();
+}
+
+/**
+ * 處理怪物行動階段
+ * 包含：怪物技能/普攻、玩家閃避判定、玩家被動反制
+ */
+function processMonsterAction() {
+    if (currentMonster.curHp <= 0 || window.battleContext.isFinished) return;
+
+    const stats = window.battleContext.stats;
+    let finalIncomingDmg = 0;
+    let monsterActionLog = "";
+
+    // 1. 玩家閃避判定 (最優先級)
+    if (Math.random() * 100 < stats.dodgeRate) {
+        addBattleLog(`<div style="color: #3498db;">🍃 閃避！你輕巧地避開了 ${currentMonster.name} 的攻擊</div>`);
+        return; // 完全避開，後續邏輯不執行
+    }
+
+    // 2. 決定怪物行為：技能或普攻
+    const usedSkill = (currentMonster.skills && currentMonster.skills.length > 0 && Math.random() < 0.25) 
+                      ? currentMonster.skills[Math.floor(Math.random() * currentMonster.skills.length)] 
+                      : null;
+
+    if (usedSkill) {
+        // 怪物技能邏輯
+        const mAtkData = currentMonster.atkRange || [1, 10];
+        const mBaseAtk = Math.floor(Math.random() * (mAtkData[1] - mAtkData[0] + 1)) + mAtkData[0];
+        const result = usedSkill.onEffect(mBaseAtk, stats, currentMonster);
+        
+        finalIncomingDmg = result.dmg || 0;
+        monsterActionLog = `<div style="color: ${usedSkill.color || '#f39c12'};">★ ${currentMonster.name} ${result.log}</div>`;
+        
+        if (result.heal > 0) {
+            currentMonster.curHp = Math.min(currentMonster.hp, currentMonster.curHp + result.heal);
+        }
+    } else {
+        // 怪物普通反擊
+        const mAtkData = currentMonster.atkRange || [1, 10];
+        const mBaseAtk = Math.floor(Math.random() * (mAtkData[1] - mAtkData[0] + 1)) + mAtkData[0];
+        finalIncomingDmg = Math.max(1, Math.floor((mBaseAtk * mBaseAtk) / (mBaseAtk + stats.def + 1)));
+        monsterActionLog = `<div style="color: #e74c3c;">${currentMonster.name} 發起反擊</div>`;
+    }
+
+    // 3. 【關鍵：玩家反制環節】在傷害結算前執行
+    // 我們檢查裝備被動中是否有 onBeforeHit (受擊前觸發)
+    finalIncomingDmg = processPlayerCounters(finalIncomingDmg);
+
+    // 4. 護盾減傷處理 (屬於防禦狀態)
+    if (finalIncomingDmg > 0 && game.shieldTime && Date.now() < game.shieldTime) {
+        const reduction = Math.floor(finalIncomingDmg * (game.shieldReduce || 0.3));
+        finalIncomingDmg -= reduction;
+        monsterActionLog += ` <span style="color:#3498db;">(🛡️ 護盾吸收 ${reduction})</span>`;
+    }
+
+    // 5. 最終傷害落實
+    addBattleLog(monsterActionLog);
+    if (finalIncomingDmg > 0) {
+        game.currentHp = Math.max(0, (Number(game.currentHp) || 0) - finalIncomingDmg);
+        addBattleLog(`<div>造成了 <span style="color: #e74c3c;">${Math.floor(finalIncomingDmg)}</span> 點傷害</div>`);
+    }
+
+    updateBattleUI();
+}
+
+/**
+ * 玩家反制處理器
+ * 掃描所有被動與狀態，決定是否減少傷害或反彈傷害
+ */
+function processPlayerCounters(incomingDmg) {
+    let currentDmg = incomingDmg;
+
+    for (let slot in game.equipment) {
+        const item = game.equipment[slot];
+        if (!item || !item.name) continue;
+
+        for (let keyword in equipPassivesDB) {
+            if (item.name.includes(keyword)) {
+                const p = equipPassivesDB[keyword];
+                
+                // 執行受擊前的反制邏輯
+                if (p.onBeforeHit && Math.random() < (p.chance || 1)) {
+                    const counterResult = p.onBeforeHit(currentMonster, currentDmg);
+                    if (counterResult) {
+                        if (counterResult.log) addBattleLog(counterResult.log);
+                        if (counterResult.reduceDmg) currentDmg -= counterResult.reduceDmg;
+                        if (counterResult.reflectDmg) {
+                            currentMonster.curHp = Math.max(0, currentMonster.curHp - counterResult.reflectDmg);
+                            addBattleLog(`<div>💥 反彈造成 ${Math.floor(counterResult.reflectDmg)} 點傷害！</div>`);
                         }
                     }
                 }
             }
         }
     }
+    return Math.max(0, currentDmg);
 }
 
-  // 7. 最終勝負判定
-  updateBattleUI();
-  if (currentMonster.curHp <= 0) {
-    clearInterval(battleInterval); battleInterval = null;
-    currentMonster.curHp = 0; updateBattleUI();
-    setTimeout(winBattle, 300);
-  } else if (game.currentHp <= 0) {
-    game.currentHp = 0; clearInterval(battleInterval); battleInterval = null;
-    updateBattleUI(); stopBattle("你被打敗了，撤退回家...");
-  }
-}
 
-/**
+
  * ============================================================
  * 1. 勝利結算系統 (Reward & Drops)
  * ============================================================
