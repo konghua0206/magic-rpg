@@ -92,73 +92,124 @@
 </div>
 
 <!--戰鬥頁面 (Battle Page)-->
-<div id="page-battle" class="page" style="width: 100%; max-width: 600px; margin: 0 auto;">
-  <div class="card" style="padding: 15px; width: auto;">
-    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px;">
-      
-      <h3 style="margin: 0; color: var(--primary); font-size: 1.1rem; flex: 1 1 auto; min-width: 120px;">
-        ⚔️ 冒險與討伐
-      </h3>
-      
-      <div style="display: flex; gap: 5px; flex: 1 1 auto; justify-content: flex-end;">
-        <button id="btnModeAdv" 
-                onclick="toggleBattleMode('adventure')" 
-                style="padding: 8px 10px; font-size: 12px; white-space: nowrap; flex: 1; max-width: 110px; cursor: pointer;">
-          冒險模式
-        </button>
-        <button id="btnModeBoss" 
-                onclick="toggleBattleMode('boss')" 
-                style="padding: 8px 10px; font-size: 12px; background: #444; white-space: nowrap; flex: 1; max-width: 110px; cursor: pointer;">
-          BOSS 挑戰
-        </button>
+<div id="page-battle" class="page" style="width: 100%; max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; box-sizing: border-box;">
+
+  <div class="card" style="padding: 10px; background: #1a1a2e; border: 1px solid #7b1fa2; border-radius: 12px; display: flex; gap: 8px;">
+    <button id="btnModeAdv" onclick="toggleBattleMode('adventure')" style="flex: 1; padding: 10px; border-radius: 8px; font-size: 13px; border: none; background: #7b1fa2; color: #fff; font-weight: bold; cursor: pointer;">🌲 區域冒險</button>
+    <button id="btnModeBoss" onclick="toggleBattleMode('boss')" style="flex: 1; padding: 10px; border-radius: 8px; font-size: 13px; border: 1px solid #7b1fa2; background: #121212; color: #b39ddb; font-weight: bold; cursor: pointer;">💀 首領挑戰</button>
+  </div>
+
+  <div style="background: #161625; border: 1px solid #4a148c; border-radius: 16px; padding: 15px; display: flex; flex-direction: column; gap: 15px; box-shadow: inset 0 0 20px rgba(0,0,0,0.5);">
+    
+    <div id="controlSection">
+      <div id="adventureControls">
+        <select id="regionSelect" onchange="changeRegion(this.value)" 
+                style="width: 100%; padding: 12px; background: #000; color: #e1bee7; border: 1px solid #9c27b0; border-radius: 8px; font-size: 14px; outline: none;">
+        </select>
       </div>
       
-    </div>
-
-    <div id="adventureControls">
-      <select id="regionSelect" onchange="changeRegion(this.value)" style="width: 100%; padding: 10px; background: #222; color: #fff; border: 1px solid var(--primary); border-radius: 8px; margin-bottom: 10px;"></select>
-    </div>
-
-    <div id="bossControls" style="display:none;">
-      <div id="bossList" style="display: flex; gap: 12px; overflow-x: auto; padding: 10px 5px; scroll-snap-type: x mandatory;"></div>
-      <div class="small" style="text-align:center; color:rgba(255,255,255,0.4); margin-top:5px;">← 左右滑動選擇對手 →</div>
-    </div>
-
-    <div id="battleStatus" style="text-align: center; margin: 15px 0; min-height: 24px; color: #f1c40f;">準備就緒</div>
-
-    <div id="battleDisplayArea" style="display: flex; flex-direction: column; gap: 12px;">
-      <div id="playerBattleArea" class="card" style="display:none; position: relative; overflow: hidden; min-height: 130px; border-left: 5px solid var(--primary); padding: 15px; background: rgba(0,0,0,0.5);">
-        <img id="battlePlayerImg" src="" style="position: absolute; right: -5px; top: -5px; height: 130%; opacity: 0.7; pointer-events: none; mask-image: linear-gradient(to left, black, transparent); -webkit-mask-image: linear-gradient(to left, black, transparent); object-fit: contain; z-index: 0;">
-        <div style="position: relative; z-index: 1; width: 60%;">
-          <div id="playerSideName" style="font-weight: bold; color: var(--primary); font-size: 18px; text-shadow: 0 0 5px #000;">【玩家】</div>
-          <div style="font-size: 14px; margin-top: 4px; color: #eee;">HP: <span id="pBattleHpText" style="font-family: monospace;">0 / 0</span></div>
-          <div style="width:100%; height:12px; background:rgba(0,0,0,0.6); border-radius:6px; overflow:hidden; margin-top:8px; border: 1px solid rgba(255,255,255,0.1);">
-            <div id="pBattleHpBar" style="width:100%; height:100%; background:linear-gradient(90deg, #2ecc71, #27ae60); transition: width 0.3s;"></div>
+      <div id="bossControls" style="display:none;">
+        <style>
+          /* 為 BOSS 列表設計的粗橫向滾軸 */
+          #bossList::-webkit-scrollbar {
+            height: 10px; /* 增加高度讓 PC 好點擊 */
+          }
+          #bossList::-webkit-scrollbar-track {
+            background: #000;
+            border-radius: 5px;
+          }
+          #bossList::-webkit-scrollbar-thumb {
+            background: #7b1fa2;
+            border-radius: 5px;
+            border: 2px solid #000;
+          }
+          #bossList::-webkit-scrollbar-thumb:hover {
+            background: #9c27b0;
+          }
+        </style>
+        <div id="bossList" style="display: flex; gap: 12px; overflow-x: auto; padding: 10px 5px 15px 5px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;">
           </div>
-        </div>
-      </div>
-
-      <div id="vsTitle" style="display:none; text-align: center; color: #666; font-weight: bold; font-style: italic; font-size: 20px; margin: -5px 0;">V.S.</div>
-
-      <div id="monsterArea" class="card" style="display:none; position: relative; overflow: hidden; min-height: 130px; border-right: 5px solid #e74c3c; padding: 15px; background: rgba(0,0,0,0.5);">
-        <img id="bossImg" src="" style="position: absolute; left: -5px; top: -5px; height: 130%; opacity: 0.7; pointer-events: none; mask-image: linear-gradient(to right, black, transparent); -webkit-mask-image: linear-gradient(to right, black, transparent); object-fit: contain; z-index: 0;">
-        <div style="position: relative; z-index: 1; width: 60%; margin-left: auto; text-align: right;">
-          <div id="mName" style="font-weight: bold; color: #e74c3c; font-size: 18px; text-shadow: 0 0 5px #000;">怪物名稱</div>
-          <div style="font-size: 14px; margin-top: 4px; color: #eee;">HP: <span id="mHpText" style="font-family: monospace;">0 / 0</span></div>
-          <div style="width:100%; height:12px; background:rgba(0,0,0,0.6); border-radius:6px; overflow:hidden; margin-top:8px; border: 1px solid rgba(255,255,255,0.1);">
-            <div id="mHpBar" style="width:100%; height:100%; background:linear-gradient(90deg, #ff4d4d, #ff9f43); transition: width 0.3s;"></div>
-          </div>
+        <div style="text-align:center; color:#9c27b0; font-size: 11px; margin-top: 2px; font-weight: bold; letter-spacing: 1px;">
+          ⬅ 左右滑動或拖動滾軸選擇對手 ➡
         </div>
       </div>
     </div>
 
-    <button id="startBattleBtn" onclick="startBattle()" style="margin-top: 10px;">開始搜尋敵人</button>
-    <button id="stopBattleBtn" onclick="stopBattle('已撤離戰場')" style="display:none; background:#555; margin-top: 10px;">撤退 / 停止</button>
+    <div id="battleStatus" style="text-align: center; color: #f1c40f; font-weight: bold; font-size: 14px; letter-spacing: 1px; text-shadow: 0 0 8px rgba(241,196,15,0.4);">
+      準備就緒
+    </div>
+
+    <div id="battleDisplayArea" style="display: flex; flex-direction: column; gap: 10px;">
+      <div id="battle-buffs" style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap; min-height:22px;"></div>
+
+      <div id="playerBattleArea" style="display:none; position: relative; overflow: hidden; min-height: 120px; border-left: 4px solid #2ecc71; padding: 12px; background: linear-gradient(90deg, #1b3320, #1a1a2e); border-radius: 10px;">
+  <img id="battlePlayerImg" src="" style="position: absolute; right: -5px; top: -5px; height: 130%; opacity: 0.5; pointer-events: none; mask-image: linear-gradient(to left, black, transparent); -webkit-mask-image: linear-gradient(to left, black, transparent); object-fit: contain;">
+  <div style="position: relative; z-index: 1;">
+    <div id="playerSideName" style="font-weight: bold; color: #2ecc71; font-size: 16px; text-shadow: 0 0 5px rgba(46, 204, 113, 0.5);">玩家</div>
+    <div style="font-size: 13px; color: #a2cfb6; margin-top: 4px;">HP: <span id="pBattleHpText">0 / 0</span></div>
+    <div style="width:120px; height:10px; background:rgba(0,0,0,0.6); border-radius:5px; margin-top:8px; border: 1px solid #1e5631; overflow:hidden;">
+      <div id="pBattleHpBar" style="width:100%; height:100%; background:linear-gradient(90deg, #27ae60, #2ecc71); transition: 0.3s; box-shadow: 0 0 8px rgba(46, 204, 113, 0.4);"></div>
+    </div>
+  </div>
+</div>
+
+      <div id="vsTitle" style="display:none; text-align: center; color: #4a148c; font-weight: 900; font-style: italic; font-size: 18px;">V.S.</div>
+
+      <div id="monsterArea" style="display:none; position: relative; overflow: hidden; min-height: 120px; border-right: 4px solid #e74c3c; padding: 12px; background: linear-gradient(270deg, #3d1010, #1a1a2e); border-radius: 10px;">
+        <img id="bossImg" src="" style="position: absolute; left: -5px; top: -5px; height: 130%; opacity: 0.5; pointer-events: none; mask-image: linear-gradient(to right, black, transparent); -webkit-mask-image: linear-gradient(to right, black, transparent); object-fit: contain;">
+        <div style="position: relative; z-index: 1; text-align: right;">
+          <div id="mName" style="font-weight: bold; color: #ffab91; font-size: 16px;">怪物名稱</div>
+          <div style="font-size: 13px; color: #ffab91; margin-top: 4px;">HP: <span id="mHpText">0 / 0</span></div>
+          <div style="width:120px; height:10px; background:rgba(0,0,0,0.6); border-radius:5px; margin-top:8px; border: 1px solid #bf360c; overflow:hidden; margin-left: auto;">
+            <div id="mHpBar" style="width:100%; height:100%; background:linear-gradient(90deg, #ff4d4d, #ff9f43); transition: 0.3s;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="card" style="margin-top: 15px; padding: 10px;">
-    <div id="battleLog" style="height: 150px; overflow-y: auto; font-size: 12px; display: flex; flex-direction: column; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px;"></div>
+<style>
+  /* 戰鬥日誌專屬美化滾動條 */
+  #battleLog::-webkit-scrollbar {
+    width: 6px; /* 縱向拉桿寬度 */
+  }
+  #battleLog::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3); /* 軌道背景 */
+    border-radius: 10px;
+  }
+  #battleLog::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #7b1fa2, #4a148c); /* 使用與主題一致的紫色漸層 */
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  #battleLog::-webkit-scrollbar-thumb:hover {
+    background: #9c27b0; /* 懸停時變亮 */
+  }
+
+  /* 為了讓日誌文字更易讀，稍微調整間距 */
+  #battleLog div {
+    margin-bottom: 4px;
+    padding-bottom: 2px;
+    border-bottom: 1px border-bottom: 1px dotted rgba(255,255,255,0.05);
+  }
+</style>
+
+<div class="card" style="background: #000; border: 1px solid #4a148c; border-radius: 12px; overflow: hidden;">
+  <div style="background: #1a1a2e; padding: 8px 12px; font-size: 11px; color: #fff; border-bottom: 1px solid #4a148c; font-weight: bold; letter-spacing: 1px;">📜 戰鬥情報回報</div>
+  <div id="battleLog" style="height: 140px; overflow-y: auto; font-size: 12px; padding: 10px; color: #ffffff; line-height: 1.6; background: rgba(26, 26, 46, 0.4); scroll-behavior: smooth;"></div>
+</div>
+
+  <div style="margin-top: 5px;">
+    <button id="startBattleBtn" onclick="startBattle()" 
+            style="width: 100%; padding: 16px; background: linear-gradient(180deg, #7b1fa2, #4a148c); color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 0 #2e0d5a; cursor: pointer;">
+      ⚔️ 開始搜尋對手
+    </button>
+    <button id="stopBattleBtn" onclick="stopBattle('已撤離戰場')" 
+            style="display:none; width: 100%; padding: 16px; background: #2c2c44; color: #b39ddb; border: 1px solid #4a148c; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer;">
+      🏳️ 停止戰鬥 / 撤退
+    </button>
   </div>
+
 </div>
 
 <!--技能頁面 (Skills Page)-->
@@ -236,7 +287,7 @@
   
   <div class="card">
     <div class="small" style="text-align: center;">
-      遊戲版本：v0.5.0<br>
+      遊戲版本：v0.5.1<br>
       最後存檔時間：<span id="lastSaveTime">--:--:--</span>
     </div>
   </div>
@@ -277,6 +328,8 @@
 </body>
 
 <script src="js/skills.js"></script>
+<script src="js/equips_skills.js"></script>
+<script src="js/equips_passives.js"></script>
 <script src="js/monsters.js"></script>
 <script src="js/monsters_dropdown.js"></script>
 <script src="js/bosses.js"></script>
@@ -1366,15 +1419,17 @@ function spawnSkillEffect(skill) {
     if (effect.parentNode) effect.remove();
   }, 1200);
 }
-  
+
 /**
  * ============================================================
- * 戰鬥系統整理 (Combat System)
+ * 1. 介面模式與控制項切換
  * ============================================================
  */
+
 // 區域與模式變數
 let currentRegion = "新手森林"; 
 let battleMode = 'adventure'; 
+
 
 // 切換戰鬥模式 (冒險/BOSS)
 function toggleBattleMode(mode) {
@@ -1383,15 +1438,71 @@ function toggleBattleMode(mode) {
     return;
   }
   battleMode = mode;
+  // 切換對應控制區域的顯示
   document.getElementById("adventureControls").style.display = (mode === 'adventure') ? 'block' : 'none';
   document.getElementById("bossControls").style.display = (mode === 'boss') ? 'block' : 'none';
+  
+  // 更新按鈕視覺狀態
   document.getElementById("btnModeAdv").style.background = (mode === 'adventure') ? '' : '#444';
   document.getElementById("btnModeBoss").style.background = (mode === 'boss') ? '' : '#444';
   
   if (mode === 'boss') renderBossList();
 }
 
-// 渲染 BOSS 挑戰列表
+/**
+ * ============================================================
+ * 2. 數據與狀態更新 (HP/Mana/Log)
+ * ============================================================
+ */
+
+// 更新戰鬥相關血條與數據 UI
+function updateBattleUI() {
+  const stats = getCombatStats();
+  const curHp = Math.max(0, Math.floor(game.currentHp));
+  const maxHp = stats.maxHp;
+
+  // 更新戰鬥面板中的玩家 HP
+  const pText = document.getElementById("pBattleHpText");
+  const pBar = document.getElementById("pBattleHpBar");
+  if (pText) pText.innerText = `${curHp} / ${maxHp}`;
+  if (pBar) pBar.style.width = (curHp / maxHp * 100) + "%";
+
+  // 更新怪物 HP
+  if (currentMonster) {
+    const mHp = Math.max(0, Math.floor(currentMonster.curHp));
+    const mText = document.getElementById("mHpText");
+    const mBar = document.getElementById("mHpBar");
+    if (mText) mText.innerText = `${mHp} / ${currentMonster.maxHp}`;
+    if (mBar) mBar.style.width = (mHp / currentMonster.maxHp * 100) + "%";
+  }
+
+  // 同步更新主介面狀態
+  const mainHpText = document.getElementById("hpText");
+  const mainHpBar = document.getElementById("hpBar");
+  if (mainHpText) mainHpText.innerText = `${curHp} / ${maxHp}`;
+  if (mainHpBar) mainHpBar.style.width = (curHp / maxHp * 100) + "%";
+  
+  const manaEl = document.getElementById("mana");
+  if (manaEl) manaEl.innerText = Math.floor(game.mana).toLocaleString();
+}
+
+// 新增戰鬥訊息到日誌 (從上方插入)
+function addBattleLog(msg) {
+  const log = document.getElementById("battleLog");
+  if (log) {
+    const div = document.createElement("div");
+    div.innerHTML = msg;
+    log.insertBefore(div, log.firstChild);
+  }
+}
+
+/**
+ * ============================================================
+ * 3. 動態元件渲染 (BOSS 列表與 Buff 圖示)
+ * ============================================================
+ */
+
+// 渲染 BOSS 挑戰列表卡片
 function renderBossList() {
   const list = document.getElementById("bossList");
   if (!list) return;
@@ -1399,23 +1510,13 @@ function renderBossList() {
 
   bossData.forEach(boss => {
     const card = document.createElement("div");
-    // 保留原本的寬高、背景與滾軸對齊屬性
     card.style = `
-      flex: 0 0 140px;
-      height: 180px; 
+      flex: 0 0 140px; height: 180px; 
       background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-      border: 1px solid #f1c40f;
-      border-radius: 12px;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: center;
-      text-align: center;
-      scroll-snap-align: start;
-      position: relative;
-      transition: transform 0.2s;
-      cursor: pointer;
+      border: 1px solid #f1c40f; border-radius: 12px; padding: 10px;
+      display: flex; flex-direction: column; justify-content: space-between;
+      align-items: center; text-align: center; scroll-snap-align: start;
+      position: relative; transition: transform 0.2s; cursor: pointer;
       box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     `;
     
@@ -1427,18 +1528,15 @@ function renderBossList() {
       <div style="position:absolute; top:-8px; left:10px; background:#f1c40f; color:#000; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:bold; z-index:1;">
         Lv.${boss.lv}
       </div>
-
       <div style="width: 70px; height: 70px; margin-top: 5px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(241, 196, 15, 0.3);">
         <img src="${boss.img}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='https://via.placeholder.com/70?text=BOSS'">
       </div>
-
       <div style="width: 100%;">
         <div style="font-weight: bold; font-size: 13px; color: #fff; margin: 5px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
           ${boss.name}
         </div>
         <div style="font-size: 10px; color: #f1c40f;">✨ ${boss.rewardMana.toLocaleString()}</div>
       </div>
-
       <button style="width: 100%; padding: 5px; font-size: 11px; background: #e74c3c; border: none; border-radius: 4px; color: white; font-weight: bold; cursor: pointer;">
         挑戰
       </button>
@@ -1447,10 +1545,65 @@ function renderBossList() {
   });
 }
 
-// 切換冒險區域
+// 戰鬥中渲染被動技能 Buff 圖示
+function updateBattleBuffs() {
+  const container = document.getElementById("battle-buffs");
+  if (!container) return;
+  container.innerHTML = "";
+
+  const passiveCounts = {}; 
+
+  for (let slot in game.equipment) {
+    const item = game.equipment[slot];
+    if (!item || !item.name) continue;
+
+    for (let keyword in equipPassivesDB) {
+      if (item.name.includes(keyword)) {
+        if (!passiveCounts[keyword]) {
+          passiveCounts[keyword] = {
+            count: 1,
+            data: equipPassivesDB[keyword],
+            icon: item.icon
+          };
+        } else {
+          passiveCounts[keyword].count++;
+        }
+      }
+    }
+  }
+
+  for (let key in passiveCounts) {
+    const entry = passiveCounts[key];
+    const p = entry.data;
+    const buffEl = document.createElement("div");
+    buffEl.style.cssText = `
+      display: flex; align-items: center; gap: 4px; padding: 2px 8px;
+      background: rgba(0,0,0,0.6); border: 1px solid ${p.color};
+      border-radius: 4px; color: ${p.color}; font-size: 11px;
+    `;
+
+    const isPath = entry.icon && (entry.icon.includes('/') || entry.icon.includes('.'));
+    let iconHtml = isPath 
+      ? `<img src="${entry.icon}" style="width:16px; height:16px; object-fit:contain;">`
+      : `<span style="font-size:14px; line-height:1;">${entry.icon || "✨"}</span>`;
+
+    const countText = entry.count > 1 ? `<b style="margin-left:4px; color:#fff;">x${entry.count}</b>` : "";
+    buffEl.innerHTML = `${iconHtml} <span>${p.name}${countText}</span>`;
+    container.appendChild(buffEl);
+  }
+}
+
+/**
+ * ============================================================
+ * 1. 區域管理與準備
+ * ============================================================
+ */
+
+// 切換冒險區域邏輯
 function changeRegion(val) {
   if (battleInterval) {
     alert("戰鬥中無法切換區域！");
+    // 強制將下拉選單還原為當前區域
     document.getElementById("regionSelect").value = currentRegion;
     return;
   }
@@ -1458,134 +1611,169 @@ function changeRegion(val) {
   document.getElementById("battleStatus").innerText = `已抵達：${currentRegion}`;
 }
 
-// 新增戰鬥訊息到日誌
-function addBattleLog(msg) {
-  const log = document.getElementById("battleLog");
-  if (log) {
-    const div = document.createElement("div");
-    div.innerHTML = msg;
-    log.insertBefore(div, log.firstChild);
-  }
-}
+/**
+ * ============================================================
+ * 2. 戰鬥啟動入口 (一般冒險)
+ * ============================================================
+ */
 
-// 更新戰鬥相關血條與數據 UI
-function updateBattleUI() {
-  const stats = getCombatStats();
-  const curHp = Math.max(0, Math.floor(game.currentHp));
-  const maxHp = stats.maxHp;
-
-  const pText = document.getElementById("pBattleHpText");
-  const pBar = document.getElementById("pBattleHpBar");
-  if (pText) pText.innerText = `${curHp} / ${maxHp}`;
-  if (pBar) pBar.style.width = (curHp / maxHp * 100) + "%";
-
-  if (currentMonster) {
-    const mHp = Math.max(0, Math.floor(currentMonster.curHp));
-    const mText = document.getElementById("mHpText");
-    const mBar = document.getElementById("mHpBar");
-    if (mText) mText.innerText = `${mHp} / ${currentMonster.maxHp}`;
-    if (mBar) mBar.style.width = (mHp / currentMonster.maxHp * 100) + "%";
-  }
-
-  const mainHpText = document.getElementById("hpText");
-  const mainHpBar = document.getElementById("hpBar");
-  if (mainHpText) mainHpText.innerText = `${curHp} / ${maxHp}`;
-  if (mainHpBar) mainHpBar.style.width = (curHp / maxHp * 100) + "%";
-  
-  const manaEl = document.getElementById("mana");
-  if (manaEl) manaEl.innerText = Math.floor(game.mana).toLocaleString();
-}
-
-// 開始一般冒險戰鬥
 function startBattle() {
+  // 基本條件檢查：若已在戰鬥或體力為 0 則不執行
   if (battleInterval || game.currentHp <= 0) return;
+  
+  // 重置狀態文字與視覺
+  document.getElementById("battleStatus").innerText = "";
+  document.getElementById("battleStatus").style.color = "#f1c40f"; 
+
+  // 1. 隨機抽選當前區域怪物
   const areaData = regions[currentRegion];
   const monsterList = areaData.monsters;
   const rand = Math.floor(Math.random() * monsterList.length);
-  currentMonster = { ...monsterList[rand], maxHp: monsterList[rand].hp, curHp: monsterList[rand].hp };
+  const selected = monsterList[rand];
+  
+  // 建立當前戰鬥怪物物件
+  currentMonster = { ...selected, maxHp: selected.hp, curHp: selected.hp };
 
+  // 2. 初始化戰鬥介面內容
   document.getElementById("battlePlayerImg").src = document.getElementById("avatarImg").src;
   document.getElementById("playerSideName").innerText = `【${document.getElementById("nameDisplay").innerText}】`;
-  document.getElementById("bossImg").src = "";
+  document.getElementById("bossImg").src = ""; // 一般戰鬥不顯示 BOSS 大圖
+  document.getElementById("mName").innerText = `${currentMonster.name} (Lv.${currentMonster.lv})`;
 
+  // 3. 切換元件顯示狀態
   document.getElementById("playerBattleArea").style.display = "block";
   document.getElementById("monsterArea").style.display = "block";
   document.getElementById("vsTitle").style.display = "block";
   document.getElementById("startBattleBtn").style.display = "none";
   document.getElementById("stopBattleBtn").style.display = "block";
-  document.getElementById("mName").innerText = `${currentMonster.name} (Lv.${currentMonster.lv})`;
 
+  // 4. 同步 UI 與啟動計時器
   updateBattleUI();
+  updateBattleBuffs(); 
   battleInterval = setInterval(battleTick, 1000);
 }
 
-// 開始 BOSS 戰鬥
+/**
+ * ============================================================
+ * 3. 戰鬥啟動入口 (BOSS 挑戰)
+ * ============================================================
+ */
+
 function startBossBattle(boss) {
-  if (game.currentHp <= 0) { alert("體力不足！"); return; }
+  if (game.currentHp <= 0) { 
+    alert("體力不足！"); 
+    return; 
+  }
   
+  // 隱藏 BOSS 列表控制項以防干擾，並設置挑戰狀態
+  document.getElementById("bossControls").style.display = "none";
+  document.getElementById("battleStatus").innerText = "";
+  document.getElementById("battleStatus").style.color = "#e74c3c"; // BOSS 戰使用警告紅
+
+  // 1. 建立 BOSS 戰鬥資料 (加入 isBoss 標記)
+  currentMonster = { ...boss, maxHp: boss.hp, curHp: boss.hp, isBoss: true };
+  
+  // 2. 更新頭像與名稱
   document.getElementById("battlePlayerImg").src = document.getElementById("avatarImg").src;
   document.getElementById("playerSideName").innerText = `【${document.getElementById("nameDisplay").innerText}】`;
-  
-  currentMonster = { ...boss, maxHp: boss.hp, curHp: boss.hp, isBoss: true };
   document.getElementById("bossImg").src = boss.img;
   document.getElementById("mName").innerText = `【BOSS】${currentMonster.name}`;
 
-  document.getElementById("bossControls").style.display = "none";
+  // 3. 切換元件顯示狀態
   document.getElementById("playerBattleArea").style.display = "block";
   document.getElementById("monsterArea").style.display = "block";
   document.getElementById("vsTitle").style.display = "block";
   document.getElementById("startBattleBtn").style.display = "none";
   document.getElementById("stopBattleBtn").style.display = "block";
   
+  // 4. 更新 UI 與啟動計時器
   updateBattleUI();
+  updateBattleBuffs(); 
+
   battleInterval = setInterval(battleTick, 1000);
 }
 
-// 戰鬥計時循環邏輯 (Enhanced Combat Loop)
+/**
+ * ============================================================
+ * 戰鬥計時循環邏輯 (Battle Tick)
+ * ============================================================
+ */
 function battleTick() {
   if (!currentMonster) return;
 
-  const stats = getCombatStats(); // 取得包含裝備加成後的總屬性
-  let baseDmg = 0;
-  let actionLog = ""; 
-  let skillTriggered = false;
-
-  // --- A. 冷卻時間處理 ---
-  // 確保 currentCooldowns 已初始化
-  if (typeof currentCooldowns === 'undefined') window.currentCooldowns = {};
-  
-  // 每一回合（秒），將所有冷卻中的技能倒數 -1
-  for (let skillId in currentCooldowns) {
-    if (currentCooldowns[skillId] > 0) {
-      currentCooldowns[skillId]--;
+  // 1. 取得基礎屬性並計算裝備被動加成
+  const stats = getCombatStats(); 
+  for (let slot in game.equipment) {
+    const item = game.equipment[slot];
+    if (item && item.name) {
+      for (let keyword in equipPassivesDB) {
+        if (item.name.includes(keyword)) {
+          const p = equipPassivesDB[keyword];
+          if (p.battleStats) {
+            if (p.battleStats.atkMulti) stats.atk *= (1 + p.battleStats.atkMulti);
+            if (p.battleStats.intMulti) stats.int *= (1 + p.battleStats.intMulti);
+            if (p.battleStats.defMulti) stats.def *= (1 + p.battleStats.defMulti);
+            if (p.battleStats.critRateAdd) stats.critRate += p.battleStats.critRateAdd;
+          }
+        }
+      }
     }
   }
 
-  // --- B. 玩家攻擊判定 ---
+  let baseDmg = 0;
+  let actionLog = ""; 
+  let skillTriggered = false;
+  // 2. 冷卻時間處理
+  if (typeof currentCooldowns === 'undefined') window.currentCooldowns = {};
+  for (let skillId in currentCooldowns) {
+    if (currentCooldowns[skillId] > 0) currentCooldowns[skillId]--;
+  }
+
+  // 3. 裝備技能判定 (隨機觸發額外傷害)
+  let equipSkillTotalDmg = 0;
+  for (let slot in game.equipment) {
+    const item = game.equipment[slot];
+    if (item && item.skills && Array.isArray(item.skills)) {
+      item.skills.forEach(skillName => {
+        const eSkill = (typeof equipSkillsDB !== 'undefined') ? equipSkillsDB[skillName] : null;
+        if (eSkill && Math.random() < eSkill.chance) {
+          try {
+            const eResult = eSkill.onEffect(stats, currentMonster);
+            equipSkillTotalDmg += eResult.dmg;
+            addBattleLog(`<div><span style="color:${eSkill.color}">【裝備技能：${eSkill.name}】</span> ${eResult.log} 造成 <span style="color:#2ecc71;">${eResult.dmg}</span> 傷害</div>`);
+            if (typeof spawnSkillEffect === "function") spawnSkillEffect(eSkill);
+          } catch (err) { console.error(`裝備技能 [${skillName}] 失敗:`, err); }
+        }
+      });
+    }
+  }
+
+  // 立即套用裝備技能傷害
+  if (equipSkillTotalDmg > 0 && currentMonster) {
+    currentMonster.curHp -= equipSkillTotalDmg;
+    updateBattleUI();
+    if (currentMonster.curHp <= 0) {
+       currentMonster.curHp = 0;
+       clearInterval(battleInterval); battleInterval = null;
+       setTimeout(winBattle, 300); return; 
+    }
+  }
+
+  // 4. 玩家主動技能判定
   if (game.equippedSkills && game.equippedSkills.length > 0) {
-    // 篩選出：已裝備、沒在冷卻、且魔力足夠的技能
     const availableSkills = game.equippedSkills.filter(id => {
       const s = allSkills.find(sk => sk.id === id);
       return s && (currentCooldowns[id] || 0) <= 0 && game.mana >= s.cost;
     });
 
     if (availableSkills.length > 0) {
-      // 從可用技能中隨機選一個
       const randomId = availableSkills[Math.floor(Math.random() * availableSkills.length)];
       const skill = allSkills.find(s => s.id === randomId);
-
-      // 判定發動機率
       if (skill && Math.random() < skill.chance) {
         game.mana -= skill.cost;
         skillTriggered = true;
-
-        // 從技能數據庫讀取 cooldown 並寫入追蹤器
         currentCooldowns[skill.id] = skill.cooldown;
-
-        // 執行視覺特效
         if (typeof spawnSkillEffect === "function") spawnSkillEffect(skill);
-
-        // 執行技能獨立程序 (計算傷害與日誌文字)
         const result = skill.onEffect(stats, currentMonster);
         baseDmg = result.dmg;
         actionLog = `<span style="color:${skill.color}">【${skill.name}】</span> ${result.log}`;
@@ -1593,102 +1781,93 @@ function battleTick() {
     }
   }
 
-  // --- C. 若未觸發技能則執行普攻 ---
+  // 5. 普攻與暴擊計算
   if (!skillTriggered) {
     baseDmg = Math.max(1, Math.floor((stats.atk * stats.atk) / (stats.atk + currentMonster.def)));
     actionLog = `<span style="color:#ccc;">普通攻擊：</span> `;
   }
 
-  // --- D. 暴擊判定 (普攻與技能皆可暴擊) ---
   const isPlayerCrit = Math.random() * 100 < stats.critRate;
   if (isPlayerCrit) {
-    // 使用 stats.critMulti 動態倍率
-    const critDmg = Math.floor(baseDmg * stats.critMulti);
-    baseDmg = critDmg;
+    baseDmg = Math.floor(baseDmg * stats.critMulti);
     actionLog += `<span style="color:#f1c40f; font-weight:bold;">[暴擊 x${stats.critMulti.toFixed(1)}!!] </span>`;
   }
 
-  // 套用傷害到怪物並記錄
   currentMonster.curHp -= baseDmg;
   addBattleLog(`<div>${actionLog}造成 <span style="color: #2ecc71;">${baseDmg}</span> 傷害</div>`);
 
-// --- E. 怪物反擊判定 (加入減傷判定版本) ---
-if (currentMonster.curHp > 0) {
-  // 玩家閃避判定
-  const isPlayerDodged = Math.random() * 100 < stats.dodgeRate;
-
-  if (isPlayerDodged) {
-    addBattleLog(`<div style="color: #3498db;">🍃 閃避！你輕巧地避開了 ${currentMonster.name} 的攻擊</div>`);
-  } else {
-    // 1. 基礎數值準備
-    let mAtkData = currentMonster.atkRange || [currentMonster.lv * 5, currentMonster.lv * 10];
-    let mBaseAtk = Math.floor(Math.random() * (mAtkData[1] - mAtkData[0] + 1)) + mAtkData[0];
-    let battleMsg = "";
-
-    // 2. 隨機挑選技能
-    let usedSkill = null;
-    if (currentMonster.skills && currentMonster.skills.length > 0 && Math.random() < 0.25) {
-      usedSkill = currentMonster.skills[Math.floor(Math.random() * currentMonster.skills.length)];
-    }
-
-    // 3. 執行效果
-    if (usedSkill && typeof usedSkill.onEffect === "function") {
-      // 執行 BOSS 技能程序
-      const result = usedSkill.onEffect(mBaseAtk, stats, currentMonster);
-      
-      let finalDmg = result.dmg || 0;
-
-      // --- 【新增】技能傷害減傷判定 ---
-      if (finalDmg > 0 && game.shieldTime && Date.now() < game.shieldTime) {
-        const reduction = Math.floor(finalDmg * (game.shieldReduce || 0.3));
-        finalDmg -= reduction;
-        // 在日誌中加上微小的護盾提示
-        result.log += ` <span style="color:#3498db;">(🛡️-${reduction})</span>`;
-      }
-
-      if (finalDmg > 0) game.currentHp -= finalDmg;
-      if (result.heal > 0) currentMonster.curHp = Math.min(currentMonster.hp, currentMonster.curHp + result.heal);
-      
-      battleMsg = `<div style="color: ${usedSkill.color || '#f39c12'};">★ ${currentMonster.name} ${result.log}</div>`;
+  // 6. 怪物反擊判定 (含閃避、護盾、被動觸發)
+  if (currentMonster.curHp > 0) {
+    const isPlayerDodged = Math.random() * 100 < stats.dodgeRate;
+    if (isPlayerDodged) {
+      addBattleLog(`<div style="color: #3498db;">🍃 閃避！你輕巧地避開了 ${currentMonster.name} 的攻擊</div>`);
     } else {
-      // 普通反擊：使用標準公式
-      let mDamage = Math.max(1, Math.floor((mBaseAtk * mBaseAtk) / (mBaseAtk + stats.def)));
+      let mAtkData = currentMonster.atkRange || [currentMonster.lv * 5, currentMonster.lv * 10];
+      let mBaseAtk = Math.floor(Math.random() * (mAtkData[1] - mAtkData[0] + 1)) + mAtkData[0];
+      let battleMsg = "";
 
-      // --- 【新增】普通攻擊減傷判定 ---
-      if (game.shieldTime && Date.now() < game.shieldTime) {
-        const reduction = Math.floor(mDamage * (game.shieldReduce || 0.3));
-        mDamage -= reduction;
-        battleMsg = `<div style="color: #e74c3c;">${currentMonster.name} 反擊造成 ${mDamage} 傷害 <span style="color:#3498db;">(護盾吸收 ${reduction})</span></div>`;
+      let usedSkill = (currentMonster.skills && currentMonster.skills.length > 0 && Math.random() < 0.25) 
+                      ? currentMonster.skills[Math.floor(Math.random() * currentMonster.skills.length)] : null;
+
+      if (usedSkill) {
+        const result = usedSkill.onEffect(mBaseAtk, stats, currentMonster);
+        let finalDmg = result.dmg || 0;
+        if (finalDmg > 0 && game.shieldTime && Date.now() < game.shieldTime) {
+          const reduction = Math.floor(finalDmg * (game.shieldReduce || 0.3));
+          finalDmg -= reduction;
+          result.log += ` <span style="color:#3498db;">(🛡️-${reduction})</span>`;
+        }
+        if (finalDmg > 0) game.currentHp -= finalDmg;
+        if (result.heal > 0) currentMonster.curHp = Math.min(currentMonster.hp, currentMonster.curHp + result.heal);
+        battleMsg = `<div style="color: ${usedSkill.color || '#f39c12'};">★ ${currentMonster.name} ${result.log}</div>`;
       } else {
-        battleMsg = `<div style="color: #e74c3c;">${currentMonster.name} 反擊造成 ${mDamage} 傷害</div>`;
+        let mDamage = Math.max(1, Math.floor((mBaseAtk * mBaseAtk) / (mBaseAtk + stats.def)));
+        if (game.shieldTime && Date.now() < game.shieldTime) {
+          const reduction = Math.floor(mDamage * (game.shieldReduce || 0.3));
+          mDamage -= reduction;
+          battleMsg = `<div style="color: #e74c3c;">${currentMonster.name} 反擊造成 ${mDamage} 傷害 <span style="color:#3498db;">(護盾吸收 ${reduction})</span></div>`;
+        } else {
+          battleMsg = `<div style="color: #e74c3c;">${currentMonster.name} 反擊造成 ${mDamage} 傷害</div>`;
+        }
+        game.currentHp -= mDamage;
       }
+      addBattleLog(battleMsg);
 
-      game.currentHp -= mDamage;
+      // 受擊時觸發被動
+      for (let slot in game.equipment) {
+        const item = game.equipment[slot];
+        if (item && item.name) {
+          for (let keyword in equipPassivesDB) {
+            if (item.name.includes(keyword)) {
+              const p = equipPassivesDB[keyword];
+              if (p.onBeingHit && Math.random() < (p.chance || 1)) {
+                const res = p.onBeingHit(currentMonster);
+                if (res && res.success) addBattleLog(res.log);
+              }
+            }
+          }
+        }
+      }
     }
-    
-    addBattleLog(battleMsg);
   }
-}
 
-  // --- F. 勝負判定 ---
-  updateBattleUI(); // 更新 UI 血條
-
+  // 7. 最終勝負判定
+  updateBattleUI();
   if (currentMonster.curHp <= 0) {
-    clearInterval(battleInterval);
-    battleInterval = null;
-    currentMonster.curHp = 0;
-    updateBattleUI();
+    clearInterval(battleInterval); battleInterval = null;
+    currentMonster.curHp = 0; updateBattleUI();
     setTimeout(winBattle, 300);
   } else if (game.currentHp <= 0) {
-    game.currentHp = 0;
-    clearInterval(battleInterval);
-    battleInterval = null;
-    updateBattleUI();
-    stopBattle("你被打敗了，撤退回家...");
+    game.currentHp = 0; clearInterval(battleInterval); battleInterval = null;
+    updateBattleUI(); stopBattle("你被打敗了，撤退回家...");
   }
 }
 
-// 勝利結算
+/**
+ * ============================================================
+ * 1. 勝利結算系統 (Reward & Drops)
+ * ============================================================
+ */
 function winBattle() {
   if (!currentMonster) return;
 
@@ -1696,24 +1875,25 @@ function winBattle() {
   const monsterName = currentMonster.name;
   const log = document.getElementById("battleLog");
 
-  // 1. 基礎獎勵計算 (材料與魔力)
+  // --- A. 基礎獎勵：魔力與材料 ---
   let dropItemName = currentMonster.dropMat || "未知材料";
   game.materials[dropItemName] = (game.materials[dropItemName] || 0) + 1;
 
+  // 根據等級與是否為 BOSS 計算魔力獎勵
   let rewardMana = isBossBattle 
     ? Math.floor(2000 * Math.pow(1.114, currentMonster.lv)) 
     : Math.floor(250 * Math.pow(1.114, currentMonster.lv));
   game.mana += rewardMana;
 
-  // 2. 裝備掉落判定系統
+  // --- B. 裝備掉落判定 ---
   let dropMsgs = [];
 
   if (isBossBattle) {
-    // --- 情況 A：BOSS 專屬掉落 (執行 onDeath) ---
+    // BOSS 專屬掉落 (執行 onDeath)
     if (typeof currentMonster.onDeath === 'function') {
       try {
         const specialDrops = currentMonster.onDeath(currentMonster);
-        if (Array.isArray(specialDrops) && specialDrops.length > 0) {
+        if (Array.isArray(specialDrops)) {
           specialDrops.forEach(item => {
             if (item) {
               game.inventory.push(item);
@@ -1721,22 +1901,20 @@ function winBattle() {
             }
           });
         }
-      } catch (e) {
-        console.error("Boss onDeath 執行出錯:", e);
-      }
+      } catch (e) { console.error("Boss 掉落執行出錯:", e); }
     } 
     
-    // --- 情況 B：BOSS 普通掉落 (若專屬沒中，則 30% 機率補一件隨機裝) ---
+    // BOSS 補底機制：若沒中專屬，30% 機率獲得保底綠裝以上的隨機裝備
     if (dropMsgs.length === 0 && Math.random() < 0.3) {
-      const fallbackEquip = generateRandomEquip(currentMonster.lv);
-      if (fallbackEquip) {
-        if (fallbackEquip.rarity < 1) fallbackEquip.rarity = 1; // Boss 保底綠裝
-        game.inventory.push(fallbackEquip);
-        dropMsgs.push(`<span style="color: var(--rarity-${fallbackEquip.rarity})">[${fallbackEquip.name}]</span>`);
+      const fallback = generateRandomEquip(currentMonster.lv);
+      if (fallback) {
+        if (fallback.rarity < 1) fallback.rarity = 1; 
+        game.inventory.push(fallback);
+        dropMsgs.push(`<span style="color: var(--rarity-${fallback.rarity})">[${fallback.name}]</span>`);
       }
     }
   } else {
-    // --- 情況 C：普通小怪 (30% 掉落) ---
+    // 普通怪掉落判定 (30% 機率)
     if (Math.random() < 0.3) {
       const commonEquip = generateRandomEquip(currentMonster.lv);
       if (commonEquip) {
@@ -1746,29 +1924,27 @@ function winBattle() {
     }
   }
 
-  // 3. 組合訊息與更新 UI
+  // --- C. UI 日誌與視覺反饋 ---
   let equipMsg = dropMsgs.length > 0 ? ` 並獲得了 ${dropMsgs.join("、")}` : "";
 
   if (log) {
     if (isBossBattle) {
-      // Boss 特殊金色外框樣式
       log.innerHTML = `<div style="color: #f1c40f; font-weight: bold; border: 1px solid #f1c40f; padding: 10px; border-radius: 8px; margin: 5px 0; background: rgba(241, 196, 15, 0.1);">🏆 傳奇討伐成功！擊敗了 ${monsterName}<br>獎勵：${rewardMana.toLocaleString()} ✨、${dropItemName}${equipMsg}</div>` + log.innerHTML;
     } else {
-      // 小怪藍色簡潔樣式
       log.innerHTML = `<div style="color: #3498db; margin: 3px 0; padding-left: 5px; border-left: 3px solid #3498db;">勝利！獲得 ${rewardMana.toLocaleString()} ✨、${dropItemName}${equipMsg}</div>` + log.innerHTML;
     }
   }
 
-  // 4. 狀態保存與渲染更新
+  // --- D. 存檔與後續行為 ---
   document.getElementById("battleStatus").innerText = isBossBattle ? `首領挑戰成功！` : `勝利！獲得獎勵...`;
   saveData();
   renderInventory(); 
 
-  // 5. 戰鬥結束與後續動作
   if (isBossBattle) {
     stopBattle(`成功擊敗了首領 ${monsterName}！`);
   } else {
     currentMonster = null;
+    // 延遲一段時間後自動進入下一場戰鬥
     setTimeout(() => {
       if (game.currentHp > 0) {
         startBattle(); 
@@ -1779,24 +1955,50 @@ function winBattle() {
   }
 }
 
-// 終止戰鬥與復原介面
+/**
+ * ============================================================
+ * 2. 終止戰鬥與介面復原 (Stop & Cleanup)
+ * ============================================================
+ */
 function stopBattle(reason = "戰鬥停止") {
-  if (battleInterval) { clearInterval(battleInterval); battleInterval = null; }
+  // 1. 停止計時器
+  if (battleInterval) { 
+    clearInterval(battleInterval); 
+    battleInterval = null; 
+  }
   currentMonster = null;
 
+  // 2. 隱藏戰鬥專屬元件
   document.getElementById("playerBattleArea").style.display = "none";
   document.getElementById("monsterArea").style.display = "none";
   document.getElementById("vsTitle").style.display = "none";
   
-  if (battleMode === 'boss') {
+  // 3. 恢復 BOSS 列表顯示 (如果在 BOSS 模式)
+  if (typeof battleMode !== 'undefined' && battleMode === 'boss') {
     document.getElementById("bossControls").style.display = "block";
   }
 
+  // 4. 切換按鈕狀態
   document.getElementById("startBattleBtn").style.display = "block";
   document.getElementById("stopBattleBtn").style.display = "none";
-  document.getElementById("battleStatus").innerText = reason;
+
+  // 5. 清空被動技能圖標 (解決標籤殘留問題)
+  const buffContainer = document.getElementById("battle-buffs");
+  if (buffContainer) {
+    buffContainer.innerHTML = ""; 
+  }
+
+  // 6. 刷新狀態標籤 (保持原本的黃色與邏輯)
+  const statusEl = document.getElementById("battleStatus");
+  if (statusEl) {
+    statusEl.innerText = reason; 
+    statusEl.style.color = "#f1c40f"; // 保持你原本的黃色
+  }
+  
+  // 7. 更新全域 UI
   updateUI();
 }
+
 
 /**
  * ============================================================
