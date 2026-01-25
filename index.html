@@ -1918,59 +1918,72 @@ function battleTick() {
   addBattleLog(`<div>${actionLog}造成 <span style="color: #2ecc71;">${baseDmg}</span> 傷害</div>`);
 
   // 6. 怪物反擊判定 (含閃避、護盾、被動觸發)
-  if (currentMonster.curHp > 0) {
+if (currentMonster.curHp > 0) {
     const isPlayerDodged = Math.random() * 100 < stats.dodgeRate;
     if (isPlayerDodged) {
-      addBattleLog(`<div style="color: #3498db;">🍃 閃避！你輕巧地避開了 ${currentMonster.name} 的攻擊</div>`);
+        addBattleLog(`<div style="color: #3498db;">🍃 閃避！你避開了 ${currentMonster.name} 的攻擊</div>`);
     } else {
-      let mAtkData = currentMonster.atkRange || [currentMonster.lv * 5, currentMonster.lv * 10];
-      let mBaseAtk = Math.floor(Math.random() * (mAtkData[1] - mAtkData[0] + 1)) + mAtkData[0];
-      let battleMsg = "";
+        // 1. 確保怪物攻擊力數據合法，防止 NaN
+        let mAtkData = currentMonster.atkRange || [1, 10];
+        // 額外保險：防止 atkRange 被技能弄壞成非數字
+        let mMin = Number(mAtkData[0]) || 1;
+        let mMax = Number(mAtkData[1]) || mMin + 1;
+        
+        let mBaseAtk = Math.floor(Math.random() * (mMax - mMin + 1)) + mMin;
+        let finalPlayerDamage = 0; // 統一計算總傷害量
+        let battleMsg = "";
 
-      let usedSkill = (currentMonster.skills && currentMonster.skills.length > 0 && Math.random() < 0.25) 
-                      ? currentMonster.skills[Math.floor(Math.random() * currentMonster.skills.length)] : null;
+        // 2. 判斷怪物技能或普攻
+        let usedSkill = (currentMonster.skills && currentMonster.skills.length > 0 && Math.random() < 0.25) 
+                        ? currentMonster.skills[Math.floor(Math.random() * currentMonster.skills.length)] : null;
 
-      if (usedSkill) {
-        const result = usedSkill.onEffect(mBaseAtk, stats, currentMonster);
-        let finalDmg = result.dmg || 0;
-        if (finalDmg > 0 && game.shieldTime && Date.now() < game.shieldTime) {
-          const reduction = Math.floor(finalDmg * (game.shieldReduce || 0.3));
-          finalDmg -= reduction;
-          result.log += ` <span style="color:#3498db;">(🛡️-${reduction})</span>`;
-        }
-        if (finalDmg > 0) game.currentHp -= finalDmg;
-        if (result.heal > 0) currentMonster.curHp = Math.min(currentMonster.hp, currentMonster.curHp + result.heal);
-        battleMsg = `<div style="color: ${usedSkill.color || '#f39c12'};">★ ${currentMonster.name} ${result.log}</div>`;
-      } else {
-        let mDamage = Math.max(1, Math.floor((mBaseAtk * mBaseAtk) / (mBaseAtk + stats.def)));
-        if (game.shieldTime && Date.now() < game.shieldTime) {
-          const reduction = Math.floor(mDamage * (game.shieldReduce || 0.3));
-          mDamage -= reduction;
-          battleMsg = `<div style="color: #e74c3c;">${currentMonster.name} 反擊造成 ${mDamage} 傷害 <span style="color:#3498db;">(護盾吸收 ${reduction})</span></div>`;
+        if (usedSkill) {
+            const result = usedSkill.onEffect(mBaseAtk, stats, currentMonster);
+            finalPlayerDamage = result.dmg || 0;
+            // 處理怪物回血
+            if (result.heal > 0) currentMonster.curHp = Math.min(currentMonster.hp, currentMonster.curHp + result.heal);
+            battleMsg = `<div style="color: ${usedSkill.color || '#f39c12'};">★ ${currentMonster.name} ${result.log}</div>`;
         } else {
-          battleMsg = `<div style="color: #e74c3c;">${currentMonster.name} 反擊造成 ${mDamage} 傷害</div>`;
+            finalPlayerDamage = Math.max(1, Math.floor((mBaseAtk * mBaseAtk) / (mBaseAtk + stats.def + 1)));
+            battleMsg = `<div style="color: #e74c3c;">${currentMonster.name} 反擊造成 ${finalPlayerDamage} 傷害</div>`;
         }
-        game.currentHp -= mDamage;
-      }
-      addBattleLog(battleMsg);
 
-      // 受擊時觸發被動
-      for (let slot in game.equipment) {
-        const item = game.equipment[slot];
-        if (item && item.name) {
-          for (let keyword in equipPassivesDB) {
-            if (item.name.includes(keyword)) {
-              const p = equipPassivesDB[keyword];
-              if (p.onBeingHit && Math.random() < (p.chance || 1)) {
-                const res = p.onBeingHit(currentMonster);
-                if (res && res.success) addBattleLog(res.log);
-              }
-            }
-          }
+        // 3. 護盾減傷處理 (在套用到 game.currentHp 之前完成計算)
+        if (finalPlayerDamage > 0 && game.shieldTime && Date.now() < game.shieldTime) {
+            const reduction = Math.floor(finalPlayerDamage * (game.shieldReduce || 0.3));
+            finalPlayerDamage -= reduction;
+            battleMsg += ` <span style="color:#3498db;">(🛡️ 吸收 ${reduction})</span>`;
         }
-      }
+
+        // 4. 【關鍵修復】執行血量扣除，並加入安全檢查
+        finalPlayerDamage = Number(finalPlayerDamage) || 0;
+        game.currentHp = Math.max(0, (Number(game.currentHp) || 0) - finalPlayerDamage);
+        addBattleLog(battleMsg);
+
+        // 5. 【關鍵修復】受擊被動延後執行
+        // 只有在扣完血且人還活著時，才觸發「廢人領域」等回血被動
+        if (game.currentHp > 0) {
+            for (let slot in game.equipment) {
+                const item = game.equipment[slot];
+                if (item && item.name) {
+                    for (let keyword in equipPassivesDB) {
+                        if (item.name.includes(keyword)) {
+                            const p = equipPassivesDB[keyword];
+                            if (p.onBeingHit && Math.random() < (p.chance || 1)) {
+                                const res = p.onBeingHit(currentMonster);
+                                if (res && res.success) {
+                                    addBattleLog(res.log);
+                                    // 更新 UI 以反映被動帶來的血量變化 (例如回血)
+                                    updateBattleUI(); 
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
-  }
+}
 
   // 7. 最終勝負判定
   updateBattleUI();
@@ -2543,3 +2556,4 @@ updateUI();
 </body>
 
 </html>
+
