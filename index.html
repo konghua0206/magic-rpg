@@ -1850,59 +1850,80 @@ function battleTick() {
     if (currentCooldowns[skillId] > 0) currentCooldowns[skillId]--;
   }
 
-  // 3. 裝備技能判定 (隨機觸發額外傷害)
+  // 3裝備技能判定 (邏輯分流版)
   let equipSkillTotalDmg = 0;
+  
   for (let slot in game.equipment) {
     const item = game.equipment[slot];
     if (item && item.skills && Array.isArray(item.skills)) {
       item.skills.forEach(skillName => {
         const eSkill = (typeof equipSkillsDB !== 'undefined') ? equipSkillsDB[skillName] : null;
-        if (eSkill && Math.random() < eSkill.chance) {
+        
+        // 觸發判定
+        if (eSkill && Math.random() < (eSkill.chance || 0)) {
           try {
-            // 執行技能邏輯計算
+            // 執行技能運算，獲取結果物件
             const eResult = eSkill.onEffect(stats, currentMonster);
-            
-            // --- 【安全性核心：統一處理數值】 ---
-            const dmgVal = Number(eResult.dmg) || 0;
-            const healVal = Number(eResult.heal) || 0;
-            const manaVal = Number(eResult.manaGain) || 0; // 配合新版技能回傳
+            if (!eResult) return;
 
-            // 累加傷害
-            equipSkillTotalDmg += dmgVal;
+            // --- 邏輯分流處理 ---
 
-            // 處理補血 (深夜零食時間的主要功能)
-            if (healVal > 0) {
+            // A. 傷害類處理 (如果有 dmg)
+            if (eResult.dmg > 0) {
+              const sDmg = Number(eResult.dmg) || 0;
+              equipSkillTotalDmg += sDmg;
+            }
+
+            // B. 恢復類處理 (如果有 heal)
+            if (eResult.heal > 0) {
               const maxHp = (typeof getTotalStat === 'function' ? getTotalStat('hp') : (game.hp || 100));
-              let safeCurrentHp = Number(game.currentHp) || 0;
-              // 確保不會補過頭，且強制數值化防止 NaN
-              game.currentHp = Math.min(maxHp, safeCurrentHp + healVal);
+              let safeCurrentHp = Number(game.currentHp);
+              // 若目前的血量已經壞掉 (NaN)，則以最大血量為基準校正
+              if (isNaN(safeCurrentHp)) safeCurrentHp = 0; 
+              
+              const sHeal = Number(eResult.heal) || 0;
+              game.currentHp = Math.min(maxHp, safeCurrentHp + sHeal);
             }
 
-            // 處理魔力
-            if (manaVal > 0) {
-              game.mana = (Number(game.mana) || 0) + manaVal;
+            // C. 資源類處理 (如果有 manaGain)
+            if (eResult.manaGain > 0) {
+              game.mana = (Number(game.mana) || 0) + (Number(eResult.manaGain) || 0);
             }
-            // ------------------------------------
 
-            addBattleLog(`<div><span style="color:${eSkill.color}">【裝備技能：${eSkill.name}】</span> ${eResult.log} 造成 <span style="color:#2ecc71;">${dmgVal}</span> 傷害</div>`);
-            if (typeof spawnSkillEffect === "function") spawnSkillEffect(eSkill);
+            // D. 日誌與特效 (統一處理)
+            let logMsg = eResult.log || "";
+            let dmgText = eResult.dmg > 0 ? ` 造成 <span style="color:#2ecc71;">${Math.floor(eResult.dmg)}</span> 傷害` : "";
             
+            addBattleLog(`<div><span style="color:${eSkill.color}">【裝備技能：${eSkill.name}】</span> ${logMsg}${dmgText}</div>`);
+            
+            if (typeof spawnSkillEffect === "function") {
+              spawnSkillEffect(eSkill);
+            }
+
           } catch (err) { 
-            console.error(`裝備技能 [${skillName}] 執行出錯，已跳過以防止遊戲卡死:`, err); 
+            console.error(`裝備技能 [${skillName}] 執行衝突:`, err); 
           }
         }
       });
     }
   }
 
-  // 立即套用裝備技能傷害 (加上 Number 保護)
+  // 裝備技能總傷害套用 (確保傷害是數字)
   if (equipSkillTotalDmg > 0 && currentMonster) {
-    currentMonster.curHp = Math.max(0, (Number(currentMonster.curHp) || 0) - equipSkillTotalDmg);
+    const safeMonsterHp = Number(currentMonster.curHp) || 0;
+    currentMonster.curHp = Math.max(0, safeMonsterHp - equipSkillTotalDmg);
+    
     updateBattleUI();
+    
+    // 檢查怪物死亡
     if (currentMonster.curHp <= 0) {
        currentMonster.curHp = 0;
-       if (battleInterval) { clearInterval(battleInterval); battleInterval = null; }
-       setTimeout(winBattle, 300); return; 
+       if (battleInterval) {
+         clearInterval(battleInterval);
+         battleInterval = null;
+       }
+       setTimeout(winBattle, 300);
+       return; // 怪物已死，中斷後續 battleTick
     }
   }
 
@@ -2582,5 +2603,6 @@ updateUI();
 </body>
 
 </html>
+
 
 
