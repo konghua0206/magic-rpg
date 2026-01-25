@@ -7,7 +7,7 @@ const exchangeCodesDB = {
   },
   "GOD_SLAER_BETA": {
     name: "v0.5.0通關恭喜!",
-    cost: { "神聖遺物": 0 },
+    cost: { "神聖遺物": 1 },
     reward: { type: "uniqueEquip", id: "umaru_god_slayer", lv: 100 },
     desc: "提交 1 個神聖遺物，換取終極武器。"
   },
