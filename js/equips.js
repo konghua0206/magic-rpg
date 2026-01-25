@@ -32,6 +32,39 @@ const uniqueItemTemplates = {
     description: "這片葉子不再發出尖叫，而是低沉的次元回響，那是萬物終焉的旋律。"
   },
 
+  "umaru_god_slayer": {
+    type: "mainHand",
+    rarity: 3, // 傳奇
+    name: "懶惰者的終焉爆裂",
+    // 總預算約 552 (隨機傳奇 Lv.100 為 384 * 1.2 = 460)
+    ranges: {
+      atk: [520, 550],  
+      hp: [350, 400],   
+      agi: [120, 150],  
+      luk: [90, 110]   
+    },
+    skills: ["可樂噴射", "深夜零食時間", "懶散光束"], 
+    passive: "【廢人領域】受攻擊時 20% 機率恢復生命，並使敵人進入 3 回合的「懶散」狀態 (攻擊力下降 25%)。",
+    icon: "images/equip/CHS_it_eq_cri_hammer.png", 
+    description: "這把槌子裝滿了閃爍的碳酸液體，揮動時發出清脆的開罐聲，據說只有領悟懶惰真諦的人才能揮動它。"
+  },
+
+  "umaru_god_slayer_2": {
+    type: "mainHand",
+    rarity: 3, // 傳奇
+    name: "懶惰者的終焉爆裂·偽",
+    ranges: {
+      atk: [420, 450],  
+      hp: [300, 300],   
+      agi: [60, 70],  
+      luk: [50, 60]   
+    },
+    skills: ["深夜零食時間"], 
+    passive: "【廢人領域】受攻擊時 20% 機率恢復生命，並使敵人進入 3 回合的「懶散」狀態 (攻擊力下降 25%)。",
+    icon: "images/equip/CHS_it_eq_cri_hammer.png", 
+    description: "這把槌子裝滿了閃爍的碳酸液體，揮動時發出清脆的開罐聲，據說只有領悟懶惰真諦的人才能揮動它。"
+  },
+
   "divine_crown": {
     type: "head",
     rarity: 3, // 0:普通, 1:稀有, 2:史詩, 3:傳奇

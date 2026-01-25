@@ -256,6 +256,29 @@ const bossData = [
   dropMat: "神聖遺物", 
   rewardMana: 10000000,
   // BOSS 專屬技能程序化版本
+  onDeath: function(currentMonster) {
+    let drops = [];
+    
+    // 1. 次元專屬傳奇裝備
+    if (Math.random() < 0.3) {
+      const equip = createUniqueItem("umaru_god_slayer_2", currentMonster.lv);
+      if (equip) {
+        drops.push(equip);
+      }
+    }
+
+    // 2. 高階隨機裝備
+    if (Math.random() < 0.15) {
+      const randomEquip = generateRandomEquip(currentMonster.lv);
+      if (randomEquip) {
+        // Boss 掉落保底：高等級 Boss 至少為史詩(2)
+        if (randomEquip.rarity < 2) randomEquip.rarity = 2;
+        drops.push(randomEquip);
+      }
+    }
+
+    return drops;
+  },
   skills: [
     { 
       name: "懶散光束", 

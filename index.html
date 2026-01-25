@@ -15,6 +15,7 @@
   <div class="nav-item" onclick="switchPage('battle')"><span>⚔️</span>戰鬥</div>
   <div class="nav-item" onclick="switchPage('skills')"><span>📜</span>技能</div>
   <div class="nav-item" onclick="switchPage('inventory')"><span>🎒</span>背包</div>
+  <div class="nav-item" onclick="switchPage('exchange')"><span>🎁</span>兌換</div>
   <div class="nav-item" id="nav-settings" onclick="switchPage('settings')"><span>⚙️</span>設定</div>
 </nav>
 
@@ -260,6 +261,20 @@
   </div>
 </div>
 
+<!--兌換頁面 (Settings Page)-->
+<div id="page-exchange" class="page-content" style="display:none;">
+  <div class="character-card" style="text-align:center; padding: 30px;">
+    <p style="color:rgba(255,255,255,0.6); margin-bottom:20px;">輸入序號並支付指定素材即可兌換獎勵</p>
+    
+    <input type="text" id="exchangeInput" placeholder="請輸入兌換碼..." 
+           style="width: 80%; padding: 12px; border-radius: 8px; border: none; background: rgba(0,0,0,0.3); color: white; text-align: center; font-size: 16px;">
+    
+    <button class="btn-primary" onclick="processExchange()" style="margin-top: 20px; width: 60%;">確認兌換</button>
+    
+    <div id="exchangeHint" style="margin-top:20px; font-size: 14px; color: #fab1a0;"></div>
+  </div>
+</div>
+
 <!--設定頁面 (Settings Page)-->
 <div id="page-settings" class="page">
   <div class="card">
@@ -287,7 +302,7 @@
   
   <div class="card">
     <div class="small" style="text-align: center;">
-      遊戲版本：v0.5.1<br>
+      遊戲版本：v0.5.2<br>
       最後存檔時間：<span id="lastSaveTime">--:--:--</span>
     </div>
   </div>
@@ -384,6 +399,7 @@
 <script src="js/monsters_dropdown.js"></script>
 <script src="js/bosses.js"></script>
 <script src="js/equips.js"></script>
+<script src="js/code_database.js"></script>
 
 <script>
 
@@ -417,6 +433,7 @@ function getDefaultGameData() {
     learnedSkills: [], 
     equippedSkills: [], 
     inventory: [], 
+    usedCodes: [], 
     materials: { "古老鹿角": 0, "守護者核心": 0, "深淵靈魂": 0 },
     equipment: { 
       head: null, top: null, bottom: null, shoes: null, 
@@ -2346,6 +2363,66 @@ function createUniqueItem(templateId, lv = 1) {
 
   return newItem;
 }
+
+/**
+ * ============================================================
+ * 兌換碼系統
+ * ============================================================
+ */
+function processExchange() {
+  const inputCode = document.getElementById("exchangeInput").value.trim().toUpperCase();
+  const hintEl = document.getElementById("exchangeHint");
+  const data = exchangeCodesDB[inputCode];
+
+  // --- 1. 檢查序號是否存在 ---
+  if (!data) {
+    hintEl.innerHTML = "❌ 序號錯誤或已過期";
+    return;
+  }
+
+  // --- 2. 檢查是否已經兌換過 (新增限制) ---
+  if (game.usedCodes && game.usedCodes.includes(inputCode)) {
+    hintEl.innerHTML = "❌ 此序號已經兌換過囉！";
+    return;
+  }
+
+  // --- 3. 檢查背包素材是否足夠 ---
+  for (let matName in data.cost) {
+    const requiredAmount = data.cost[matName];
+    const currentAmount = game.materials[matName] || 0;
+    
+    if (currentAmount < requiredAmount) {
+      hintEl.innerHTML = `❌ 素材不足：需要 ${matName} x${requiredAmount}`;
+      return;
+    }
+  }
+
+  // --- 4. 執行扣除素材 ---
+  for (let matName in data.cost) {
+    game.materials[matName] -= data.cost[matName];
+  }
+
+  // --- 5. 發放獎勵 ---
+  if (data.reward.type === "mana") {
+    game.mana += data.reward.value;
+  } 
+  else if (data.reward.type === "uniqueEquip") {
+    const equip = createUniqueItem(data.reward.id, data.reward.lv);
+    if (equip) game.inventory.push(equip);
+  }
+
+  // --- 6. 紀錄已使用序號 (新增限制) ---
+  if (!game.usedCodes) game.usedCodes = [];
+  game.usedCodes.push(inputCode);
+
+  // --- 7. 更新介面與存檔 ---
+  document.getElementById("exchangeInput").value = "";
+  hintEl.innerHTML = `✅ 成功兌換：${data.name}`;
+  
+  if (typeof updateUI === "function") updateUI();
+  if (typeof saveData === "function") saveData();
+}
+
 
 /**
  * ============================================================

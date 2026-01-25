@@ -21,6 +21,85 @@ const equipSkillsDB = {
     }
   },
 
+  "可樂噴射": {
+    name: "可樂噴射",
+    desc: "裝備特效：攻擊時 15% 機率引發氣體爆發，造成基於 (智力+幸運) 500% 的混合傷害。",
+    chance: 0.15,
+    color: "#fab1a0",
+    glowColor: "rgba(250, 177, 160, 0.8)",
+    icon: "images/equip/CHS_it_eq_cri_hammer.png", 
+    onEffect: (stats, monster) => {
+      // 遵循備忘錄 1 & 2：數值來源優先級與 || 0 保路
+      const pInt = (stats && stats.int) || (typeof getTotalStat === 'function' ? getTotalStat('int') : 0) || 0;
+      const pLuk = (stats && stats.luk) || (typeof getTotalStat === 'function' ? getTotalStat('luk') : 0) || 0;
+      const mDef = (monster && monster.def) || 0;
+
+      const multiplier = 5.0;
+      let skillAtk = (pInt + pLuk) * multiplier;
+      
+      // 遵循備忘錄 6：正常減傷公式
+      const effectiveDef = mDef * 0.7;
+      let dmg = Math.max(1, Math.floor((skillAtk * skillAtk) / (skillAtk + effectiveDef + 1)));
+      
+      return { 
+        dmg: dmg, 
+        log: `🥤 <span style="color:#fab1a0">【可樂噴射】</span>！氣體爆裂造成了 <span style="color:#ff4d4d">${dmg}</span> 點傷害！` 
+      };
+    }
+  },
+
+  "深夜零食時間": {
+    name: "深夜零食時間",
+    desc: "裝備特效：攻擊時 10% 機率恢復 15% 已損失生命值，並增加魔力。",
+    chance: 0.10,
+    color: "#55efc4",
+    glowColor: "rgba(85, 239, 196, 0.8)",
+    icon: "images/equip/CHS_it_eq_cri_hammer.png", 
+    onEffect: (stats, monster) => {
+      // 遵循備忘錄 2 & 5：確保 dmg 為 0 防止 NaN
+      const maxHp = (stats && stats.hp) || (typeof getTotalStat === 'function' ? getTotalStat('hp') : 100) || 100;
+      const currentHp = (game && game.currentHp) || maxHp;
+      const lostHp = Math.max(0, maxHp - currentHp);
+      
+      let healAmt = Math.floor(lostHp * 0.15) + ((game.lv || 1) * 2); 
+      const pMed = (stats && stats.med) || (typeof getTotalStat === 'function' ? getTotalStat('med') : 0) || 0;
+      
+      if (typeof game !== 'undefined') {
+        game.currentHp = Math.min(maxHp, (game.currentHp || 0) + healAmt);
+        game.mana += (pMed * 10);
+      }
+      
+      return { 
+        dmg: 0, // 強制回傳 0，符合規範
+        heal: healAmt, 
+        log: `🍟 <span style="color:#55efc4">【深夜零食時間】</span>！回復了 <span style="color:#2ecc71">${healAmt}</span> HP！` 
+      };
+    }
+  },
+
+  "懶散光束": {
+    name: "懶散光束",
+    desc: "裝備特效：12% 機率造成智力 300% 以上的無視防禦傷害。",
+    chance: 0.12,
+    color: "#ff7675",
+    glowColor: "rgba(255, 118, 117, 0.8)",
+    icon: "images/equip/CHS_it_eq_cri_hammer.png", 
+    onEffect: (stats, monster) => {
+      const pInt = (stats && stats.int) || (typeof getTotalStat === 'function' ? getTotalStat('int') : 0) || 0;
+      const pVit = (stats && stats.vit) || (typeof getTotalStat === 'function' ? getTotalStat('vit') : 0) || 0;
+      
+      const multiplier = 3.0 + (pVit / 200);
+      
+      // 遵循備忘錄 6：無視防禦計算
+      let dmg = Math.max(1, Math.floor(pInt * multiplier * 1.5));
+      
+      return { 
+        dmg: dmg, 
+        log: `💤 <span style="color:#ff7675">【懶散光束】</span>！造成了 <span style="color:#ff4d4d">${dmg}</span> 點真理傷害！` 
+      };
+    }
+  },
+
   "重擊": {
     name: "重擊",
     desc: "裝備特效：攻擊時有機率發動重擊，造成 140% 的物理傷害。",
