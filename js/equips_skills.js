@@ -56,26 +56,26 @@ const equipSkillsDB = {
     glowColor: "rgba(85, 239, 196, 0.8)",
     icon: "images/equip/CHS_it_eq_cri_hammer.png", 
     onEffect: (stats, monster) => {
-      // 遵循備忘錄 2 & 5：確保 dmg 為 0 防止 NaN
-      const maxHp = (stats && stats.hp) || (typeof getTotalStat === 'function' ? getTotalStat('hp') : 100) || 100;
-      const currentHp = (game && game.currentHp) || maxHp;
+      // 1. 取得數值，加上強力的 NaN 保護
+      const maxHp = (typeof getTotalStat === 'function' ? getTotalStat('hp') : (game.hp || 100)) || 100;
+      const currentHp = (typeof game !== 'undefined' && game.currentHp !== undefined) ? game.currentHp : maxHp;
+      
+      // 2. 計算邏輯：恢復已損失血量 15% + 等級保底
       const lostHp = Math.max(0, maxHp - currentHp);
-      
       let healAmt = Math.floor(lostHp * 0.15) + ((game.lv || 1) * 2); 
+      
       const pMed = (stats && stats.med) || (typeof getTotalStat === 'function' ? getTotalStat('med') : 0) || 0;
+      const manaGain = pMed * 10;
       
-      if (typeof game !== 'undefined') {
-        game.currentHp = Math.min(maxHp, (game.currentHp || 0) + healAmt);
-        game.mana += (pMed * 10);
-      }
-      
+      // 【重要】這裡不再直接修改 game.currentHp，只負責計算並回傳
       return { 
-        dmg: 0, // 強制回傳 0，符合規範
+        dmg: 0, 
         heal: healAmt, 
+        manaGain: manaGain, 
         log: `🍟 <span style="color:#55efc4">【深夜零食時間】</span>！回復了 <span style="color:#2ecc71">${healAmt}</span> HP！` 
       };
     }
-  },
+},
 
   "懶散光束": {
     name: "懶散光束",
@@ -184,5 +184,6 @@ const equipSkillsDB = {
      - 正常減傷：Math.max(1, (playerAtk * playerAtk) / (playerAtk + monster.def))。
      設計技能時需明確選擇使用哪一種公式。
 */
+
 
 console.log("✅ 技能系統備忘錄載入完成，開發時請遵循數值安全檢查。");
