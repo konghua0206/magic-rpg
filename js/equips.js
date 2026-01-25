@@ -1,12 +1,13 @@
 const uniqueItemTemplates = {
   "mandrake_talisman": {
     type: "necklace",
-    rarity: 2, 
+    rarity: 2, // 史詩
     name: "曼德拉的尖叫護身符",
+    // 總預算約 48 (隨機史詩為 39.6)
     ranges: {
-      hp: [150, 250],
-      vit: [10, 15],
-      med: [8, 12]
+      hp: [40, 60],    
+      vit: [12, 18],   
+      med: [12, 16]    
     },
     skills: ["靈魂尖叫"],
     passive: "受攻擊時有機率使敵人防禦下降 10%",
@@ -16,16 +17,17 @@ const uniqueItemTemplates = {
 
   "mandrake_talisman_ascended": {
     type: "necklace",
-    rarity: 3, // 傳奇等級
+    rarity: 3, // 傳奇
     name: "曼德拉皇的末日鳴響",
+    // 總預算約 415 (隨機傳奇為 345.6)
     ranges: {
-      hp: [6000, 10000],   
-      str: [25, 40],       
-      int: [40, 70],       
-      med: [50, 90]        
+      hp: [300, 450],  
+      str: [80, 100],  
+      int: [80, 120],  
+      med: [80, 100]   
     },
     skills: ["靈魂尖叫"],    
-    passive: "受攻擊時有機率使敵人防禦下降 10%", 
+    passive: "【次元壓制】受攻擊時 15% 機率使敵人防禦下降 25%", 
     icon: "images/equip/CHS_it_eq_hayate_acce.png", 
     description: "這片葉子不再發出尖叫，而是低沉的次元回響，那是萬物終焉的旋律。"
   },

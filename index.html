@@ -364,7 +364,7 @@
           裝備 / 替換
         </button>
         <button onclick="closeModal()" style="background: rgba(255,255,255,0.05); border: 1px solid #444; color: #aaa; padding: 8px; border-radius: 8px; font-size: 12px; cursor: pointer;">
-          關閉
+          返回背包
         </button>
       </div>
     </div>
@@ -2110,22 +2110,19 @@ function stopBattle(reason = "戰鬥停止") {
  */
 function generateRandomEquip(lv) {
   try {
-    // 1. 內部基礎配置 (確保不依賴外部 slotIcons 或 namePool)
+    // ===== 1. 內部基礎配置與資源庫 =====
     const types = ["head", "top", "bottom", "shoes", "mainHand", "offHand", "necklace", "ring1"];
     const rarityNames = ["普通", "稀有", "史詩", "傳奇"];
-    
     const internalIcons = {
       head: "🎓", top: "👕", bottom: "👖", shoes: "👟",
       mainHand: "⚔️", offHand: "🛡️", necklace: "📿", ring1: "💍"
     };
-
     const internalNames = {
       head: ["頭盔", "戰盔", "法帽"], top: ["胸甲", "長袍", "鎖子甲"],
       bottom: ["護腿", "戰褲", "裙衣"], shoes: ["長靴", "戰靴", "輕靈靴"],
       mainHand: ["長劍", "法杖", "戰錘"], offHand: ["盾牌", "咒文書", "護腕"],
       necklace: ["頸飾", "護身符", "項鍊"], ring1: ["戒指", "指環", "刻印戒"]
     };
-
     const prefixes = {
       0: ["生鏽的", "破損的", "粗糙的", "普通的", "老舊的"],
       1: ["精良的", "強化型", "士兵的", "磨練過的", "鋒利的", "堅固的"],
@@ -2133,17 +2130,23 @@ function generateRandomEquip(lv) {
       3: ["神聖的", "滅世之", "上古遺留", "諸神的", "末日咆哮", "虛空之源"]
     };
 
-    // 2. 詞綴屬性庫 (屬性加成)
-    const prefixBonus = {
-      "精良的": { hp: 10 * lv }, "強化型": { def: 2 * lv }, "鋒利的": { atk: 5 * lv },
-      "堅固的": { def: 4 * lv }, "極致的": { atk: 10 * lv, str: 5 },
-      "大師級": { str: 5, int: 5, agi: 5 }, "守護者": { def: 8 * lv, vit: 8 },
-      "不朽的": { hp: 100 * lv, vit: 10 }, "神聖的": { all: 5 * lv },
-      "滅世之": { atk: 30 * lv, luk: 15 }, "諸神的": { str: 15, int: 15, med: 15 },
-      "上古遺留": { hp: 100 * lv, def: 20 * lv }
+    const prefixBonusData = {
+      "生鏽的": { atk: -1 * Math.floor(lv * 0.1) }, 
+      "精良的": { hp: Math.floor(lv * 2.0) }, 
+      "強化型": { def: Math.floor(lv * 0.5) }, 
+      "鋒利的": { atk: Math.floor(lv * 0.8) },
+      "堅固的": { def: Math.floor(lv * 0.8) }, 
+      "極致的": { atk: Math.floor(lv * 1.5), str: Math.floor(lv * 0.2) },
+      "大師級": { str: Math.floor(lv * 0.3), int: Math.floor(lv * 0.3), agi: Math.floor(lv * 0.3) }, 
+      "守護者": { def: Math.floor(lv * 1.2), vit: Math.floor(lv * 0.4) },
+      "不朽的": { hp: Math.floor(lv * 8.0), vit: Math.floor(lv * 0.5) }, 
+      "神聖的": { all: Math.floor(lv * 0.4) }, 
+      "滅世之": { atk: Math.floor(lv * 2.5), luk: Math.floor(lv * 0.2) }, 
+      "諸神的": { str: Math.floor(lv * 0.5), int: Math.floor(lv * 0.5), med: Math.floor(lv * 0.5) }, 
+      "上古遺留": { hp: Math.floor(lv * 10.0), def: Math.floor(lv * 1.5) }
     };
 
-    // 3. 隨機抽取過程
+    // ===== 2. 隨機抽取稀有度、部位與名稱 =====
     const type = types[Math.floor(Math.random() * types.length)];
     const roll = Math.random();
     let r = 0;
@@ -2155,58 +2158,99 @@ function generateRandomEquip(lv) {
     const selectedPrefix = pList[Math.floor(Math.random() * pList.length)];
     const selectedBaseName = internalNames[type][Math.floor(Math.random() * internalNames[type].length)];
 
-    // 4. 基礎數值計算
-    const baseMultiplier = (lv * 0.5);
-    const rarityMultiplier = (1 + r * 0.5);
-    let stats = { atk: 0, def: 0, hp: 0, str: 0, agi: 0, int: 0, vit: 0, luk: 0, med: 0 };
+    // ===== 3. Budget 預算分配系統 =====
+    const budgetFactor = 1.2; 
+    const rarityFactor = [1.0, 1.5, 2.2, 3.2];
+    let budget = lv * budgetFactor * rarityFactor[r];
 
-    if (type === "mainHand") {
-      stats.atk = Math.floor(20 * baseMultiplier * rarityMultiplier);
-    } else if (["top", "bottom"].includes(type)) {
-      stats.def = Math.floor(10 * baseMultiplier * rarityMultiplier);
-      stats.hp = Math.floor(50 * baseMultiplier * rarityMultiplier);
-    } else {
-      stats.hp = Math.floor(20 * baseMultiplier * rarityMultiplier);
+    const statCost = {
+      atk: 2.0, def: 1.8, hp: 0.4,
+      str: 1.0, agi: 1.0, int: 1.0,
+      vit: 1.0, luk: 0.9, med: 0.8
+    };
+
+    // 這裡維持原有的 bias
+    const bias = {
+      mainHand: { atk: 0.45, str: 0.25, int: 0.25 },
+      offHand: { def: 0.35, vit: 0.35 },
+      top: { def: 0.4, hp: 0.3, vit: 0.2 },
+      bottom: { def: 0.35, hp: 0.35 },
+      necklace: { hp: 0.3, med: 0.35, luk: 0.2 },
+      ring1: { str: 0.3, agi: 0.3, int: 0.3 },
+      shoes: { agi: 0.4, hp: 0.3 },
+      head: { hp: 0.3, int: 0.3 }
+    }[type] || { hp: 0.5, str: 0.5 };
+
+    let stats = { atk: 0, def: 0, hp: 0 };
+    let extraStats = { str: 0, agi: 0, int: 0, vit: 0, luk: 0, med: 0 };
+
+    // === 新增：根據稀有度限制副屬性條目數量 ===
+    // r=0(1條), r=1(2條), r=2(4條), r=3(6條)
+    const slotCounts = [1, 2, 4, 6];
+    const maxSlots = slotCounts[r];
+    const allExtraKeys = Object.keys(extraStats);
+    // 隨機挑選出本次裝備可以擁有的副屬性 key
+    const allowedExtraKeys = allExtraKeys
+      .sort(() => Math.random() - 0.5)
+      .slice(0, maxSlots);
+
+    // 基礎分配：只分配給允許的 key
+    for (let key in bias) {
+      const share = budget * bias[key];
+      const value = Math.floor(share / (statCost[key] || 1));
+      
+      if (stats.hasOwnProperty(key)) {
+        stats[key] += value;
+      } else if (allowedExtraKeys.includes(key)) {
+        extraStats[key] += value;
+      }
+      // 注意：如果 key 不在 allowed 內，預算會留給後面的補強步驟
+      budget -= share;
     }
 
-    // 5. 注入前綴加成
-    const bonus = prefixBonus[selectedPrefix];
+    // 剩餘預算隨機補強：嚴格限制在 allowedExtraKeys 內
+    while (budget > 1) {
+      const k = allowedExtraKeys[Math.floor(Math.random() * allowedExtraKeys.length)];
+      if (budget >= statCost[k]) {
+        extraStats[k] += 1;
+        budget -= statCost[k];
+      } else break;
+    }
+
+    // ===== 4. Prefix 詞綴系統注入 =====
+    const bonus = prefixBonusData[selectedPrefix];
     if (bonus) {
       for (let key in bonus) {
         if (key === 'all') {
-          ['str', 'agi', 'int', 'vit', 'luk', 'med'].forEach(s => stats[s] += (5 * lv));
-        } else {
-          stats[key] = (stats[key] || 0) + bonus[key];
+          // 'all' 屬於特殊加成，通常不計入條目限制，或只加在已有條目上
+          // 這裡依照你原始邏輯，全屬性直接注入
+          for (let s in extraStats) extraStats[s] += Math.floor(lv * 0.4);
+        } else if (stats.hasOwnProperty(key)) {
+          stats[key] += bonus[key];
+        } else if (extraStats.hasOwnProperty(key)) {
+          // 如果詞綴加了原本沒開的槽位，直接加上去 (視為詞綴的額外獎勵)
+          extraStats[key] += bonus[key];
         }
       }
     }
 
-    // 6. 回傳最終裝備物件
     return {
       id: Date.now() + Math.random(),
       type: type,
       rarity: r,
       name: `[Lv.${lv}] ${rarityNames[r]} · ${selectedPrefix}${selectedBaseName}`,
-      atk: stats.atk || 0,
-      def: stats.def || 0,
-      hp: stats.hp || 0,
-      extraStats: {
-        str: stats.str || 0,
-        agi: stats.agi || 0,
-        int: stats.int || 0,
-        vit: stats.vit || 0,
-        luk: stats.luk || 0,
-        med: stats.med || 0
-      },
-      icon: internalIcons[type]
+      atk: Math.max(0, stats.atk),
+      def: Math.max(0, stats.def),
+      hp: Math.max(0, stats.hp),
+      extraStats: extraStats,
+      icon: internalIcons[type] || "❓"
     };
 
   } catch (error) {
-    console.error("Critical Error in generateRandomEquip:", error);
-    return null; // 防止整個遊戲崩潰
+    console.error("生成錯誤:", error);
+    return null;
   }
 }
-
 /**
  * ============================================================
  * 訂製裝備生成器 (Advanced Equipment Generator)
@@ -2225,31 +2269,53 @@ function createUniqueItem(templateId, lv = 1) {
   // 初始化副屬性，避免 UI 渲染卡死
   newItem.extraStats = newItem.extraStats || { str: 0, agi: 0, int: 0, vit: 0, luk: 0, med: 0 };
 
+  // ===== 1. 同步後的詞綴強度 (與隨機裝備一致的 0.x~2.x 係數) =====
   const prefixBonus = {
-    "精鍊的": { atk: 5 * lv }, "卓越之": { hp: 20 * lv }, "洗鍊的": { def: 3 * lv },
-    "堅固的": { def: 5 * lv }, "鋒利的": { atk: 8 * lv },
-    "極致的": { atk: 10 * lv, luk: 5 }, "大師級": { str: 5, agi: 5 }, 
-    "守護者": { def: 10 * lv, vit: 5 }, "不朽的": { hp: 50 * lv, med: 5 }, // 已修正名稱
-    "神聖的": { all: 5 * lv }, "諸神的": { str: 10, int: 10, med: 10 },
-    "滅世之": { atk: 25 * lv, luk: 10 }, "上古遺留": { hp: 100 * lv, def: 20 * lv }
+    // 稀有 (1) 級別
+    "精鍊的": { atk: Math.floor(lv * 0.5) }, 
+    "卓越之": { hp: Math.floor(lv * 4.0) }, 
+    "洗鍊的": { def: Math.floor(lv * 0.5) },
+    "堅固的": { def: Math.floor(lv * 0.8) }, 
+    "鋒利的": { atk: Math.floor(lv * 0.8) },
+
+    // 史詩 (2) 級別
+    "極致的": { atk: Math.floor(lv * 1.5), luk: Math.floor(lv * 0.1) }, 
+    "大師級": { str: Math.floor(lv * 0.3), agi: Math.floor(lv * 0.3) }, 
+    "守護者": { def: Math.floor(lv * 1.2), vit: Math.floor(lv * 0.3) }, 
+    "不朽的": { hp: Math.floor(lv * 8.0), med: Math.floor(lv * 0.2) },
+
+    // 傳奇 (3) 級別
+    "神聖的": { all: Math.floor(lv * 0.4) }, 
+    "諸神的": { str: Math.floor(lv * 0.5), int: Math.floor(lv * 0.5), med: Math.floor(lv * 0.5) },
+    "滅世之": { atk: Math.floor(lv * 2.5), luk: Math.floor(lv * 0.2) }, 
+    "上古遺留": { hp: Math.floor(lv * 10.0), def: Math.floor(lv * 1.5) },
+    
+    // 普通 (0) 級別
+    "特製的": { hp: Math.floor(lv * 1.5) },
+    "工匠的": { def: Math.floor(lv * 0.2) },
+    "改良型": { atk: Math.floor(lv * 0.2) }
   };
 
   const rarityPrefixes = {
     0: ["特製的", "工匠的", "改良型"],
     1: ["精鍊的", "卓越之", "洗鍊的", "堅固的", "鋒利的"],
-    2: ["極致的", "大師級", "守護者", "不朽的"], // 這裡修正了 "不朽 of"
+    2: ["極致的", "大師級", "守護者", "不朽的"],
     3: ["神聖的", "諸神的", "滅世之", "上古遺留"]
   };
 
+  // ===== 2. 隨機選取詞綴 =====
   const r = newItem.rarity || 0;
   const pList = rarityPrefixes[r] || rarityPrefixes[0];
   const randomPrefix = pList[Math.floor(Math.random() * pList.length)];
   
+  // ===== 3. 注入詞綴加成 =====
   const bonus = prefixBonus[randomPrefix];
   if (bonus) {
     for (let key in bonus) {
       if (key === 'all') {
-        ['str', 'agi', 'int', 'vit', 'luk', 'med'].forEach(s => newItem.extraStats[s] = (newItem.extraStats[s] || 0) + (5 * lv));
+        ['str', 'agi', 'int', 'vit', 'luk', 'med'].forEach(s => {
+          newItem.extraStats[s] = (newItem.extraStats[s] || 0) + Math.floor(lv * 0.4);
+        });
       } else if (['atk', 'def', 'hp'].includes(key)) {
         newItem[key] = (newItem[key] || 0) + bonus[key];
       } else {
@@ -2258,18 +2324,24 @@ function createUniqueItem(templateId, lv = 1) {
     }
   }
 
+  // ===== 4. 處理名稱組合 =====
   const rarityNames = ["普通", "稀有", "史詩", "傳奇"];
   newItem.name = `[Lv.${lv}] ${rarityNames[r]} · ${randomPrefix}${template.name.trim()}`;
 
+  // ===== 5. 處理模板原有的範圍數值 (Ranges) =====
   if (newItem.ranges) {
     const getRandomValue = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
     for (let stat in newItem.ranges) {
       const val = newItem.ranges[stat];
       let rolledVal = Array.isArray(val) ? getRandomValue(val[0], val[1]) : (val || 0);
-      if (['atk', 'def', 'hp'].includes(stat)) newItem[stat] = (newItem[stat] || 0) + rolledVal;
-      else newItem.extraStats[stat] = (newItem.extraStats[stat] || 0) + rolledVal;
+      
+      if (['atk', 'def', 'hp'].includes(stat)) {
+        newItem[stat] = (newItem[stat] || 0) + rolledVal;
+      } else {
+        newItem.extraStats[stat] = (newItem.extraStats[stat] || 0) + rolledVal;
+      }
     }
-    delete newItem.ranges;
+    delete newItem.ranges; // 渲染前清除範圍定義
   }
 
   return newItem;
@@ -2391,5 +2463,4 @@ updateUI();
 </div>
 </div>
 </body>
-
 </html>
