@@ -1553,31 +1553,48 @@ let battleMode = 'adventure';
 
 
 // 切換戰鬥模式 (冒險/BOSS)
-function toggleBattleMode(mode) {
+functfunction toggleBattleMode(mode) {
   if (battleInterval) {
     alert("戰鬥中無法切換模式！");
     return;
   }
+
   battleMode = mode;
+
   // 切換對應控制區域的顯示
-  document.getElementById("adventureControls").style.display = (mode === 'adventure') ? 'block' : 'none';
-  document.getElementById("bossControls").style.display = (mode === 'boss') ? 'block' : 'none';
-  
+  document.getElementById("adventureControls").style.display =
+    (mode === 'adventure') ? 'block' : 'none';
+  document.getElementById("bossControls").style.display =
+    (mode === 'boss') ? 'block' : 'none';
+
   // 更新按鈕視覺狀態
-  document.getElementById("btnModeAdv").style.background = (mode === 'adventure') ? '' : '#444';
-  document.getElementById("btnModeBoss").style.background = (mode === 'boss') ? '' : '#444';
-  
-  if (mode === 'boss') renderBossList();
-}
+  document.getElementById("btnModeAdv").style.background =
+    (mode === 'adventure') ? '' : '#444';
+  document.getElementById("btnModeBoss").style.background =
+    (mode === 'boss') ? '' : '#444';
 
-/**
- * ============================================================
- * 2. 數據與狀態更新 (HP/Mana/Log)
- * ============================================================
- */
+  // ✅ 關鍵修正：BOSS 模式要等 boss 子檔全部載入
+  if (mode === 'boss') {
+    if (!window.bossesLoaded) {
+      // 顯示提示（可選）
+      const statusEl = document.getElementById("battleStatus");
+      if (statusEl) {
+        statusEl.innerText = "BOSS 資料載入中…";
+        statusEl.style.color = "#f1c40f";
+      }
 
-// 更新戰鬥相關血條與數據 UI
-function updateBattleUI() {
+      window.addEventListener(
+        "bosses:loaded",
+        () => {
+          renderBossList();
+        },
+        { once: true }
+      );
+    } else {
+      renderBossList();
+    }
+  }
+  }ion updateBattleUI() {
   const stats = getCombatStats();
   const curHp = Math.max(0, Math.floor(game.currentHp));
   const maxHp = stats.maxHp;
@@ -3236,6 +3253,7 @@ updateUI();
 </body>
 
 </html>
+
 
 
 
