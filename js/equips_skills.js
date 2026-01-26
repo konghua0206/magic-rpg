@@ -1,6 +1,6 @@
 const equipSkillsDB = {
   "靈魂尖叫": {
-    name: "靈魂尖調",
+    name: "靈魂尖叫",
     desc: "裝備特效：攻擊時有機率發出靈魂尖叫，造成基於智力 250% 的無視防禦傷害。",
     chance: 0.15, 
     color: "#a29bfe", 
@@ -49,30 +49,35 @@ const equipSkillsDB = {
   },
   
   "深夜零食時間": {
-    name: "深夜零食時間",
-    desc: "裝備特效：攻擊時 10% 機率恢復 10% 最大生命值，並固定增加魔力。",
-    chance: 0.10,
-    color: "#55efc4",
-    glowColor: "rgba(85, 239, 196, 0.8)",
-    icon: "images/equip/CHS_it_eq_cri_hammer.png", 
-    onEffect: (stats, monster) => {
-      // 1. 取得最大血量，確保絕對有數字
-      const maxHp = (typeof getTotalStat === 'function' ? getTotalStat('hp') : (game.hp || 100)) || 100;
-      
-      // 2. 改為簡單的固定比例：最大血量的 10% + 等級加成
-      const healAmt = Math.floor(maxHp * 0.10) + ((game.lv || 1) * 5); 
-      
-      // 3. 固定魔力回報 (不依賴複雜屬性)
-      const manaGain = 100 + ((game.lv || 1) * 10);
-      
-      return { 
-        dmg: 0, 
-        heal: healAmt, 
-        manaGain: manaGain, 
-        log: `🍟 <span style="color:#55efc4">【深夜零食時間】</span>！恢復了 <span style="color:#2ecc71">${healAmt}</span> HP！` 
-      };
-    }
-  },
+  name: "深夜零食時間",
+  desc: "裝備特效：攻擊時 10% 機率恢復 10% 最大生命值，並固定增加魔力。",
+  chance: 0.10,
+  color: "#55efc4",
+  glowColor: "rgba(85, 239, 196, 0.8)",
+  icon: "images/equip/CHS_it_eq_cri_hammer.png",
+  onEffect: (stats, monster) => {
+    // ✅ 正確最大血量：用 getMaxHp（你的數值中心）
+    const maxHp = (typeof getMaxHp === "function")
+      ? getMaxHp()
+      : (stats?.maxHp ?? (game.hp || 100));
+
+    // 等級欄位統一：你數值中心用 charLv（沒有就 fallback lv）
+    const lv = Number(game.charLv ?? game.lv ?? 1) || 1;
+
+    // 10% 最大血量 + 等級加成
+    const healAmt = Math.floor(maxHp * 0.10) + (lv * 5);
+
+    // 固定魔力回報
+    const manaGain = 100 + (lv * 10);
+
+    return {
+      dmg: 0,
+      heal: healAmt,
+      manaGain: manaGain,
+      log: `🍟 <span style="color:#55efc4">【深夜零食時間】</span>！恢復了 <span style="color:#2ecc71">${healAmt}</span> HP！`
+    };
+  }
+},
   
   "懶散光束": {
     name: "懶散光束",
@@ -184,4 +189,5 @@ const equipSkillsDB = {
 
 
 console.log("✅ 技能系統備忘錄載入完成，開發時請遵循數值安全檢查。");
+
 
