@@ -2553,6 +2553,13 @@ function applyBattleResults(results) {
       currentMonster.curHp = Math.min(maxHp, Math.floor(next));
       continue;
     }
+    if (r.type === "buff") {
+      if (r.log) addBattleLog(`<div>${r.log}</div>`);
+      if (r.buff) addBuff(r.target, r.buff);
+      window._battleUiDirty = true;
+      continue;
+    }
+
   }
 
   // 保險整數化（防被動直接改小數）
