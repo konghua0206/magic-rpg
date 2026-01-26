@@ -1,9 +1,9 @@
-// js/bosses/index.js
+// js/bosses/index.js  (Robust Loader + Always Fires bosses:loaded)
 (function () {
   window.bossRegistry = window.bossRegistry || {};
   window.bossesLoaded = false;
 
-  // 你只要維護這份清單（檔名大小寫要與 GitHub 上完全一致）
+  // ✅ 你只要維護這份（檔名大小寫要跟實際檔案完全一致）
   const bossFiles = [
     "boss_1.js",
     "boss_2.js",
@@ -19,7 +19,7 @@
     "boss_tide_priestess.js"
   ];
 
-  // ✅ 用 index.js 自己的位置當 base（GitHub Pages / repo 子路徑都不會炸）
+  // ✅ 用 index.js 自己的位置當 base（Netlify/GitHub Pages 都穩）
   const thisUrl = new URL(document.currentScript.src);
   const baseDir = new URL("./", thisUrl); // => .../js/bosses/
 
@@ -28,16 +28,13 @@
       const s = document.createElement("script");
       s.src = url;
       s.async = false;
-
       s.onload = () => resolve({ ok: true, url });
       s.onerror = () => resolve({ ok: false, url });
-
       document.head.appendChild(s);
     });
   }
 
-  // ✅ bossData：直接從 registry 組合（不猜 id）
-  // 若你想要固定順序，後面我給你 bossIdList 版本
+  // ✅ bossData：永遠從 registry 組合（不會因為先抓到空陣列就永遠空）
   Object.defineProperty(window, "bossData", {
     get() {
       return Object.values(window.bossRegistry || {});
@@ -46,22 +43,20 @@
 
   (async function () {
     const results = [];
-
     for (const file of bossFiles) {
       const url = new URL(file, baseDir).href;
       const r = await loadScript(url);
       results.push(r);
-      if (!r.ok) console.error("[bosses] failed:", r.url);
+      if (!r.ok) console.error("[bosses] failed to load:", r.url);
     }
 
-    // ✅ 無論中途是否有失敗，都宣告載入流程完成（避免 UI 永遠等不到）
     window.bossesLoaded = true;
 
     const okCount = results.filter(x => x.ok).length;
-    const regCount = Object.keys(window.bossRegistry).length;
-    console.log(`[bosses] load done. files ok=${okCount}/${bossFiles.length}, registry=${regCount}`);
+    const regCount = Object.keys(window.bossRegistry || {}).length;
+    console.log(`[bosses] load done: files ok=${okCount}/${bossFiles.length}, registry=${regCount}`);
 
+    // ✅ 不管有沒有失敗檔案，都要發事件，避免 UI 永遠等不到
     window.dispatchEvent(new Event("bosses:loaded"));
   })();
 })();
-
