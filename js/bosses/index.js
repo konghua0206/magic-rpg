@@ -15,6 +15,7 @@
     "boss_mandrake_ascended.js",
     "boss_shark_liver.js",
     "boss_final_1.js"
+    "boss_tide_priestess.js"
   ];
 
   // 2) 取得目前這支 index.js 的資料夾當 base（GitHub Pages 不會炸）
@@ -59,3 +60,4 @@
     }
   })();
 })();
+
