@@ -18,47 +18,60 @@ const equipPassivesDB = {
     }
   },
 
-  "懶惰者": {  
-    name: "廢人領域",
-    desc: "裝備特效：受攻擊時 20% 機率恢復生命，並使敵人進入 3 回合的「懶散」狀態 (攻擊力下降 25%)。",
-    chance: 0.2, 
-    color: "#74b9ff",
-    
-    // 受擊時執行的效果
-    onBeingHit: (monster) => {
-      // 1. 玩家端：生命恢復 (基礎 5% + 體質補正)
-      const maxHp = typeof getTotalStat === 'function' ? getTotalStat('hp') : (game.hp || 100);
-      const currentVit = typeof getTotalStat === 'function' ? getTotalStat('vit') : (game.vit || 0);
-      let healAmt = Math.floor(maxHp * 0.05 + (currentVit * 0.5));
-      
-      if (typeof game !== 'undefined') {
-        game.currentHp = Math.min(maxHp, (game.currentHp || 0) + healAmt);
-      }
+  "懶惰者": {
+  name: "廢人領域",
+  desc: "裝備特效：受攻擊時 20% 機率恢復生命，並使敵人進入 3 回合的「懶散」狀態 (攻擊力下降 25%)。",
+  chance: 0.2,
+  color: "#74b9ff",
 
-      // 2. 怪獸端：設置持續時間與狀態
-      // 儲存原始攻擊力（如果尚未儲存）
-      if (!monster.originalAtkRange) {
+  onBeingHit: (monster) => {
+    // 正確最大血量（關鍵修正）
+    const maxHp = (typeof getMaxHp === "function")
+      ? getMaxHp()
+      : (typeof getCombatStats === "function" ? (getCombatStats().maxHp || 100) : (game.hp || 100));
+
+    const currentVit = (typeof getTotalStat === "function")
+      ? getTotalStat("vit")
+      : (game.vit || 0);
+
+    // 回血：基礎 5% + 體質補正
+    const healAmt = Math.floor(maxHp * 0.05 + (currentVit * 0.5));
+
+    // 只做「加血」，避免任何夾低行為
+    const before = Math.floor(Number(game.currentHp) || 0);
+    const next = before + healAmt;
+
+    game.currentHp = Math.min(maxHp, next);
+
+    // -------------------------
+    // 怪物端：懶散 debuff（不改 battle logic 的前提下，維持你原本做法）
+    // -------------------------
+    if (monster) {
+      // 儲存原始 atkRange（只存一次）
+      if (!monster.originalAtkRange && Array.isArray(monster.atkRange)) {
         monster.originalAtkRange = [...monster.atkRange];
       }
 
-      // 設置 Debuff 屬性
       monster.lazyStatus = {
-        duration: 3, // 持續 3 回合
-        reduction: 0.75 // 剩餘 75% 攻擊力
+        duration: 3,
+        reduction: 0.75
       };
 
-      // 立即套用效果 (防止攻擊歸零：始終基於原始值計算)
-      monster.atkRange = [
-        Math.floor(monster.originalAtkRange[0] * monster.lazyStatus.reduction),
-        Math.floor(monster.originalAtkRange[1] * monster.lazyStatus.reduction)
-      ];
-
-      return { 
-        success: true, 
-        log: `<span style="color:#74b9ff">【廢人領域】觸發！回復 ${healAmt} HP，${monster.name} 陷入了懶散狀態 (持續 3 回合)！</span>` 
-      };
+      // 立即套用（基於 originalAtkRange，不會越疊越低）
+      if (monster.originalAtkRange && Array.isArray(monster.originalAtkRange)) {
+        monster.atkRange = [
+          Math.max(1, Math.floor(monster.originalAtkRange[0] * monster.lazyStatus.reduction)),
+          Math.max(1, Math.floor(monster.originalAtkRange[1] * monster.lazyStatus.reduction))
+        ];
+      }
     }
-  },
+
+    return {
+      success: true,
+      log: `<span style="color:#74b9ff">【廢人領域】觸發！回復 ${healAmt} HP，${monster?.name || "敵人"} 陷入了懶散狀態 (持續 3 回合)！</span>`
+    };
+  }
+},
 
   "龍鱗": {
     name: "龍血護體",
@@ -86,4 +99,5 @@ const equipPassivesDB = {
         return { success: true, log: `反彈了 ${reflectDmg} 點傷害！` };
     }
   }
+
 };
