@@ -25,40 +25,33 @@ const equipPassivesDB = {
   color: "#74b9ff",
 
   onBeingHit: (monster) => {
-    // 1) ✅ 正確最大血量（優先 getMaxHp，其次 getCombatStats().maxHp）
+    // ✅ 只算數值，不改 game.currentHp
     const maxHp = (typeof getMaxHp === "function")
       ? (Number(getMaxHp()) || 100)
       : (typeof getCombatStats === "function"
           ? (Number(getCombatStats().maxHp) || 100)
           : (Number(game.hp) || 100));
 
-    // 2) 取得體質（vit）
     const currentVit = (typeof getTotalStat === "function")
       ? (Number(getTotalStat("vit")) || 0)
       : (Number(game.vit) || 0);
 
-    // 3) 回血量：基礎 5% + 體質補正
     const healAmt = Math.floor(maxHp * 0.05 + (currentVit * 0.5));
 
-    // 4) ✅ 關鍵修正：回血只能增加，不允許降低（避免任何夾血）
-    const before = Math.floor(Number(game.currentHp) || 0);
-    const after = Math.min(maxHp, before + healAmt);
-    game.currentHp = Math.max(before, after);
-
-    // 5) 怪物端：懶散 debuff（3 回合，atkRange 降到 75%）
+    // -------------------------
+    // 怪物端：懶散 debuff（保留你原先的做法）
+    // -------------------------
     if (monster) {
-      // 儲存原始 atkRange（只存一次）
       if (!monster.originalAtkRange && Array.isArray(monster.atkRange)) {
         monster.originalAtkRange = [...monster.atkRange];
       }
 
-      // 設置 debuff
       monster.lazyStatus = {
         duration: 3,
         reduction: 0.75
       };
 
-      // 立即套用（永遠基於 originalAtkRange 計算，避免越疊越低）
+      // 立即套用（基於 originalAtkRange，避免越疊越低）
       if (monster.originalAtkRange && Array.isArray(monster.originalAtkRange)) {
         const oMin = Number(monster.originalAtkRange[0]) || 1;
         const oMax = Number(monster.originalAtkRange[1]) || oMin;
@@ -70,9 +63,9 @@ const equipPassivesDB = {
       }
     }
 
-    // 6) 回傳 log
     return {
       success: true,
+      heal: healAmt, // ✅ 交給引擎結算
       log: `<span style="color:#74b9ff">【廢人領域】觸發！回復 ${healAmt} HP，${monster?.name || "敵人"} 陷入了懶散狀態 (持續 3 回合)！</span>`
     };
   }
@@ -106,4 +99,5 @@ const equipPassivesDB = {
   }
 
 };
+
 
