@@ -16,7 +16,6 @@
     "boss_mandrake_ascended.js",
     "boss_shark_liver.js",
     "boss_final_1.js"
-    "boss_tide_priestess.js"
   ];
 
   // === 動態載入 ===
@@ -34,4 +33,5 @@
     }
   });
 })();
+
 
