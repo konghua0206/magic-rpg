@@ -16,6 +16,7 @@
     "boss_mandrake_ascended.js",
     "boss_shark_liver.js",
     "boss_final_1.js"
+    "boss_tide_priestess.js"
   ];
 
   // ✅ 用 index.js 自己的位置當 base（GitHub Pages / repo 子路徑都不會炸）
@@ -63,3 +64,4 @@
     window.dispatchEvent(new Event("bosses:loaded"));
   })();
 })();
+
