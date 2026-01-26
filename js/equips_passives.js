@@ -20,12 +20,12 @@ const equipPassivesDB = {
 
 "懶惰者": {
   name: "廢人領域",
-  desc: "裝備特效：受攻擊時 20% 機率恢復生命，並使敵人進入 3 回合的「懶散」狀態 (攻擊力下降 25%)。",
+  desc: "裝備特效：受攻擊時 20% 機率在下回合開始恢復生命，並使敵人進入 3 回合的「懶散」狀態 (攻擊力下降 25%)。",
   chance: 0.2,
   color: "#74b9ff",
 
   onBeingHit: (monster) => {
-    // ✅ 只算數值，不改 game.currentHp
+    // ✅ 只算數值，不直接改 game.currentHp
     const maxHp = (typeof getMaxHp === "function")
       ? (Number(getMaxHp()) || 100)
       : (typeof getCombatStats === "function"
@@ -37,6 +37,18 @@ const equipPassivesDB = {
       : (Number(game.vit) || 0);
 
     const healAmt = Math.floor(maxHp * 0.05 + (currentVit * 0.5));
+
+    // ✅ 延時回血：排程到「下回合開始」才回
+    // 需要 queueHealNextTurn 已存在（我們用 battleContext.events 來存）
+    if (typeof queueHealNextTurn === "function") {
+      queueHealNextTurn(
+        healAmt,
+        `<span style="color:#74b9ff">【廢人領域】回復了 ${healAmt} HP</span>`
+      );
+    } else {
+      // fallback（若你還沒接事件系統，至少不會報錯；但也不會回血）
+      console.warn("[廢人領域] queueHealNextTurn 未定義，延遲回血未排程");
+    }
 
     // -------------------------
     // 怪物端：懶散 debuff（保留你原先的做法）
@@ -65,8 +77,9 @@ const equipPassivesDB = {
 
     return {
       success: true,
-      heal: healAmt, // ✅ 交給引擎結算
-      log: `<span style="color:#74b9ff">【廢人領域】觸發！回復 ${healAmt} HP，${monster?.name || "敵人"} 陷入了懶散狀態 (持續 3 回合)！</span>`
+      // ✅ 不再回傳 heal（避免引擎立刻回血）
+      heal: 0,
+      log: `<span style="color:#74b9ff">【廢人領域】觸發！${monster?.name || "敵人"} 陷入懶散狀態 (持續 3 回合)，你的回復將在下回合開始生效！</span>`
     };
   }
 },

@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>魔法修煉 RPG：測試版</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/konghua0206/magic-rpg@main/css/style.css">
+<link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
@@ -303,7 +303,7 @@
   
   <div class="card">
     <div class="small" style="text-align: center;">
-      遊戲版本：v0.6.0<br>
+      遊戲版本：v0.6.1<br>
       最後存檔時間：<span id="lastSaveTime">--:--:--</span>
     </div>
   </div>
@@ -393,16 +393,14 @@
 
 </body>
 
-
-
-<script src="https://cdn.jsdelivr.net/gh/konghua0206/magic-rpg@main/js/skills.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/konghua0206/magic-rpg@main/js/equips_skills.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/konghua0206/magic-rpg@main/js/equips_passives.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/konghua0206/magic-rpg@main/js/monsters.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/konghua0206/magic-rpg@main/js/monsters_dropdown.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/konghua0206/magic-rpg@main/js/bosses.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/konghua0206/magic-rpg@main/js/equips.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/konghua0206/magic-rpg@main/js/code_database.js"></script>
+<script src="js/skills.js"></script>
+<script src="js/equips_skills.js"></script>
+<script src="js/equips_passives.js"></script>
+<script src="js/monsters.js"></script>
+<script src="js/monsters_dropdown.js"></script>
+<script src="js/bosses.js"></script>
+<script src="js/equips.js"></script>
+<script src="js/code_database.js"></script>
 
 <script>
 
@@ -1822,48 +1820,6 @@ function startBossBattle(boss) {
  * ============================================================
  */
 
-function initializeBattle() {
-  if (!currentMonster) return;
-
-  window.battleContext = {
-    turn: 0,
-    turnCount: 0,   // 相容舊 UI
-    stats: null,    // UI / 舊系統可能會讀
-    buffs: [],
-    modifiers: [],
-    states: [],
-    events: [],
-    isFinished: false
-  };
-
-  updateBattleUI();
-}
-
-function buildBattleStats(context) {
-  const base = getCombatStats();
-  const stats = { ...base };
-
-  const mods = Array.isArray(context?.modifiers) ? context.modifiers : [];
-
-  for (const m of mods) {
-    if (!m) continue;
-
-    if (m.atkMulti) stats.atk *= (1 + Number(m.atkMulti));
-    if (m.defMulti) stats.def *= (1 + Number(m.defMulti));
-
-    if (m.critRateAdd) stats.critRate += Number(m.critRateAdd);
-    if (m.dodgeRateAdd) stats.dodgeRate += Number(m.dodgeRateAdd);
-  }
-
-  // ✅ 保底：防止爆表或負值
-  stats.atk = Math.max(0, Number(stats.atk) || 0);
-  stats.def = Math.max(0, Number(stats.def) || 0);
-  stats.critRate = Math.max(0, Math.min(100, Number(stats.critRate) || 0));
-  stats.dodgeRate = Math.max(0, Math.min(95, Number(stats.dodgeRate) || 0)); // 閃避留點空間
-
-  return stats;
-}
-
 function battleTick() {
   if (!currentMonster) return;
 
@@ -1886,6 +1842,7 @@ function battleTick() {
   ctx.turn = (ctx.turn || 0) + 1;
   ctx.turnCount = (ctx.turnCount || 0) + 1;
 
+  processTurnStartEvents();
   tickCooldowns();
   tickModifiers();
   syncEquipPassivesToModifiers();
@@ -1893,7 +1850,7 @@ function battleTick() {
   const stats = buildBattleStats(ctx);
   ctx.stats = stats;
 
-  // ✅ Day6：回合開始先清 dirty
+  // 回合開始先清 dirty
   window._battleUiDirty = false;
 
   // 裝備
@@ -1923,76 +1880,10 @@ function battleTick() {
     applyBattleResults(afterHit);
   }
 
-  // ✅ Day6：整回合最多一次 UI 更新
+  // 整回合最多一次 UI 更新
   if (window._battleUiDirty) updateBattleUI();
 
   finalizeBattleIfNeeded();
-}
-
-function tickModifiers() {
-  const ctx = window.battleContext;
-  if (!ctx) return;
-
-  if (!Array.isArray(ctx.modifiers)) ctx.modifiers = [];
-
-  // duration--，<=0 移除
-  ctx.modifiers = ctx.modifiers.filter(m => {
-    if (!m) return false;
-    if (m.duration == null) return true;       // 沒寫 duration = 永久
-    m.duration = Number(m.duration) - 1;
-    return m.duration > 0;
-  });
-}
-
-function tickCooldowns() {
-  if (typeof currentCooldowns === "undefined") window.currentCooldowns = {};
-  for (let skillId in currentCooldowns) {
-    if (currentCooldowns[skillId] > 0) currentCooldowns[skillId]--;
-  }
-}
-
-function processPlayerPhase(stats) {
-  const results = [];
-
-  // 1) 優先技能
-  const skill = pickAvailableSkill();
-  if (skill) {
-    const cost = Number(skill.cost) || 0;
-    game.mana = (Number(game.mana) || 0) - cost;
-
-    // 上 CD
-    if (typeof currentCooldowns === "undefined") window.currentCooldowns = {};
-    currentCooldowns[skill.id] = Number(skill.cooldown) || 0;
-
-    // 特效
-    if (typeof spawnSkillEffect === "function") spawnSkillEffect(skill);
-
-    // 技能效果
-    const raw = skill.onEffect(stats, currentMonster);
-    results.push(...normalizeSkillResult(skill, raw));
-    return results;
-  }
-
-  // 2) 沒技能就普攻（沿用你 Day1 的公式）
-  let dmg = Math.max(
-    1,
-    Math.floor((stats.atk * stats.atk) / (stats.atk + (Number(currentMonster.def) || 0) + 1))
-  );
-
-  const isCrit = Math.random() * 100 < (Number(stats.critRate) || 0);
-  if (isCrit) {
-    dmg = Math.floor(dmg * (Number(stats.critMulti) || 1));
-    results.push({ type: "log", text: `💥 暴擊！x${Number(stats.critMulti) || 1}` });
-  }
-
-  results.push({
-    type: "damage",
-    target: "monster",
-    value: dmg,
-    log: `你攻擊造成 ${dmg} 傷害`
-  });
-
-  return results;
 }
 
 function processMonsterPhase(stats) {
@@ -2066,7 +1957,7 @@ function processMonsterPhase(stats) {
 
   incomingDmg = Math.max(0, Number(incomingDmg) || 0);
 
-  // 5) ✅ 受擊前反制（onBeforeHit：減傷/反彈）
+  // 5) 受擊前反制（onBeforeHit：減傷/反彈）
   if (typeof processPlayerCounters === "function") {
     const counter = processPlayerCounters(incomingDmg);
     if (counter?.results?.length) results.push(...counter.results);
@@ -2076,14 +1967,14 @@ function processMonsterPhase(stats) {
     // 若你想「反彈打死怪就取消傷害」，之後我可以幫你加規則
   }
 
-  // 6) ✅ 護盾減傷（反制後 → 扣血前）
+  // 6) 護盾減傷（反制後 → 扣血前）
   if (typeof applyShieldReduction === "function") {
     const shield = applyShieldReduction(incomingDmg);
     if (shield?.results?.length) results.push(...shield.results);
     if (shield && shield.dmg != null) incomingDmg = Math.max(0, Number(shield.dmg) || 0);
   }
 
-  // 7) ✅ 最終傷害落地（用 BattleResult，交給 applyBattleResults 扣血）
+  // 7) 最終傷害落地（用 BattleResult，交給 applyBattleResults 扣血）
   if (incomingDmg > 0) {
     results.push({
       type: "damage",
@@ -2096,6 +1987,60 @@ function processMonsterPhase(stats) {
   }
 
   return results;
+}
+
+function triggerOnBeingHitPassives() {
+  const results = [];
+
+  for (let slot in game.equipment) {
+    const item = game.equipment[slot];
+    if (!item || !item.name) continue;
+
+    for (let keyword in equipPassivesDB) {
+      if (!item.name.includes(keyword)) continue;
+
+      const p = equipPassivesDB[keyword];
+      if (!p || typeof p.onBeingHit !== "function") continue;
+
+      const chance = (p.chance == null) ? 1 : Number(p.chance);
+      if (Math.random() >= chance) continue;
+
+      try {
+        // 舊系統：p.onBeingHit(currentMonster) -> {success, log, heal? ...}
+        const res = p.onBeingHit(currentMonster);
+
+        if (res?.log) results.push({ type: "log", text: res.log });
+
+        // 若你的被動會直接改 game.currentHp，那也沒關係（舊函式本體不能改）
+        // 但如果它回傳 heal，我們也支援走結算：
+        if (res?.heal > 0) {
+          results.push({ type: "heal", target: "player", value: Number(res.heal) || 0 });
+        }
+      } catch (err) {
+        console.error(`onBeingHit 被動錯誤 [${keyword}]`, err);
+      }
+    }
+  }
+
+  return results;
+}
+
+function applyShieldReduction(incomingDmg) {
+  let dmg = Math.max(0, Number(incomingDmg) || 0);
+  const results = [];
+
+  if (dmg > 0 && game.shieldTime && Date.now() < game.shieldTime) {
+    const reduceRate = (game.shieldReduce == null) ? 0.3 : Number(game.shieldReduce);
+    const reduction = Math.floor(dmg * reduceRate);
+    dmg = Math.max(0, dmg - reduction);
+
+    results.push({
+      type: "log",
+      text: `🛡️ 護盾吸收 ${reduction} 傷害`
+    });
+  }
+
+  return { dmg, results };
 }
 
 function processPlayerCounters(incomingDmg) {
@@ -2143,116 +2088,49 @@ function processPlayerCounters(incomingDmg) {
   return { dmg, results };
 }
 
-function applyShieldReduction(incomingDmg) {
-  let dmg = Math.max(0, Number(incomingDmg) || 0);
+function processPlayerPhase(stats) {
   const results = [];
 
-  if (dmg > 0 && game.shieldTime && Date.now() < game.shieldTime) {
-    const reduceRate = (game.shieldReduce == null) ? 0.3 : Number(game.shieldReduce);
-    const reduction = Math.floor(dmg * reduceRate);
-    dmg = Math.max(0, dmg - reduction);
+  // 1) 優先技能
+  const skill = pickAvailableSkill();
+  if (skill) {
+    const cost = Number(skill.cost) || 0;
+    game.mana = (Number(game.mana) || 0) - cost;
 
-    results.push({
-      type: "log",
-      text: `🛡️ 護盾吸收 ${reduction} 傷害`
-    });
+    // 上 CD
+    if (typeof currentCooldowns === "undefined") window.currentCooldowns = {};
+    currentCooldowns[skill.id] = Number(skill.cooldown) || 0;
+
+    // 特效
+    if (typeof spawnSkillEffect === "function") spawnSkillEffect(skill);
+
+    // 技能效果
+    const raw = skill.onEffect(stats, currentMonster);
+    results.push(...normalizeSkillResult(skill, raw));
+    return results;
   }
 
-  return { dmg, results };
-}
+  // 2) 沒技能就普攻（沿用你 Day1 的公式）
+  let dmg = Math.max(
+    1,
+    Math.floor((stats.atk * stats.atk) / (stats.atk + (Number(currentMonster.def) || 0) + 1))
+  );
 
-function triggerOnBeingHitPassives() {
-  const results = [];
-
-  for (let slot in game.equipment) {
-    const item = game.equipment[slot];
-    if (!item || !item.name) continue;
-
-    for (let keyword in equipPassivesDB) {
-      if (!item.name.includes(keyword)) continue;
-
-      const p = equipPassivesDB[keyword];
-      if (!p || typeof p.onBeingHit !== "function") continue;
-
-      const chance = (p.chance == null) ? 1 : Number(p.chance);
-      if (Math.random() >= chance) continue;
-
-      try {
-        // 舊系統：p.onBeingHit(currentMonster) -> {success, log, heal? ...}
-        const res = p.onBeingHit(currentMonster);
-
-        if (res?.log) results.push({ type: "log", text: res.log });
-
-        // 若你的被動會直接改 game.currentHp，那也沒關係（舊函式本體不能改）
-        // 但如果它回傳 heal，我們也支援走結算：
-        if (res?.heal > 0) {
-          results.push({ type: "heal", target: "player", value: Number(res.heal) || 0 });
-        }
-      } catch (err) {
-        console.error(`onBeingHit 被動錯誤 [${keyword}]`, err);
-      }
-    }
+  const isCrit = Math.random() * 100 < (Number(stats.critRate) || 0);
+  if (isCrit) {
+    dmg = Math.floor(dmg * (Number(stats.critMulti) || 1));
+    results.push({ type: "log", text: `💥 暴擊！x${Number(stats.critMulti) || 1}` });
   }
+
+  results.push({
+    type: "damage",
+    target: "monster",
+    value: dmg,
+    log: `你攻擊造成 ${dmg} 傷害`
+  });
 
   return results;
 }
-
-function applyBattleResults(results) {
-  for (const r of results) {
-    if (r.log) addBattleLog(`<div>${r.log}</div>`);
-    if (r.type === "log" && r.text) addBattleLog(`<div>${r.text}</div>`);
-
-    if (r.type === "damage") {
-      const value = Math.max(0, Number(r.value) || 0);
-
-      if (r.target === "monster") {
-        const next = (Number(currentMonster.curHp) || 0) - value;
-        currentMonster.curHp = Math.max(0, Math.floor(next));
-      } else if (r.target === "player") {
-        const next = (Number(game.currentHp) || 0) - value;
-        game.currentHp = Math.max(0, Math.floor(next));
-      }
-      continue;
-    }
-
-    if (r.type === "heal") {
-      const value = Math.max(0, Number(r.value) || 0);
-      const before = Math.floor(Number(game.currentHp) || 0);
-
-      const maxHp = (typeof getMaxHp === "function") ? getMaxHp() : before;
-      const after = Math.min(maxHp, before + value);
-
-  // ✅ 關鍵：heal 不允許降低血量
-      game.currentHp = Math.max(before, Math.floor(after));
-      continue;
-    }
-
-    if (r.type === "mana") {
-      game.mana = (Number(game.mana) || 0) + (Number(r.value) || 0);
-      continue;
-    }
-
-    if (r.type === "healMonster") {
-      const value = Math.max(0, Number(r.value) || 0);
-      const maxHp = Number(currentMonster.hp) || (Number(currentMonster.curHp) || 0);
-      const next = (Number(currentMonster.curHp) || 0) + value;
-      currentMonster.curHp = Math.min(maxHp, Math.floor(next));
-      continue;
-    }
-  }
-
-  // 保險整數化（防被動直接改小數）
-  if (game.currentHp != null) game.currentHp = Math.max(0, Math.floor(Number(game.currentHp) || 0));
-  if (currentMonster?.curHp != null) currentMonster.curHp = Math.max(0, Math.floor(Number(currentMonster.curHp) || 0));
-
-  // ✅ Day6：全域 UI dirty（不改參數、不會相容性炸裂）
-  window._battleUiDirty = true;
-}
-
-function createTurnUIFlag() {
-  return { dirty: false };
-}
-
 
 function pickAvailableSkill() {
   if (!Array.isArray(game.equippedSkills) || game.equippedSkills.length === 0) return null;
@@ -2334,32 +2212,6 @@ function addModifier(mod) {
   }
 
   ctx.modifiers.push({ ...mod });
-}
-
-function ensureBattleContextForCurrentMonster() {
-  const m = currentMonster;
-  if (!m) return;
-
-  // 產生一個能代表「這一場戰鬥」的 key
-  // （name+lv+hp 通常足夠；你也可以改成怪物 id 若有）
-  const key = `${m.name || "?"}|${m.lv || 0}|${m.hp || 0}`;
-
-  if (!window.battleContext || window.battleContext.battleKey !== key) {
-    window.battleContext = {
-      battleKey: key,     // ⭐ 關鍵：用來辨識是否換怪
-      turn: 0,
-      turnCount: 0,
-      stats: null,
-      buffs: [],
-      modifiers: [],
-      states: [],
-      events: [],
-      isFinished: false
-    };
-  } else {
-    // 同一隻怪的同一場戰鬥：確保沒被殘留狀態卡死
-    window.battleContext.isFinished = false;
-  }
 }
 
 function processEquipmentPhase(stats) {
@@ -2466,6 +2318,193 @@ function syncEquipPassivesToModifiers() {
   }
 }
 
+function queueHealNextTurn(amount, htmlLog) {
+  if (!window.battleContext) return;
+  if (!Array.isArray(window.battleContext.events)) window.battleContext.events = [];
+
+  const nextTurn = (Number(window.battleContext.turn) || 0) + 1;
+
+  window.battleContext.events.push({
+    type: "delayedHeal",
+    turn: nextTurn,
+    amount: Math.max(0, Math.floor(Number(amount) || 0)),
+    log: htmlLog || ""
+  });
+}
+
+function processTurnStartEvents() {
+  const ctx = window.battleContext;
+  if (!ctx || !Array.isArray(ctx.events)) return;
+
+  const turnNow = Number(ctx.turn) || 0;
+
+  const remain = [];
+  const toApply = [];
+
+  for (const ev of ctx.events) {
+    if (!ev) continue;
+    if (ev.type === "delayedHeal" && Number(ev.turn) === turnNow) {
+      if (ev.log) toApply.push({ type: "log", text: ev.log });
+      if (ev.amount > 0) toApply.push({ type: "heal", target: "player", value: ev.amount });
+    } else {
+      remain.push(ev);
+    }
+  }
+
+  ctx.events = remain;
+
+  if (toApply.length > 0) {
+    // 走你現有結算器（它會整數化 + 設 dirty）
+    applyBattleResults(toApply);
+  }
+}
+
+
+function applyBattleResults(results) {
+  for (const r of results) {
+    if (r.log) addBattleLog(`<div>${r.log}</div>`);
+    if (r.type === "log" && r.text) addBattleLog(`<div>${r.text}</div>`);
+
+    if (r.type === "damage") {
+      const value = Math.max(0, Number(r.value) || 0);
+
+      if (r.target === "monster") {
+        const next = (Number(currentMonster.curHp) || 0) - value;
+        currentMonster.curHp = Math.max(0, Math.floor(next));
+      } else if (r.target === "player") {
+        const next = (Number(game.currentHp) || 0) - value;
+        game.currentHp = Math.max(0, Math.floor(next));
+      }
+      continue;
+    }
+
+    if (r.type === "heal") {
+      const value = Math.max(0, Number(r.value) || 0);
+      const before = Math.floor(Number(game.currentHp) || 0);
+
+      const maxHp = (typeof getMaxHp === "function") ? getMaxHp() : before;
+      const after = Math.min(maxHp, before + value);
+
+  // ✅ 關鍵：heal 不允許降低血量
+      game.currentHp = Math.max(before, Math.floor(after));
+      continue;
+    }
+
+    if (r.type === "mana") {
+      game.mana = (Number(game.mana) || 0) + (Number(r.value) || 0);
+      continue;
+    }
+
+    if (r.type === "healMonster") {
+      const value = Math.max(0, Number(r.value) || 0);
+      const maxHp = Number(currentMonster.hp) || (Number(currentMonster.curHp) || 0);
+      const next = (Number(currentMonster.curHp) || 0) + value;
+      currentMonster.curHp = Math.min(maxHp, Math.floor(next));
+      continue;
+    }
+  }
+
+  // 保險整數化（防被動直接改小數）
+  if (game.currentHp != null) game.currentHp = Math.max(0, Math.floor(Number(game.currentHp) || 0));
+  if (currentMonster?.curHp != null) currentMonster.curHp = Math.max(0, Math.floor(Number(currentMonster.curHp) || 0));
+
+  // ✅ Day6：全域 UI dirty（不改參數、不會相容性炸裂）
+  window._battleUiDirty = true;
+}
+
+function buildBattleStats(context) {
+  const base = getCombatStats();
+  const stats = { ...base };
+
+  const mods = Array.isArray(context?.modifiers) ? context.modifiers : [];
+
+  for (const m of mods) {
+    if (!m) continue;
+
+    if (m.atkMulti) stats.atk *= (1 + Number(m.atkMulti));
+    if (m.defMulti) stats.def *= (1 + Number(m.defMulti));
+
+    if (m.critRateAdd) stats.critRate += Number(m.critRateAdd);
+    if (m.dodgeRateAdd) stats.dodgeRate += Number(m.dodgeRateAdd);
+  }
+
+  // ✅ 保底：防止爆表或負值
+  stats.atk = Math.max(0, Number(stats.atk) || 0);
+  stats.def = Math.max(0, Number(stats.def) || 0);
+  stats.critRate = Math.max(0, Math.min(100, Number(stats.critRate) || 0));
+  stats.dodgeRate = Math.max(0, Math.min(95, Number(stats.dodgeRate) || 0)); // 閃避留點空間
+
+  return stats;
+}
+
+function tickModifiers() {
+  const ctx = window.battleContext;
+  if (!ctx) return;
+
+  if (!Array.isArray(ctx.modifiers)) ctx.modifiers = [];
+
+  // duration--，<=0 移除
+  ctx.modifiers = ctx.modifiers.filter(m => {
+    if (!m) return false;
+    if (m.duration == null) return true;       // 沒寫 duration = 永久
+    m.duration = Number(m.duration) - 1;
+    return m.duration > 0;
+  });
+}
+
+function tickCooldowns() {
+  if (typeof currentCooldowns === "undefined") window.currentCooldowns = {};
+  for (let skillId in currentCooldowns) {
+    if (currentCooldowns[skillId] > 0) currentCooldowns[skillId]--;
+  }
+}
+
+function createTurnUIFlag() {
+  return { dirty: false };
+}
+
+function ensureBattleContextForCurrentMonster() {
+  const m = currentMonster;
+  if (!m) return;
+
+  // 產生一個能代表「這一場戰鬥」的 key
+  // （name+lv+hp 通常足夠；你也可以改成怪物 id 若有）
+  const key = `${m.name || "?"}|${m.lv || 0}|${m.hp || 0}`;
+
+  if (!window.battleContext || window.battleContext.battleKey !== key) {
+    window.battleContext = {
+      battleKey: key,     // ⭐ 關鍵：用來辨識是否換怪
+      turn: 0,
+      turnCount: 0,
+      stats: null,
+      buffs: [],
+      modifiers: [],
+      states: [],
+      events: [],
+      isFinished: false
+    };
+  } else {
+    // 同一隻怪的同一場戰鬥：確保沒被殘留狀態卡死
+    window.battleContext.isFinished = false;
+  }
+}
+
+function initializeBattle() {
+  if (!currentMonster) return;
+
+  window.battleContext = {
+    turn: 0,
+    turnCount: 0,   // 相容舊 UI
+    stats: null,    // UI / 舊系統可能會讀
+    buffs: [],
+    modifiers: [],
+    states: [],
+    events: [],
+    isFinished: false
+  };
+
+  updateBattleUI();
+}
 
 function finalizeBattleIfNeeded() {
   if (!currentMonster) return;
@@ -2499,7 +2538,6 @@ function finalizeBattle(result) {
     }, 0);
   }
 }
-
 
 
 /**
