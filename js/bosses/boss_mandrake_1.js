@@ -47,7 +47,6 @@
       if (Math.random() < 0.1) {
         const randomEquip = generateRandomEquip(currentMonster.lv);
         if (randomEquip) {
-          if (randomEquip.rarity < 1) randomEquip.rarity = 1;
           drops.push(randomEquip);
         }
       }

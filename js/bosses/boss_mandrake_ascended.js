@@ -53,7 +53,6 @@
       if (Math.random() < 0.15) {
         const randomEquip = generateRandomEquip(currentMonster.lv);
         if (randomEquip) {
-          if (randomEquip.rarity < 2) randomEquip.rarity = 2;
           drops.push(randomEquip);
         }
       }

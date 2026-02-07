@@ -1,9 +1,8 @@
-// js/bosses/index.js  (Robust Loader + Always Fires bosses:loaded)
+// js/bosses/index.js
 (function () {
   window.bossRegistry = window.bossRegistry || {};
-  window.bossesLoaded = false;
 
-  // ✅ 你只要維護這份（檔名大小寫要跟實際檔案完全一致）
+  // 1) 你只要維護這份清單（檔名大小寫要完全一致）
   const bossFiles = [
     "boss_1.js",
     "boss_2.js",
@@ -15,48 +14,49 @@
     "boss_mandrake_1.js",
     "boss_mandrake_ascended.js",
     "boss_shark_liver.js",
-    "boss_final_1.js"
+    "boss_final_1.js",
     "boss_tide_priestess.js"
   ];
 
-  // ✅ 用 index.js 自己的位置當 base（Netlify/GitHub Pages 都穩）
-  const thisUrl = new URL(document.currentScript.src);
-  const baseDir = new URL("./", thisUrl); // => .../js/bosses/
+  // 2) 取得目前這支 index.js 的資料夾當 base（GitHub Pages 不會炸）
+  const thisScriptUrl = new URL(document.currentScript.src);
+  const baseDir = new URL("./", thisScriptUrl); // => .../js/bosses/
 
+  // 3) 順序載入（避免 async 造成 bossRegistry 還沒填完就被用）
   function loadScript(url) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const s = document.createElement("script");
       s.src = url;
-      s.async = false;
-      s.onload = () => resolve({ ok: true, url });
-      s.onerror = () => resolve({ ok: false, url });
+      s.async = false; // 關鍵：不要 async
+      s.onload = resolve;
+      s.onerror = () => reject(new Error("Failed to load: " + url));
       document.head.appendChild(s);
     });
   }
 
-  // ✅ bossData：永遠從 registry 組合（不會因為先抓到空陣列就永遠空）
+  // 4) 舊系統相容：bossData（永遠從 registry 即時組合）
   Object.defineProperty(window, "bossData", {
     get() {
-      return Object.values(window.bossRegistry || {});
+      return bossFiles
+        .map(f => f.replace(/\.js$/i, ""))     // 這裡如果你的 id != 檔名，改成 bossIdList 方式
+        .map(id => window.bossRegistry[id])
+        .filter(Boolean);
     }
   });
 
+  // 5) 對外提供一個 ready 旗標 + 事件（需要等載入完再 render dropdown）
+  window.bossesLoaded = false;
+
   (async function () {
-    const results = [];
-    for (const file of bossFiles) {
-      const url = new URL(file, baseDir).href;
-      const r = await loadScript(url);
-      results.push(r);
-      if (!r.ok) console.error("[bosses] failed to load:", r.url);
+    try {
+      for (const file of bossFiles) {
+        const url = new URL(file, baseDir).href;
+        await loadScript(url);
+      }
+      window.bossesLoaded = true;
+      window.dispatchEvent(new Event("bosses:loaded"));
+    } catch (e) {
+      console.error("[bosses] load error:", e);
     }
-
-    window.bossesLoaded = true;
-
-    const okCount = results.filter(x => x.ok).length;
-    const regCount = Object.keys(window.bossRegistry || {}).length;
-    console.log(`[bosses] load done: files ok=${okCount}/${bossFiles.length}, registry=${regCount}`);
-
-    // ✅ 不管有沒有失敗檔案，都要發事件，避免 UI 永遠等不到
-    window.dispatchEvent(new Event("bosses:loaded"));
   })();
 })();

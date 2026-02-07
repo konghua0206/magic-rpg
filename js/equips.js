@@ -27,7 +27,7 @@ const uniqueItemTemplates = {
       med: [80, 100]   
     },
     skills: ["靈魂尖叫"],    
-    passive: "【次元壓制】受攻擊時 15% 機率使敵人防禦下降 25%", 
+    passive: "受攻擊時有機率使敵人防禦下降 10%", 
     icon: "images/equip/CHS_it_eq_hayate_acce.png", 
     description: "這片葉子不再發出尖叫，而是低沉的次元回響，那是萬物終焉的旋律。"
   },

@@ -350,84 +350,260 @@ button:active { transform: scale(0.96); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 }
 
 
-/* 技能列表卡片容器優化 */
+/* =========================================================
+   Skills UI (Replace All)
+   ========================================================= */
+
+/* 列表容器 */
+.skill-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 技能卡本體 */
+.skill-card,
 #skillList .item-card {
-    transition: all 0.2s ease;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-left: 4px solid #555;
+  display: flex;
+  align-items: stretch;
+  padding: 12px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  gap: 12px;
 }
 
-#skillList .item-card:hover {
+/* hover 只給桌機，避免手機點擊時抖動 */
+@media (hover: hover) and (pointer: fine) {
+  .skill-card:hover,
+  #skillList .item-card:hover {
     background: rgba(255, 255, 255, 0.08);
-    transform: translateX(5px); /* 滑鼠懸停時輕微右移 */
+    transform: translateX(5px);
+  }
 }
 
-/* 技能圖示外框 */
-.skill-icon-box {
-    width: 45px;
-    height: 45px;
-    background: #1a1a1a;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-    flex-shrink: 0; /* 防止圖示被擠壓 */
-}
-
-.skill-icon-box img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* 確保圖片填滿且不變形 */
-}
-
-/* 針對「領悟」狀態的特殊處理 */
-.item-card button {
-    border-radius: 6px;
-    transition: filter 0.2s;
-}
-
-.item-card button:active {
-    filter: brightness(0.8);
-}
-
-/* 跑馬燈容器 */
-.marquee-box {
-  width: 100%;
+/* icon 外框（沿用你原本風格） */
+.skill-icon-box,
+.skill-icon {
+  width: 45px;
+  height: 45px;
+  background: #1a1a1a;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 4px;
-  margin-top: 4px;
-  padding: 3px 5px;
-  box-sizing: border-box;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  flex-shrink: 0;
 }
 
-/* 文字基礎樣式 */
-.marquee-content {
+.skill-icon-box img,
+.skill-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   display: block;
-  color: #d1d1d1;
+  border-radius: 8px;
+}
+
+/* 主內容區 */
+.skill-main {
+  flex: 1;
+  min-width: 0; /* ✅ 防止文字把 flex 撐爆 */
+}
+
+/* 標題列 */
+.skill-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap; /* ✅ 小螢幕自動換行 */
+}
+
+.skill-name {
+  font-weight: 800;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.skill-badge {
   font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  color: #ddd;
   white-space: nowrap;
-  /* 預設隱藏溢出，但不加省略號，避免跑馬燈啟動前閃爍 */
-  overflow: hidden; 
 }
 
-/* 啟動動畫的樣式 */
-.marquee-content.animate {
-  display: inline-block;
-  /* 每 100 像素給予約 2 秒的滾動時間，讓速度均勻 */
-  animation: scroll-to-end var(--scroll-speed) linear infinite;
+.skill-meta {
+  font-size: 11px;
+  color: #aaa;
+  white-space: nowrap; /* 桌機更整齊 */
 }
 
-@keyframes scroll-to-end {
-  0%, 15% { transform: translateX(0); } /* 開頭停頓 15% 的時間 */
-  85%, 100% { transform: translateX(var(--scroll-dist)); } /* 結尾停頓 15% 的時間 */
+/* 描述文字 */
+.skill-desc {
+  color: #cfcfcf;
+  margin-top: 6px;
+  line-height: 1.35;
+  overflow-wrap: anywhere; /* ✅ 長字/材料可斷行 */
+  word-break: break-word;
 }
 
-/* 滑鼠移入暫停 */
-.marquee-box:hover .marquee-content.animate {
-  animation-play-state: paused;
+/* 升級資訊盒 */
+.skill-upgrade-box {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.20);
+  border: 1px solid rgba(255,255,255,0.10);
 }
+
+.skill-upgrade-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.skill-upgrade-level,
+.skill-upgrade-mana,
+.skill-upgrade-mats {
+  font-size: 12px;
+  color: #ddd;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.skill-upgrade-mana span,
+.skill-upgrade-mats span {
+  color: #f1c40f;
+}
+
+.skill-upgrade-warn {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #e67e22;
+}
+
+/* 未學會資訊盒 */
+.skill-learn-box {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.15);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.skill-learn-cost,
+.skill-learn-mats {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* 右側按鈕區 */
+.skill-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.skill-actions button,
+.item-card button {
+  border-radius: 8px;
+  transition: filter 0.2s ease, opacity 0.2s ease, transform 0.05s ease;
+}
+
+.item-card button:active,
+.skill-actions button:active {
+  filter: brightness(0.85);
+  transform: translateY(1px);
+}
+
+/* 桌機按鈕寬度 */
+.skill-actions button {
+  width: 86px;
+  padding: 8px;
+  font-size: 12px;
+}
+
+/* =========================================================
+   Mobile Responsive (核心修復)
+   ========================================================= */
+@media (max-width: 520px) {
+  /* 卡片改直排，避免內容被擠爆 */
+  .skill-card,
+  #skillList .item-card {
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  /* icon 稍微大一點更好點 */
+  .skill-icon-box,
+  .skill-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+  }
+
+  .skill-icon-box img,
+  .skill-icon-img {
+    border-radius: 10px;
+  }
+
+  /* 標題/描述字體稍微調整 */
+  .skill-name { font-size: 16px; }
+  .skill-desc { font-size: 13px; }
+
+  /* meta 不要硬撐一行，讓它可換行 */
+  .skill-meta { white-space: normal; }
+
+  /* 升級 row 改成上下排（不擠成一行） */
+  .skill-upgrade-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  /* 按鈕改橫排平均分配 */
+  .skill-actions {
+    width: 100%;
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .skill-actions button {
+    width: 100%;
+    flex: 1;
+    padding: 10px 8px;
+    font-size: 13px;
+    border-radius: 10px;
+  }
+
+  /* 如果只有 1 顆按鈕（未學會只顯示領悟），讓它看起來也正常 */
+  .skill-actions button:only-child {
+    flex: none;
+    width: 100%;
+  }
+}
+
+/* 更小螢幕再壓一點間距 */
+@media (max-width: 380px) {
+  .skill-card,
+  #skillList .item-card {
+    padding: 10px;
+    gap: 8px;
+  }
+  .skill-actions { gap: 6px; }
+  .skill-actions button { padding: 10px 6px; font-size: 12px; }
+}
+
+
 
 /* 裝備加成文字樣式 */
 .bonus-text {
@@ -458,3 +634,5 @@ button:active { transform: scale(0.96); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
     bottom: 5px;
   }
 }
+
+

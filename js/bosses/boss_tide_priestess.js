@@ -40,10 +40,8 @@
     onDeath: function (currentMonster) {
       let drops = [];
 
-      // ✅ 保底史詩以上
       const equip = generateRandomEquip(currentMonster.lv);
       if (equip) {
-        if (equip.rarity < 2) equip.rarity = 2;
         drops.push(equip);
       }
 
@@ -51,7 +49,6 @@
       if (Math.random() < 0.3) {
         const extra = generateRandomEquip(currentMonster.lv);
         if (extra) {
-          if (extra.rarity < 2) extra.rarity = 2;
           drops.push(extra);
         }
       }
@@ -69,7 +66,7 @@
             {
               type: "buff",
               target: "player",
-              log: "潮聲纏繞著你，侵蝕生命。",
+              log: `🌊 <span style="color:#74b9ff">【潮聲女祭司｜潮聲低語】</span> 低語滲入你的耳膜，潮意開始侵蝕你的生命。`,
               buff: {
                 id: "tide_corrosion",
                 name: "潮蝕",
@@ -82,7 +79,7 @@
                     type: "damage",
                     target: "player",
                     value: 120 * (b.stacks || 1),
-                    log: "🌊 潮蝕造成傷害"
+                    log: `🌊 <b>【潮蝕】</b> 潮水啃噬你的生命`
                   }
                 ]
               }
@@ -100,7 +97,7 @@
             {
               type: "buff",
               target: "player",
-              log: "女祭司的祈禱削弱了你的防禦。",
+              log: `🔱 <span style="color:#0984e3">【潮聲女祭司｜深海祈禱】</span> 祈禱聲沉入海底，你的防禦被潮壓扭曲。`,
               buff: {
                 id: "deep_prayer",
                 name: "深海祈禱",
@@ -139,8 +136,8 @@
               target: "player",
               value: dmg,
               log: hasDebuff
-                ? "🌊 海嘯裁決爆發！(潮蝕加成)"
-                : "🌊 海嘯裁決襲來！"
+  ? `🌊 <span style="color:#00cec9">【潮聲女祭司｜海嘯裁決】</span> 海嘯裁決爆發！<span style="color:#74b9ff">(潮蝕共鳴)</span>`
+  : `🌊 <span style="color:#00cec9">【潮聲女祭司｜海嘯裁決】</span> 海嘯裁決襲來！`
             }
           ];
         }
