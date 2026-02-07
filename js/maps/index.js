@@ -8,8 +8,10 @@
   window.MAPS_MANIFEST.scripts = [
     // --- monsters packs ---
     "js/maps/wusui_sanctuary_monsters.js",
+    "js/maps/mist_ruins_monsters.js",
 
     // --- maps (registerMap 會在這些檔案內被呼叫) ---
     "js/maps/wusui_sanctuary.js",
+    "js/maps/mist_ruins.js",
   ];
 })();

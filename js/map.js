@@ -26,37 +26,52 @@
     return Array.from(registry.values()).sort((a, b) => (a.order || 9999) - (b.order || 9999));
   }
 
-
   const loadedScripts = new Set();
+  const loadingScripts = new Map();
 
   function loadScriptOnce(src) {
-    return new Promise((resolve, reject) => {
-      if (loadedScripts.has(src)) return resolve();
-      loadedScripts.add(src);
+    if (loadedScripts.has(src)) return Promise.resolve();
+    if (loadingScripts.has(src)) return loadingScripts.get(src);
 
+    const promise = new Promise((resolve, reject) => {
       const s = document.createElement("script");
       s.src = src;
-      s.onload = () => resolve();
-      s.onerror = () => reject(new Error("無法載入腳本: " + src));
+      s.onload = () => {
+        loadedScripts.add(src);
+        loadingScripts.delete(src);
+        resolve();
+      };
+      s.onerror = () => {
+        loadingScripts.delete(src);
+        reject(new Error("無法載入腳本: " + src));
+      };
       document.head.appendChild(s);
     });
+
+    loadingScripts.set(src, promise);
+    return promise;
   }
 
 
   async function ensureMapScriptsLoaded() {
-  if (mapsLoaded) return;
-  mapsLoaded = true;
+    if (mapsLoaded) return;
 
-  const scripts = getManifestScripts();
-  if (!scripts.length) {
-    console.warn("MAPS_MANIFEST.scripts 是空的：請檢查 js/maps/index.js 是否有載入且順序在 map.js 之前");
-    return;
-  }
+    const scripts = getManifestScripts();
+    if (!scripts.length) {
+      console.warn("MAPS_MANIFEST.scripts 是空的：請檢查 js/maps/index.js 是否有載入且順序在 map.js 之前");
+      return;
+    }
 
-  for (const src of scripts) {
-    await loadScriptOnce(src);
+    try {
+      for (const src of scripts) {
+        await loadScriptOnce(src);
+      }
+      mapsLoaded = true;
+    } catch (err) {
+      mapsLoaded = false;
+      throw err;
+    }
   }
-}
 
 
   // ------------------------------------------------------------
